@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>김시민호 실시간 잔여석 관리 프로그램</title>
+    
+    <style>
+        /* ==========================================================================
+           [CSS] 테마 스타일 및 전역 색상 변수 설정 (:root)
+           ========================================================================== */
+        :root {
+            /* 주요 레이아웃 및 텍스트 색상 */
+            --primary-dark: #002d5a;        /* 일괄 변경 버튼 등 주요 어두운 파란색 */
+            --boat3-color: #28a745;         /* 1호 타이틀 배경 (초록) */
+            --boat4-color: #2c7be5;         /* 2호 타이틀 배경 (파란) */
+            --bg-color: #121418;            /* 전체 화면 바탕색 (어두운 회색) */
+            --card-bg: #ffffff;             /* 각 선박 섹션의 배경색 (흰색) */
+            --success: #0040ff;             /* 티켓발권 가능 인원 글자색 (파란) */
+            --danger: #e60000;              /* 매진 및 경고 색상 (빨간) */
+            
+            /* 운항 종료 및 상태 변경에 따른 배경색/글자색 */
+            --ended-gray: #f0f0f0;          /* 운항 종료 및 중지 행의 배경색 (연회색) */
+            --ended-text-color: #999999;    /* 운항 종료 및 중지 행의 글자색 (흐린 회색) */
+            --dark-green: #006400;          /* 티켓발권종료 박스 배경색 (진녹색) */
+            --yellow-btn: #fbc02d;          /* 설정 변경 버튼 배경색 (노란) */
+            --yellow-btn-border: #f9a825;   /* 설정 변경 버튼 테두리색 */
+            
+            /* 상태별 테이블 행(Row) 은은한 배경색 모음 */
+            --available-bg: #e3f2fd;        /* 예약 가능 행의 은은한 배경색 (연파란) */
+            --sailing-bg: #fff9c4;          /* 운항 중 행의 은은한 배경색 (연노란) */
+            --ticketing-ended-bg: #e8f5e9;  /* 발권 종료 행의 은은한 배경색 (연초록) */
+            --boarding-start-bg: #fff3e0;   /* 탑승시작 행의 은은한 배경색 (연오렌지) */
+            --boarding-close-bg: #fffde7;   /* 탑승마감 행의 은은한 배경색 (연한 노란빛) */
+            --soldout-blink-bg: #ffebee;    /* 매진 행의 원래 은은한 배경색 (연분홍) */
+            
+            /* 사이드바 제어 패널 기능별 강조 색상 */
+            --highlight: #00ffcc;           /* 최상단 바 버튼 강조색 (민트) */
+            --tts-highlight: #ff9f43;       /* 안내방송 설정 강조색 (오렌지) */
+            --rotation-highlight: #00ecff;  /* 화면전환기 설정 강조색 (하늘색) */
+            --popup-highlight: #ff4d4d;     /* 긴급 팝업 설정 강조색 (밝은 빨간색) */
+        }
+
+        /* 기본 바디 스타일링: 화면 전체를 꽉 차게 쓰고 스크롤을 최소화하여 전광판/키오스크 최적화 */
+        body {
+            font-family: 'Pretendard', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0; padding: 10px; color: #333;
+            display: flex; flex-direction: row; height: 100vh; box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 메인 레이아웃: 1호와 2호 화면을 가로로 분할하여 배치하는 컨테이너 */
+        .main-container { display: flex; gap: 10px; flex: 1; min-height: 0; }
+        
+        /* 1호, 2호 각각의 독립된 선박 정보 카드 카드 보드 */
+        .boat-section {
+            flex: 1; background: var(--card-bg); border-radius: 15px;
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            position: relative;
+        }
+
+        /* 우측 세로형 관리자 전용 제어 사이드 패널 */
+        #right-sidebar {
+            width: 320px; background-color: #1e222b; padding: 15px;
+            display: flex; flex-direction: column; gap: 15px; border-radius: 15px;
+            box-sizing: border-box; margin-left: 10px; border: 1px solid #343a40;
+            overflow-y: auto;
+        }
+        
+        /* 사이드바 대타이틀 */
+        #sidebar-title {
+            color: #fff; font-size: 20px; font-weight: 900; text-align: center;
+            padding-bottom: 12px; border-bottom: 2px dashed #444; margin-bottom: 5px;
+            line-height: 1.3;
+        }
+        
+        /* 상단 버튼 그룹 및 손님용 전광판 오픈 버튼 */
+        .btn-group-top { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .btn-open-guest {
+            background-color: var(--highlight); color: #000; border: none; padding: 12px;
+            font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.2s;
+        }
+        .btn-open-guest:hover { filter: brightness(1.1); }
+        .btn-reset-all { background-color: #ff4d4d !important; color: white !important; }
+
+        /* 알람, 안내방송, 화면전환기 개별 컨테이너 상자 스타일 */
+        .alarm-toggle-container {
+            display: flex; flex-direction: column; gap: 10px; background: #282e38; 
+            padding: 12px; border-radius: 8px; border: 1px solid #444; width: 100%;
+            box-sizing: border-box;
+        }
+        
+        /* 라디오 버튼 배치용 가로 행 */
+        .alarm-radio-row { display: flex; gap: 15px; align-items: center; justify-content: center; }
+        .alarm-toggle-container label {
+            color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;
+        }
+        
+        /* 각 기능별 라디오/체크박스 포인트 색상 브랜딩 매칭 */
+        .alarm-toggle-container input[type="radio"] {
+            width: 18px; height: 18px; cursor: pointer; accent-color: var(--highlight); margin: 0;
+        }
+        .alarm-toggle-container input[type="radio"].tts-accent { accent-color: var(--tts-highlight); }
+        .alarm-toggle-container input[type="radio"].rotation-accent { accent-color: var(--rotation-highlight); }
+        .alarm-toggle-container input[type="radio"].popup-accent { accent-color: var(--popup-highlight); }
+        .alarm-toggle-container input[type="checkbox"].rotation-accent {
+            width: 18px; height: 18px; cursor: pointer; accent-color: var(--rotation-highlight); margin: 0;
+        }
+        
+        /* 세로형 설정값 입력란 컨테이너 */
+        .alarm-time-setting {
+            display: flex; flex-direction: column; gap: 8px; color: #ccc; font-size: 15px; font-weight: bold;
+            border-top: 1px solid #444; padding-top: 10px; width: 100%;
+        }
+        .setting-item-row { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+        
+        /* 숫자형 인풋 박스 스타일 정의 */
+        .alarm-time-setting input[type="number"] {
+            width: 60px; height: 32px; text-align: center; font-size: 16px; font-weight: bold;
+            border: 1px solid var(--highlight); background: #000; color: var(--highlight); border-radius: 4px;
+        }
+        .alarm-time-setting input[type="number"].tts-input { border-color: var(--tts-highlight); color: var(--tts-highlight); }
+        .alarm-time-setting input[type="number"].rotation-input { border-color: var(--rotation-highlight); color: var(--rotation-highlight); }
+        .alarm-time-setting input[type="number"].popup-input { border-color: var(--popup-highlight); color: var(--popup-highlight); }
+        
+        /* 긴급 팝업용 시/분 선택 드롭다운 셀렉트 박스 */
+        .popup-select-container { display: flex; align-items: center; gap: 4px; }
+        .popup-select {
+            width: 58px; height: 32px; font-size: 14px; font-weight: bold; text-align: center;
+            border: 1px solid var(--popup-highlight); background: #000; color: var(--popup-highlight); border-radius: 4px;
+            outline: none; padding-left: 2px;
+        }
+
+        /* 팝업 공지 문구 입력 텍스트 에어리어 */
+        .alarm-time-setting textarea.popup-textarea {
+            width: 100%; height: 55px; font-size: 14px; background: #000; color: #fff; 
+            border: 1px solid #555; border-radius: 4px; padding: 5px; box-sizing: border-box; resize: none;
+        }
+
+        /* 소제목 텍스트 */
+        .box-title-sm { color: #fff; font-size: 15px; font-weight: bold; text-align: center; margin-bottom: 2px; }
+
+        /* 선박별 최상단 대형 타이틀 바 (실시간 날짜/시계 포함) */
+        .boat-header { 
+            padding: 10px 15px; color: white; 
+            display: flex; align-items: center; justify-content: space-between; 
+            position: relative; min-height: 120px; flex-wrap: nowrap;
+        }
+        .boat-title-area { display: flex; align-items: center; gap: 20px; }
+        .boat-title { font-size: 78px; font-weight: 900; letter-spacing: -2px; text-shadow: 3px 3px 6px rgba(0,0,0,0.4); }
+
+        /* 페이지 표시기 배지 스타일 (손님용 다면 스크롤 화면용) */
+        .page-badge {
+            display: none; position: absolute; right: 20px; bottom: 20px;
+            background: rgba(0, 0, 0, 0.85); color: #ffffff; padding: 6px 18px;
+            font-size: 26px; font-weight: bold; border-radius: 30px; border: 2px solid #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6); z-index: 9999;
+        }
+        .is-guest .page-badge { display: inline-block; } /* 손님 모드일 때 활성화 */
+
+        /* 1호(초록), 2호(파랑) 헤더 배경 구분색 */
+        .boat3-title { background-color: var(--boat3-color); } 
+        .boat4-title { background-color: var(--boat4-color); } 
+
+        /* 우측 상단 날짜 및 대형 디지털 시계 스타일링 */
+        .boat-info-right { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+        .boat-date { font-size: 39px; font-weight: 700; color: rgba(255,255,255,1); line-height: 1.1; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .boat-clock { font-size: 47px; font-weight: 900; font-family: 'monospace'; line-height: 1.1; color: #ffffff !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.6); }
+
+        /* 관리자 모드 전용 기본 설정 입력판 구역 */
+        .setting-area { background: #f8f9fa; padding: 12px; border-bottom: 1px solid #ddd; display: flex; flex-direction: column; gap: 8px; }
+        .setting-area .setting-row { display: flex; gap: 8px; align-items: center; }
+        .setting-row input[type="text"], .setting-row input[type="number"] { padding: 0 10px; font-size: 20px; border: 1px solid #ccc; border-radius: 6px; height: 50px; box-sizing: border-box; }
+        
+        /* 공통 프리미엄 버튼 규격 클래스 */
+        .btn-apply-unified {
+            height: 50px; width: 120px; font-size: 20px !important; cursor: pointer; font-weight: bold; border-radius: 6px;
+            background-color: var(--yellow-btn) !important; color: #000 !important; border: 1px solid var(--yellow-btn-border) !important;
+            display: flex; align-items: center; justify-content: center; white-space: nowrap;
+        }
+        .btn-action-unified {
+            height: 50px; width: 150px; font-size: 20px !important; cursor: pointer; font-weight: bold; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center; white-space: nowrap;
+        }
+        .btn-wizard { background-color: #e1f5fe !important; color: #01579b; border: 1px solid #b3e5fc !important; }
+        .btn-section-reset { background-color: #fff0f0 !important; color: #d63031; border: 1px solid #ccc; }
+        .btn-notice-delete { background-color: #ff4d4d !important; color: #fff !important; border: 1px solid #ff3333 !important; }
+
+        /* 탑승정원, 소요시간, 코스 입력 필드 박스 레이아웃 */
+        .cap-container { display: flex; align-items: center; gap: 5px; background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 0 10px; flex: 1.2; height: 50px; box-sizing: border-box;}
+        .course-container { flex: 2 !important; }
+        .cap-label { font-size: 18px; font-weight: bold; color: #333; white-space: nowrap; }
+        .cap-edit-input { width: 100% !important; border: none !important; text-align: center; font-size: 20px; font-weight: bold; outline: none; background: transparent; }
+        .notice-edit-input { width: 100% !important; border: none !important; text-align: left; font-size: 18px; font-weight: bold; outline: none; background: transparent; resize: none; height: 44px; padding: 10px 0 0 10px; box-sizing: border-box; font-family: inherit; }
+
+        /* 손님 화면 전용 최상단 운항 코스/소요시간 정보 배너 고정바 */
+        .guest-info-banner { 
+            display: none; background: #f0f7ff; padding: 10px; border-bottom: 2px solid #2c7be5;
+            justify-content: space-around; align-items: center; font-size: 28px; font-weight: 900;
+        }
+        .is-guest .guest-info-banner { display: flex; } /* 손님 모드 시 오픈 */
+        .info-item { color: #002d5a; }
+        .info-val { color: #e60000; margin-left: 5px; }
+
+        /* 실시간 중간 안내사항(공지) 표출 패널 */
+        .notice-view-container {
+            display: none; background: #fffdeb; padding: 15px 20px; border-bottom: 3px dashed #f9a825;
+            min-height: 90px; box-sizing: border-box; flex-direction: column; justify-content: center;
+        }
+        .mode-v .notice-view-container { display: flex; } /* 근무자 모드 시 항상 표출 */
+        .notice-title { font-size: 22px; font-weight: 800; color: #d63031; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+        .notice-content { font-size: 30px; font-weight: 900; color: #2d3436; line-height: 1.3; white-space: normal; word-break: break-all; }
+
+        /* 메인 데이터 테이블 영역 디자인 (테이블 헤더 고정 처리 포함) */
+        .table-wrapper { flex: 1; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; table-layout: auto; } 
+        th { background: #eee; padding: 12px 4px; border-bottom: 3px solid #ddd; position: sticky; top: 0; z-index: 10; font-size: 30px; font-weight: 900; white-space: nowrap; }
+        
+        /* 실시간 잔여석 보드 데이터 열 셀(Cell) 스타일 및 폰트 대폭 확대 */
+        td { padding: 8px 4px; text-align: center; border-bottom: 1px solid #eee; font-weight: 900; font-size: 37px; letter-spacing: -1.5px; position: relative; line-height: 1.2; white-space: nowrap; }
+        td:first-child { font-size: 40px; font-weight: 900; letter-spacing: -1px; } /* 출발 시각 열 시인성 극대화 */
+
+        /* 티켓발권 가능한 인원 및 매진 시 인원 폰트 강조 설정 */
+        .remain-count { font-size: 45px; font-weight: 900; color: #0040ff; }
+        .text-soldout-zero { color: var(--danger) !important; font-size: 48px; }
+        .slash-divider { margin: 0 8px; font-weight: 700; color: #444; font-size: 38px; }
+
+        /* 실시간 계산 엔진에 의한 테이블 행(Row)별 조건부 배경색 바인딩 효과 */
+        .row-available-bg td { background-color: var(--available-bg); }
+        .row-sailing-bg td { background-color: var(--sailing-bg); }
+        .row-ticketing-ended-bg td { background-color: var(--ticketing-ended-bg); }
+        .row-boarding-start-bg td { background-color: var(--boarding-start-bg); }
+        .row-boarding-close-solid td { background-color: var(--boarding-close-bg) !important; }
+
+        /* 매진 항차 시 행 전체를 경고(연분홍 배경 및 빨간색 글씨) 톤으로 강제 반전 */
+        tr.row-soldout-blink td { background-color: var(--soldout-blink-bg) !important; }
+        tr.row-soldout-blink td,
+        tr.row-soldout-blink td span,
+        tr.row-soldout-blink td div,
+        tr.row-soldout-blink td .remain-count,
+        tr.row-soldout-blink td .slash-divider { color: var(--danger) !important; }
+
+        /* 손님용 디스플레이 모드일 경우 매진된 행의 시선 강탈을 위한 CSS 애니메이션 깜빡임 작동 */
+        .is-guest .row-soldout-blink td { animation: textBlinker 1.5s linear infinite; }
+
+        /* 결항, 기상악화, 운항중지 행 회색 톤 다운 처리 */
+        .row-halted-gray-bg td { background-color: var(--ended-gray) !important; color: var(--ended-text-color) !important; }
+        .row-halted-gray-bg .remain-count,
+        .row-halted-gray-bg .slash-divider { color: var(--ended-text-color) !important; }
+
+        /* 손님 모드 시 결항 및 운항중지 타임라인에 완전한 취소선(Line-through) 표시 */
+        .is-guest .row-halted-gray-bg td.line-through-cell {
+            text-decoration: line-through; text-decoration-color: #000000 !important; text-decoration-thickness: 4px; 
+        }
+        .row-ended td { background-color: var(--ended-gray) !important; color: var(--ended-text-color) !important; }
+        .row-ended .remain-count { color: var(--ended-text-color) !important; }
+
+        /* 관리자 모드 전용 인원수 조절 조작용 (+, -) 버튼 그룹 */
+        .status-cell-flex { display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-group { display: flex; gap: 3px; }
+        .btn-adj { 
+            width: 45px; height: 45px; border: 2px solid #bbb; background: #ffffff; 
+            font-size: 26px; font-weight: bold; cursor: pointer; border-radius: 8px; 
+            display: flex; align-items: center; justify-content: center; color: #333 !important;
+        }
+
+        /* 운항 상태값을 나타내는 알약(Pill) 형태 라벨 박스 공통 정의 */
+        .status-text { 
+            font-size: 37px; font-weight: 900; position: relative; z-index: 10; 
+            display: inline-block; line-height: 1.1; white-space: nowrap; 
+            padding: 6px 16px; border-radius: 10px; min-width: 140px; text-align: center;
+            text-decoration: none !important; 
+        }
+        
+        /* 각 상황 조건에 매치되는 알약 상자 테마 색상 정의 */
+        .text-ended-box { background-color: #000000 !important; color: #ffffff !important; } 
+        .text-blue { background-color: #ffcc00 !important; color: #000000 !important; border: 2px solid #000000 !important; }       
+        .bg-dark-green-yellow { background-color: var(--dark-green) !important; color: #ffff00 !important; } 
+        .text-available { background-color: #e3f2fd; color: var(--success); border: 2px solid var(--success); } 
+        .text-dark-green { background-color: #e8f5e9; color: var(--dark-green) !important; border: 2px solid var(--dark-green); }
+        .text-maintenance-gray { background-color: #e0e0e0 !important; color: var(--danger) !important; border: 2px solid #888888 !important; } 
+        .text-soldout { background-color: #ffcc00 !important; color: #000000 !important; border: 2px solid #000000 !important; }    
+        .text-boarding-start { background-color: #ffffff; color: #000000 !important; border: 2px solid #000000; font-weight: 900; } 
+        .text-boarding-close { background-color: #ffcc00 !important; color: #000000 !important; border: 2px solid #000000 !important; font-weight: 900; } 
+
+        /* 알람 사이렌 및 TTS 방송 진행 수동 끄기/확인 조작용 다이내믹 피드백 버튼 버튼 */
+        .btn-alarm-stop {
+            background-color: #ffffff !important; color: #ff1251 !important; border: 3px solid #000000 !important; 
+            padding: 5px 12px; font-size: 28px !important; font-weight: 900; border-radius: 8px; cursor: pointer; 
+            animation: textBlinker 0.8s linear infinite; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .btn-tts-stop {
+            background-color: #ffffff !important; color: #ff8400 !important; border: 3px solid #000000 !important; 
+            padding: 5px 12px; font-size: 28px !important; font-weight: 900; border-radius: 8px; cursor: pointer; 
+            animation: textBlinker 1.2s linear infinite; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        /* 하단 멀티 일괄 제어 조작판 패널 디자인 */
+        .admin-panel { background: #eee; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .control-row-single { display: flex; gap: 8px; align-items: center; }
+        
+        /* 복수 선택 처리가 가능한 커스텀 멀티셀렉트 드롭다운 컴포넌트 */
+        .custom-multiselect { position: relative; flex: 1; height: 55px; }
+        .select-btn { width: 100%; height: 100%; padding: 0 10px; font-size: 24px; font-weight: bold; background: white; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; text-align: left; }
+        .checkbox-list { 
+            display: none; position: absolute; bottom: 56px; left: 0; right: 0;
+            background: white; border: 1px solid #ccc; border-radius: 6px; 
+            max-height: 400px; overflow-y: auto; z-index: 100; box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
+        }
+        .checkbox-list.show { display: block; } /* 클릭 시 리스트 표출 */
+        .time-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; font-size: 22px; font-weight: bold; border-bottom: 1px solid #eee; cursor: pointer; }
+
+        .admin-panel input, .admin-panel select, .btn-update { flex: 1; min-width: 0; height: 55px; text-align: center; font-size: 24px; font-weight: bold; border-radius: 6px; border: 1px solid #ccc; }
+        .btn-update { background: var(--primary-dark); color: white; cursor: pointer; border: none; } 
+
+        /* 🌟 핵심 은닉 조건: 현 브라우저가 '손님용 전광판 스크린 모드'일 경우, 모든 관리자 설정 UI 패널 요소 일괄 제거 */
+        .is-guest #right-sidebar,
+        .is-guest .admin-panel, 
+        .is-guest .setting-area, 
+        .is-guest .btn-group { display: none !important; }
+        
+        .mode-v .main-container { flex-direction: row !important; }
+
+        /* 🚨 긴급 공지용 전체화면 블랙 아웃 모달 팝업 레이어 */
+        .emergency-fullscreen-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.95); z-index: 999999;
+            flex-direction: column; justify-content: center; align-items: center; padding: 40px; box-sizing: border-box;
+        }
+        .emergency-fullscreen-overlay.active { display: flex; } /* 활성화 시 노출 */
+        .emergency-popup-box {
+            background-color: #ffffff; border: 10px solid var(--popup-highlight); border-radius: 30px;
+            width: 90%; max-width: 1400px; padding: 50px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            box-sizing: border-box; animation: popupPulse 1.5s infinite alternate;
+        }
+        
+        /* [통합 양식 반영] 1번 화면(손님용) 스타일 테마 */
+        .popup-customer-theme {
+            border: 8px solid #ff4d4d !important;
+            background-color: #ffffff !important;
+            max-width: 1200px !important;
+            font-family: sans-serif !important;
+        }
+        .popup-customer-theme .emergency-popup-header {
+            font-size: 70px; font-weight: 900; color: #ff4d4d; margin-bottom: 30px; letter-spacing: -2px; 
+            display: flex; align-items: center; justify-content: center; gap: 20px;
+            border-bottom: 4px solid #ff4d4d; padding-bottom: 15px;
+        }
+        .popup-customer-theme .emergency-popup-body {
+            font-size: 55px; font-weight: 900; color: #111; line-height: 1.5; word-break: break-all; white-space: pre-wrap; margin-bottom: 40px; padding-top: 10px; border-top: none;
+        }
+        
+        /* [통합 양식 반영] 2번 화면(근무자용) 스타일 테마 */
+        .popup-staff-theme {
+            border: 8px solid #4A5568 !important;
+            background-color: #F7FAFC !important;
+            max-width: 1200px !important;
+            font-family: sans-serif !important;
+        }
+        .popup-staff-theme .emergency-popup-header {
+            font-size: 60px; font-weight: 900; color: #2D3748; margin-bottom: 30px; letter-spacing: -1px;
+            display: flex; align-items: center; justify-content: space-between; gap: 20px;
+            border-bottom: 4px solid #4A5568; padding-bottom: 15px;
+        }
+        .popup-staff-theme .emergency-popup-body {
+            font-size: 50px; font-weight: 900; color: #2D3748; line-height: 1.6; word-break: break-all; white-space: pre-wrap; margin-bottom: 40px; padding-top: 10px; border-top: none;
+        }
+
+        .emergency-popup-footer { font-size: 32px; font-weight: bold; color: #666; background: #f5f5f5; padding: 15px 30px; border-radius: 15px; display: inline-block; }
+        
+        /* 키프레임 애니메이션 정의 구역 (글자 점멸, 강력 부저 알람, TTS 방송 진행 피드백 및 모달 펄스 효과) */
+        @keyframes textBlinker { 0% { opacity: 1.0; } 50% { opacity: 0.35; } 100% { opacity: 1.0; } }
+        @keyframes alarmStrongBlinker {
+            0% { background-color: #ff1251 !important; color: #ffffff !important; }
+            50% { background-color: #ffffff !important; color: #ff1251 !important; }
+            100% { background-color: #ff1251 !important; color: #ffffff !important; }
+        }
+        @keyframes ttsActiveBlinker {
+            0% { background-color: #ff8400 !important; color: #ffffff !important; }
+            50% { background-color: #ffffff !important; color: #ff8400 !important; }
+            100% { background-color: #ff8400 !important; color: #ffffff !important; }
+        }
+        @keyframes popupPulse {
+            0% { transform: scale(1.0); box-shadow: 0 20px 50px rgba(255, 77, 77, 0.4); }
+            100% { transform: scale(1.02); box-shadow: 0 20px 60px rgba(255, 77, 77, 0.8); }
+        }
+
+        /* 관리자 전용 시각적 출발 n분 전 백그라운드 강제 사이렌 점멸 테두리 행 효과 설정 */
+        body:not(.is-guest) tr.row-alarm-blink { box-shadow: 0 0 25px 8px #ff1251 !important; position: relative; z-index: 50; }
+        body:not(.is-guest) tr.row-alarm-blink td { animation: alarmStrongBlinker 0.5s ease-in-out infinite; font-weight: 900 !important; border-top: 3px solid #000 !important; border-bottom: 3px solid #000 !important; }
+        body:not(.is-guest) tr.row-alarm-blink td:first-child span { font-size: 50px !important; text-shadow: 2px 2px 0px #000; }
+        body:not(.is-guest) tr.row-alarm-blink td span, body:not(.is-guest) tr.row-alarm-blink td div { color: inherit !important; }
+
+        /* 관리자 전용 TTS 실시간 오디오 발송 진행 중 백그라운드 강제 점멸 테두리 행 효과 설정 */
+        body:not(.is-guest) tr.row-tts-blink { box-shadow: 0 0 25px 8px #ff8400 !important; position: relative; z-index: 49; }
+        body:not(.is-guest) tr.row-tts-blink td { animation: ttsActiveBlinker 0.6s ease-in-out infinite; font-weight: 900 !important; border-top: 3px solid #000 !important; border-bottom: 3px solid #000 !important; }
+        body:not(.is-guest) tr.row-tts-blink td:first-child span { font-size: 50px !important; text-shadow: 2px 2px 0px #000; }
+        body:not(.is-guest) tr.row-tts-blink td span, body:not(.is-guest) tr.row-tts-blink td div { color: inherit !important; }
+
+        /* 대형 모니터 전광판 송출을 고려한 손님 모드 시 폰트 배율 추가 확대 최적화 */
+        .is-guest tr td { font-size: 37px !important; }
+        .is-guest tr td:first-child { font-size: 45px !important; }
+        .is-guest .status-cell-flex { font-size: 42px !important; font-weight: 900 !important; }
+        .is-guest .status-text { font-size: 47px !important; display: inline-block; }
+        .is-guest .remain-count { font-size: 55px !important; }
+        .is-guest .row-ended .remain-count, .is-guest .row-sailing-bg .remain-count { font-size: 60px; }
+        .is-guest .remain-count.shrunk-size { font-size: 55px !important; }
+
+        /* 특정 운항종료 등의 상황에서 강제 흐림 유도를 위한 오버라이드 유틸 클래스 */
+        .force-gray-color, .force-gray-color span, .force-gray-color div { color: var(--ended-text-color) !important; }
+    </style>
+</head>
+<body id="main-body">
+
+    <!-- 🚨 최상위 오버레이 레이어: 전체화면 긴급 팝업창 모달 마크업 구조 (손님용/근무자용 테마 동적 바인딩) -->
+    <div id="emergency-overlay" class="emergency-fullscreen-overlay">
+        <div id="emergency-popup-inner-box" class="emergency-popup-box">
+            <div id="emergency-popup-title-area" class="emergency-popup-header">
+                <span id="emergency-popup-main-title">📢 안내(공지) 사항</span>
+                <span id="emergency-popup-dynamic-time" style="font-size: 2rem; font-weight: bold; display: none;"></span>
+            </div>
+            <div id="emergency-popup-msg" class="emergency-popup-body">공지사항 내용이 여기에 들어갑니다.</div>
+            <div id="emergency-popup-footer" class="emergency-popup-footer">잠시 후 정상 화면으로 자동 복귀됩니다.</div>
+        </div>
+    </div>
+
+    <!-- 메인 대시보드 레이아웃 (1호 정보 좌측, 2호 정보 우측 배치) -->
+    <div class="main-container">
+        
+        <!-- ==========================================================================
+           [HTML] 김시민 1호 대시보드 및 제어 섹션
+           ========================================================================== */ -->
+        <div class="boat-section" id="section-1">
+            <!-- 선박별 상단 헤더 영역 -->
+            <div class="boat-header boat3-title">
+                <div class="boat-title-area">
+                    <div class="boat-title">&nbsp;&nbsp;&nbsp;김시민 1호</div>
+                </div>
+                <div class="boat-info-right">
+                    <div class="boat-date" id="date-1"></div>
+                    <div class="boat-clock" id="clock-1">00:00:00</div>
+                </div>
+            </div>
+            
+            <!-- 실시간 수동 흐름 안내 배너 박스 -->
+            <div class="notice-view-container" id="notice-view-container-1">
+                <div class="notice-title">📢 김시민 1호 안내사항</div>
+                <div class="notice-content" id="notice-text-1">현재 정상 운항 중입니다.</div>
+            </div>
+
+            <!-- 대형 전광판 스크린 모드 전용 상단 운항 정보 고정 바 -->
+            <div class="guest-info-banner" id="guest-banner-1">
+                <div class="info-item">●소요시간 : <span class="info-val" id="g-dur-1">-</span>분</div>
+                <div class="info-item">●운항코스 : <span class="info-val" id="g-course-1">-</span></div>
+            </div>
+
+            <!-- 관리자 모드 전용 기본 설정 가변 패널 (원시 시간표 및 메타 정보 등록) -->
+            <div class="setting-area">
+                <div class="setting-row">
+                    <input type="text" id="time-input-1" placeholder="시간표 (쉼표 구분)" style="flex: 1;">
+                    <button onclick="updateSettings(1)" class="btn-apply-unified">변경 적용</button>
+                    <button class="btn-action-unified btn-wizard" onclick="wizard(1)">시간 자동 생성</button>
+                </div>
+                <div class="setting-row">
+                    <div class="cap-container">
+                        <span class="cap-label">탑승정원 :</span>
+                        <input type="number" id="cap-direct-1" class="cap-edit-input">
+                    </div>
+                    <div class="cap-container">
+                        <span class="cap-label">소요시간 :</span>
+                        <input type="number" id="dur-direct-1" class="cap-edit-input">
+                    </div>
+                    <div class="cap-container course-container">
+                        <span class="cap-label">운항코스 :</span>
+                        <input type="text" id="course-direct-1" class="cap-edit-input" placeholder="코스명">
+                    </div>
+                    <button class="btn-apply-unified" onclick="applyExtraInfo(1)">변경 적용</button>
+                    <button class="btn-action-unified btn-section-reset" onclick="resetBoat(1)">데이터 리셋</button>
+                </div>
+                <div class="setting-row" style="border-top: 1px dashed #ccc; padding-top: 8px;">
+                    <div class="cap-container" style="flex: 1; height: 50px;">
+                        <span class="cap-label" style="color: #d63031;">📢 1호 공지 :</span>
+                        <textarea id="notice-direct-1" class="notice-edit-input" placeholder="실시간 공지사항 입력"></textarea>
+                    </div>
+                    <button class="btn-apply-unified" onclick="applyNotice(1)">공지 적용</button>
+                    <button class="btn-action-unified btn-notice-delete" onclick="deleteNotice(1)">공지 삭제</button>
+                </div>
+            </div>
+
+            <!-- 실시간 잔여석 표 렌더링 구역 -->
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>출발시간</th>
+                            <th>총 인원/<br>티켓발권한 인원</th>
+                            <th>티켓발권<br>가능한 인원</th>
+                            <th>운항상태</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-1"></tbody>
+                </table>
+            </div>
+
+            <!-- 관리자 모드 전용 하단 다중 타임라인 상태값 일괄 제어 콘솔 패널 -->
+            <div class="admin-panel">
+                <div class="control-row-single">
+                    <div class="custom-multiselect">
+                        <button class="select-btn" id="select-btn-1" onclick="toggleDropdown(1)">시간 선택</button>
+                        <div class="checkbox-list" id="list-1"></div>
+                    </div>
+                    <input type="number" id="input-1" placeholder="예약인원수">
+                    <select id="status-1">
+                        <option value="auto">자동상태</option>
+                        <option value="특별운항 티켓발권중">특별운항</option>
+                        <option value="탑승시작">탑승시작(강제)</option>
+                        <option value="티켓발권마감">티켓발권마감(강제)</option>
+                        <option value="탑승(승선)마감">탑승마감(강제)</option>
+                        <option value="운항없음">운항없음</option>
+                        <option value="기상악화 운항중지">기상악화</option>
+                        <option value="수문방류 운항중지">수문방류</option>
+                        <option value="폭죽놀이 운항중지">폭죽놀이</option>
+                        <option value="에너지절약 운항중지">에너지절약</option>
+                        <option value="점 검 중">점검중</option>
+                    </select>
+                    <button class="btn-update" onclick="applyChanges(1)">변경 적용</button>
+                </div>
+            </div>
+
+            <!-- 자동 스크롤 전광판 구동 시 현재 노출 페이징 알림 배지 -->
+            <span id="page-indicator-1" class="page-badge">[-]</span>
+        </div>
+
+
+        <!-- ==========================================================================
+           [HTML] 김시민 2호 대시보드 및 제어 섹션 (1호와 대칭 구조)
+           ========================================================================== */ -->
+        <div class="boat-section" id="section-2">
+            <div class="boat-header boat4-title">
+                <div class="boat-title-area">
+                    <div class="boat-title">&nbsp;&nbsp;&nbsp;김시민 2호</div>
+                </div>
+                <div class="boat-info-right">
+                    <div class="boat-date" id="date-2"></div>
+                    <div class="boat-clock" id="clock-2">00:00:00</div>
+                </div>
+            </div>
+            
+            <div class="notice-view-container" id="notice-view-container-2">
+                <div class="notice-title">📢 김시민 2호 안내사항</div>
+                <div class="notice-content" id="notice-text-2">현재 정상 운항 중입니다.</div>
+            </div>
+
+            <div class="guest-info-banner" id="guest-banner-2">
+                <div class="info-item">●소요시간 : <span class="info-val" id="g-dur-2">-</span>분</div>
+                <div class="info-item">●운항코스 : <span class="info-val" id="g-course-2">-</span></div>
+            </div>
+
+            <div class="setting-area">
+                <div class="setting-row">
+                    <input type="text" id="time-input-2" placeholder="시간표 (쉼표 구분)" style="flex: 1;">
+                    <button onclick="updateSettings(2)" class="btn-apply-unified">변경 적용</button>
+                    <button class="btn-action-unified btn-wizard" onclick="wizard(2)">시간 자동 생성</button>
+                </div>
+                <div class="setting-row">
+                    <div class="cap-container">
+                        <span class="cap-label">탑승정원 :</span>
+                        <input type="number" id="cap-direct-2" class="cap-edit-input">
+                    </div>
+                    <div class="cap-container">
+                        <span class="cap-label">소요시간 :</span>
+                        <input type="number" id="dur-direct-2" class="cap-edit-input">
+                    </div>
+                    <div class="cap-container course-container">
+                        <span class="cap-label">운항코스 :</span>
+                        <input type="text" id="course-direct-2" class="cap-edit-input" placeholder="코스명">
+                    </div>
+                    <button class="btn-apply-unified" onclick="applyExtraInfo(2)">변경 적용</button>
+                    <button class="btn-action-unified btn-section-reset" onclick="resetBoat(2)">데이터 리셋</button>
+                </div>
+                <div class="setting-row" style="border-top: 1px dashed #ccc; padding-top: 8px;">
+                    <div class="cap-container" style="flex: 1; height: 50px;">
+                        <span class="cap-label" style="color: #d63031;">📢 2호 공지 :</span>
+                        <textarea id="notice-direct-2" class="notice-edit-input" placeholder="실시간 공지사항 입력"></textarea>
+                    </div>
+                    <button class="btn-apply-unified" onclick="applyNotice(2)">공지 적용</button>
+                    <button class="btn-action-unified btn-notice-delete" onclick="deleteNotice(2)">공지 삭제</button>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>출발시간</th>
+                            <th>총 인원/<br>티켓발권한 인원</th>
+                            <th>티켓발권<br>가능한 인원</th>
+                            <th>운항상태</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-2"></tbody>
+                </table>
+            </div>
+
+            <div class="admin-panel">
+                <div class="control-row-single">
+                    <div class="custom-multiselect">
+                        <button class="select-btn" id="select-btn-2" onclick="toggleDropdown(2)">시간 선택</button>
+                        <div class="checkbox-list" id="list-2"></div>
+                    </div>
+                    <input type="number" id="input-2" placeholder="예약인원수">
+                    <select id="status-2">
+                        <option value="auto">자동상태</option>
+                        <option value="특별운항 티켓발권중">특별운항</option>
+                        <option value="탑승시작">탑승시작(강제)</option>
+                        <option value="티켓발권마감">티켓발권마감(강제)</option>
+                        <option value="탑승(승선)마감">탑승마감(강제)</option>
+                        <option value="운항없음">운항없음</option>
+                        <option value="기상악화 운항중지">기상악화</option>
+                        <option value="수문방류 운항중지">수문방류</option>
+                        <option value="폭죽놀이 운항중지">폭죽놀이</option>
+                        <option value="에너지절약 운항중지">에너지절약</option>
+                        <option value="점 검 중">점검중</option>
+                    </select>
+                    <button class="btn-update" onclick="applyChanges(2)">변경 적용</button>
+                </div>
+            </div>
+
+            <span id="page-indicator-2" class="page-badge">[-]</span>
+        </div>
+    </div>
+
+
+    <!-- ==========================================================================
+       [HTML] 우측 하드웨어 원격 스마트 제어 허브 시스템 사이드바 영역
+       ========================================================================== */ -->
+    <div id="right-sidebar">
+        <div id="sidebar-title">⚙️ 시스템 설정 및 관리</div>
+        
+        <!-- 디스플레이 송출 파트 멀티 브라우저 팝업 트리거 단추 그룹 -->
+        <div class="btn-group-top">
+            <button class="btn-open-guest" onclick="openGuestWindow('h')">📺 1번 화면 손님용 오픈</button>
+            <button class="btn-open-guest" onclick="openGuestWindow('v')" style="background-color: #ffcc00;">📺 2번 화면 근무자용 오픈</button>
+            <button class="btn-open-guest btn-reset-all" onclick="confirmResetAll()">⚠️ 전체 데이터 초기화</button>
+        </div>
+
+        <!-- 🔔 모듈 1. 출발 전 물리 비프 주파수 알람 사이렌 타이머 연출기 제어단 -->
+        <div class="alarm-toggle-container">
+            <div class="alarm-radio-row">
+                <label><input type="radio" name="alarm_sound" value="on" checked onchange="handleAlarmToggle()"> 🔊 알람 ON</label>
+                <label><input type="radio" name="alarm_sound" value="off" onchange="handleAlarmToggle()"> 🔇 OFF</label>
+            </div>
+            <div class="alarm-time-setting">
+                <div class="setting-item-row">
+                    <span>출발 전 설정:</span>
+                    <div>
+                        <input type="number" id="alarm-trigger-minutes" value="10" min="1" max="60" onchange="saveAlarmConfig()"> 분 전 알람 🔔
+                    </div>
+                </div>
+                <div class="setting-item-row">
+                    <span>알람 지속 시간:</span>
+                    <div>
+                        <input type="number" id="alarm-duration-seconds" value="30" min="1" max="300" onchange="saveAlarmConfig()"> 초 동안 울림
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📢 모듈 2. Web Speech API 구동 타임라인 매칭 자동 한국어 안내방송 음성 제어단 -->
+        <div class="alarm-toggle-container" style="border-color: var(--tts-highlight);">
+            <div class="alarm-radio-row">
+                <label><input type="radio" name="tts_broadcast" class="tts-accent" value="on" checked onchange="handleTtsToggle()"> 📢 방송 ON</label>
+                <label><input type="radio" name="tts_broadcast" class="tts-accent" value="off" onchange="handleTtsToggle()"> 🔇 OFF</label>
+            </div>
+            <div class="alarm-time-setting">
+                <div class="setting-item-row">
+                    <span>방송 시작 조건:</span>
+                    <div>
+                        출발 <input type="number" id="tts-trigger-minutes" class="tts-input" value="5" min="1" max="60" onchange="saveAlarmConfig()"> 분 전
+                    </div>
+                </div>
+                <div class="setting-item-row" style="color: var(--tts-highlight);">
+                    <span>방송 반복 횟수:</span>
+                    <div>
+                        <input type="number" id="tts-repeat-count" class="tts-input" value="2" min="1" max="5" onchange="saveAlarmConfig()"> 번 반복 🗣️
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📺 모듈 3. 디스플레이 오토 페이지 롤링 화면 전환기 모션 주기 제어단 -->
+        <div class="alarm-toggle-container" style="border-color: var(--rotation-highlight);">
+            <div class="box-title-sm" style="color: var(--rotation-highlight);">📺 자동 화면전환기 설정</div>
+            <div class="alarm-radio-row">
+                <label><input type="radio" name="rotation_mode" class="rotation-accent" value="on" checked onchange="handleRotationToggle()"> ▶️ ON</label>
+                <label><input type="radio" name="rotation_mode" class="rotation-accent" value="off" onchange="handleRotationToggle()"> ⏸️ OFF</label>
+            </div>
+            <div class="alarm-time-setting" style="border-top: 1px solid #444; padding-top: 10px;">
+                <div class="setting-item-row" style="margin-bottom: 5px;">
+                    <span style="color: #fff;">대상 화면 선택:</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px; padding-left: 5px;">
+                    <label style="font-size: 14px; font-weight: normal; color: #ccc;">
+                        <input type="checkbox" id="rotation-target-guest" class="rotation-accent" checked onchange="saveAlarmConfig()"> 1번 화면 손님용 적용
+                    </label>
+                    <label style="font-size: 14px; font-weight: normal; color: #ccc;">
+                        <input type="checkbox" id="rotation-target-worker" class="rotation-accent" checked onchange="saveAlarmConfig()"> 2번 화면 근무자용 적용
+                    </label>
+                </div>
+                <div class="setting-item-row" style="border-top: 1px dashed #444; padding-top: 8px; margin-top: 5px;">
+                    <span>화면 전환 주기:</span>
+                    <div>
+                        <input type="number" id="page-interval-seconds" class="rotation-input" value="5" min="2" max="60" onchange="saveAlarmConfig()"> 초 간격
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🚨 모듈 4. 긴급 마스터 원격 차단 장치 및 예약 스케줄 기반 타임 팝업 공지 설정단 -->
+        <div class="alarm-toggle-container" style="border-color: var(--popup-highlight);">
+            <div class="box-title-sm" style="color: var(--popup-highlight);">🚨 긴급 전체화면 공지 팝업 설정</div>
+            
+            <!-- 즉각 반응 차단 원격 수동 강제 스위치 -->
+            <div style="background: #1a1e24; padding: 8px; border-radius: 6px; border: 1px dashed var(--popup-highlight); margin-bottom: 3px;">
+                <div class="box-title-sm" style="color: #fff; font-size: 13px; margin-bottom: 5px;">🔴 수동 즉시 발동 스위치</div>
+                <div class="alarm-radio-row">
+                    <label style="color: #ff4d4d;"><input type="radio" name="popup_manual_switch" class="popup-accent" value="forced_on" onchange="handleManualPopupToggle(this.value)"> ⚡ 강제ON</label>
+                    <label><input type="radio" name="popup_manual_switch" class="popup-accent" value="forced_off" checked onchange="handleManualPopupToggle(this.value)"> 💤 해제</label>
+                </div>
+            </div>
+
+            <!-- 예약제 기반 자동 구동 장치 -->
+            <div class="box-title-sm" style="color: #aaa; font-size: 12px; text-align: left; padding-left: 5px;">🕒 예약 자동 스케줄 설정</div>
+            <div class="alarm-radio-row">
+                <label><input type="radio" name="popup_mode" class="popup-accent" value="on" checked onchange="saveAlarmConfig()"> ▶️ ON</label>
+                <label><input type="radio" name="popup_mode" class="popup-accent" value="off" onchange="saveAlarmConfig()"> ⏸️ OFF</label>
+            </div>
+            <div class="alarm-time-setting">
+                <div class="setting-item-row">
+                    <span>표출 시작 시각:</span>
+                    <div class="popup-select-container">
+                        <select id="popup-hour" class="popup-select" onchange="saveAlarmConfig()"></select> 시
+                        <select id="popup-minute" class="popup-select" onchange="saveAlarmConfig()"></select> 분
+                    </div>
+                </div>
+                <div class="setting-item-row">
+                    <span>팝업 유지 시간:</span>
+                    <div>
+                        <input type="number" id="popup-duration-seconds" class="popup-input" value="20" min="0" max="600" onchange="saveAlarmConfig()"> 초 <span style="font-size:12px;color:#aaa;">(0은 무제한)</span>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                    <span>공지 문구 내용:</span>
+                    <textarea id="popup-message-text" class="popup-textarea" placeholder="전체화면으로 띄울 공지내용을 적으세요" onchange="saveAlarmConfig()">기상 악화 및 정비 관계로 인하여 잠시 후 다음 항차 운항이 지연될 예정이오니 양해 바랍니다.</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    /* ==========================================================================
+       [JavaScript] 로컬 스토리지 동기화 및 마스터 비즈니스 로직 코어 엔진
+       ========================================================================== */
+    
+    // 타 클라이언트 윈도우(전광판) 간 단 0.1초의 누수 없는 무결점 데이터 통신을 위한 로컬 스토리지 고유 Key 상수 정의
+    const STORAGE_KEY = 'namgang_boat_v4_final';
+    const LAST_DATE_KEY = 'namgang_last_date';
+    const ALARM_MINUTES_KEY = 'namgang_alarm_minutes'; 
+    const ALARM_SECONDS_KEY = 'namgang_alarm_seconds'; 
+    const PAGE_INTERVAL_KEY = 'namgang_page_interval_seconds'; 
+    const TTS_BROADCAST_KEY = 'namgang_tts_broadcast';
+    const TTS_MINUTES_KEY = 'namgang_tts_minutes';
+    const TTS_REPEAT_KEY = 'namgang_tts_repeat_count'; 
+    const ROTATION_MODE_KEY = 'namgang_rotation_mode';
+    const ROTATION_TARGET_GUEST_KEY = 'namgang_rotation_target_guest';
+    const ROTATION_TARGET_WORKER_KEY = 'namgang_rotation_target_worker';
+    const POPUP_MODE_KEY = 'namgang_popup_mode';
+    const POPUP_TRIGGER_HOUR_KEY = 'namgang_popup_trigger_hour';
+    const POPUP_TRIGGER_MINUTE_KEY = 'namgang_popup_trigger_minute';
+    const POPUP_DURATION_KEY = 'namgang_popup_duration_seconds';
+    const POPUP_MESSAGE_KEY = 'namgang_popup_message_text';
+    const POPUP_ACTIVE_UNTIL_KEY = 'namgang_popup_active_until'; 
+    const POPUP_MANUAL_SWITCH_KEY = 'namgang_popup_manual_switch';
+
+    // 중복 연출 실행 방지 및 실시간 컴포넌트 관리를 위한 인메모리 스케줄링 로그 객체 변수
+    let playedAlarms = {};                 /* 당일 주파수 사이렌이 기 터진 타임 스탬프 체크로그 */
+    let playedBroadcasts = {};              /* 당일 TTS 오디오 음성 송출이 처리 완료된 히스토리 로그 */
+    let playedEmergencyPopups = {};         /* 당일 예약 타이머 팝업창이 이미 처리 완료된 히스토리 로그 */
+    let activeVisualAlarms = { 1: [], 2: [] }; /* 관리자 화면에서 강한 적색 사이렌을 돌릴 타임라인 리스트 */
+    let activeTtsBroadcasts = { 1: [], 2: [] };/* 관리자 화면에서 오렌지빛 TTS 표출을 돌릴 타임라인 리스트 */
+    let alarmSoundIntervals = {};          /* 오디오 컨텍스트 주파수 비프음 발생용 하드웨어 자바스크립트 인터벌 저장소 */
+
+    // 손님 전용 디스플레이 모드 단독 구동 시, 10개 항차 초과 분량에 대한 다면 슬라이드 스크롤 페이지 트래커 상태 변수
+    let guestPageStatus = {
+        1: { currentPage: 1, lastRotationTime: Date.now() },
+        2: { currentPage: 1, lastRotationTime: Date.now() }
+    };
+
+    // 주소창 파라미터(?mode=guest_h 또는 guest_v)에 따른 [클라이언트 뷰 모드] 매칭 및 클래스 동적 바인딩 파트
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('mode'); 
+    if (mode === 'guest_h') document.body.classList.add('is-guest', 'mode-h'); 
+    if (mode === 'guest_v') document.body.classList.add('is-guest', 'mode-v'); 
+    const isGuest = mode && mode.startsWith('guest'); /* 관리자 모드 여부 불린 검증기 */
+
+    // 긴급 공지 스케줄 입력단 전용 시/분 드롭다운 셀렉트 박스 동적 빌더 함수
+    function buildPopupTimeSelectOptions() {
+        const hourSelect = document.getElementById('popup-hour');
+        const minuteSelect = document.getElementById('popup-minute');
+        if(!hourSelect || !minuteSelect) return;
+
+        hourSelect.innerHTML = ""; minuteSelect.innerHTML = "";
+        for(let h=0; h<24; h++) {
+            let hStr = String(h).padStart(2, '0');
+            hourSelect.options.add(new Option(hStr, hStr));
+        }
+        for(let m=0; m<60; m+=5) { // 5분 주기로 세팅 최적화
+            let mStr = String(m).padStart(2, '0');
+            minuteSelect.options.add(new Option(mStr, mStr));
+        }
+    }
+    buildPopupTimeSelectOptions();
+
+    // 초기 데이터 소실 시의 안정적인 구동 및 원상태 복구를 위한 기본 정적 데이터 타임 테이블 데이터 구조 정의
+    const defaultBoatData = {
+        1: { capacity: 25, duration: 30, course: "망진나루 ↔ (코스연장)문화예술회관", notice: "현재 정상 운항 중입니다.", times: ["10:15", "11:15", "13:15", "14:15", "15:15", "16:15", "17:15", "19:15", "20:15", "21:15"], seats: {}, customStatus: {} },
+        2: { capacity: 30, duration: 30, course: "망진나루 ↔ (코스연장)문화예술회관", notice: "현재 정상 운항 중입니다.", times: ["10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "19:00", "20:00", "21:00"], seats: {}, customStatus: {} }
+    };
+
+    // 프로그램 전반에서 참조 및 가공하는 메인 인메모리 복합 선박 관리 데이터 객체 변수
+    let boatData = JSON.parse(JSON.stringify(defaultBoatData));
+
+    // 현 상태 변수 객체(boatData)를 JSON 문자열로 직렬화하여 로컬 스토리지에 무결 기록하는 저장소 동기화 함수
+    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(boatData)); }
+    
+    // 관리자 전용 긴급 전체화면 팝업창 수동 강제 스위치 무선 클릭 핸들러 함수
+    function handleManualPopupToggle(val) {
+        if (isGuest) return;
+        localStorage.setItem(POPUP_MANUAL_SWITCH_KEY, val);
+        updateUI();
+    }
+
+    // 제어판 사이드바의 폼 엘리먼트 설정을 모조리 취합하여 스토리지에 갱신 무결 보존하는 마스터 설정 동기화 저장 함수
+    function saveAlarmConfig() {
+        if (isGuest) return; 
+
+        // 1. 일반 알람 분/초 데이터 캡처 및 유효범위 필터링 보정
+        const trigVal = document.getElementById('alarm-trigger-minutes').value;
+        const durVal = document.getElementById('alarm-duration-seconds').value;
+        const rotVal = document.getElementById('page-interval-seconds').value;
+        
+        let triggerMins = parseInt(trigVal) || 10;
+        if(triggerMins < 1) triggerMins = 1; if(triggerMins > 60) triggerMins = 60;
+        document.getElementById('alarm-trigger-minutes').value = triggerMins;
+        localStorage.setItem(ALARM_MINUTES_KEY, triggerMins);
+
+        let durationSecs = parseInt(durVal) || 30;
+        if(durationSecs < 1) durationSecs = 1; if(durationSecs > 300) durationSecs = 300;
+        document.getElementById('alarm-duration-seconds').value = durationSecs;
+        localStorage.setItem(ALARM_SECONDS_KEY, durationSecs);
+
+        // 2. 오토 슬라이딩 화면전환기 초 주기 검증 반영
+        let intervalSecs = parseInt(rotVal) || 5;
+        if(intervalSecs < 2) intervalSecs = 2; if(intervalSecs > 60) intervalSecs = 60;
+        document.getElementById('page-interval-seconds').value = intervalSecs;
+        localStorage.setItem(PAGE_INTERVAL_KEY, intervalSecs);
+
+        // 3. TTS 안내방송 타겟 분 조건 및 횟수 데이터 백업
+        const ttsOption = document.querySelector('input[name="tts_broadcast"]:checked');
+        if (ttsOption) localStorage.setItem(TTS_BROADCAST_KEY, ttsOption.value);
+        
+        const ttsMinsVal = document.getElementById('tts-trigger-minutes').value;
+        let ttsMins = parseInt(ttsMinsVal) || 5;
+        if (ttsMins < 1) ttsMins = 1; if (ttsMins > 60) ttsMins = 60;
+        document.getElementById('tts-trigger-minutes').value = ttsMins;
+        localStorage.setItem(TTS_MINUTES_KEY, ttsMins);
+
+        const ttsRepeatVal = document.getElementById('tts-repeat-count').value;
+        let ttsRepeat = parseInt(ttsRepeatVal) || 1;
+        if (ttsRepeat < 1) ttsRepeat = 1; if (ttsRepeat > 5) ttsRepeat = 5;
+        document.getElementById('tts-repeat-count').value = ttsRepeat;
+        localStorage.setItem(TTS_REPEAT_KEY, ttsRepeat);
+
+        const rotationOption = document.querySelector('input[name="rotation_mode"]:checked');
+        if (rotationOption) localStorage.setItem(ROTATION_MODE_KEY, rotationOption.value);
+
+        const targetGuest = document.getElementById('rotation-target-guest').checked;
+        const targetWorker = document.getElementById('rotation-target-worker').checked;
+        localStorage.setItem(ROTATION_TARGET_GUEST_KEY, targetGuest ? 'true' : 'false');
+        localStorage.setItem(ROTATION_TARGET_WORKER_KEY, targetWorker ? 'true' : 'false');
+
+        // 4. 긴급 타임 공지 팝업 상세 파라미터 백업
+        const popupOption = document.querySelector('input[name="popup_mode"]:checked');
+        if (popupOption) localStorage.setItem(POPUP_MODE_KEY, popupOption.value);
+        
+        const popH = document.getElementById('popup-hour').value;
+        const popM = document.getElementById('popup-minute').value;
+        localStorage.setItem(POPUP_TRIGGER_HOUR_KEY, popH); localStorage.setItem(POPUP_TRIGGER_MINUTE_KEY, popM);
+
+        let popDur = parseInt(document.getElementById('popup-duration-seconds').value);
+        if (isNaN(popDur) || popDur < 0) popDur = 0; 
+        localStorage.setItem(POPUP_DURATION_KEY, popDur);
+
+        const popMsg = document.getElementById('popup-message-text').value;
+        localStorage.setItem(POPUP_MESSAGE_KEY, popMsg);
+    }
+
+    // 프로그램 부팅 개시 시 브라우저 내 저장된 기존 설정 및 잔여석 카운팅 정보를 온전히 빌드하는 로더 함수
+    function load() {
+        checkMidnightReset(); // 정각 날짜 변경 체크 우선 처리
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) { 
+            try { 
+                const parsed = JSON.parse(saved); 
+                /* 구버전 저장소 규격과의 상위 호환성 보장을 위한 예외 방어 속성 바인딩 */
+                if(parsed[1] && parsed[1].notice === undefined) parsed[1].notice = "현재 정상 운항 중입니다.";
+                if(parsed[2] && parsed[2].notice === undefined) parsed[2].notice = "현재 정상 운항 중입니다.";
+                boatData = parsed;
+            } 
+            catch(e) { boatData = JSON.parse(JSON.stringify(defaultBoatData)); } 
+        }
+
+        if(isGuest) return; // 전광판 모드라면 사이드바 UI 폼 렌더링 역매핑 패스
+
+        // 로컬 스토리지 보관 정보를 관리자 패널 UI 폼 요소에 정밀하게 역매핑 시키는 로직 파트
+        const savedMins = localStorage.getItem(ALARM_MINUTES_KEY);
+        const inputTrigger = document.getElementById('alarm-trigger-minutes');
+        if (savedMins && inputTrigger) inputTrigger.value = savedMins;
+
+        const savedSeconds = localStorage.getItem(ALARM_SECONDS_KEY);
+        const inputDuration = document.getElementById('alarm-duration-seconds');
+        if (savedSeconds && inputDuration) inputDuration.value = savedSeconds;
+
+        const savedInterval = localStorage.getItem(PAGE_INTERVAL_KEY);
+        const inputInterval = document.getElementById('page-interval-seconds');
+        if (savedInterval && inputInterval) inputInterval.value = savedInterval;
+
+        const savedTtsBroadcast = localStorage.getItem(TTS_BROADCAST_KEY);
+        if (savedTtsBroadcast) {
+            const radio = document.querySelector(`input[name="tts_broadcast"][value="${savedTtsBroadcast}"]`);
+            if (radio) radio.checked = true;
+        }
+        const savedTtsMins = localStorage.getItem(TTS_MINUTES_KEY);
+        const inputTtsMins = document.getElementById('tts-trigger-minutes');
+        if (savedTtsMins && inputTtsMins) inputTtsMins.value = savedTtsMins;
+
+        const savedTtsRepeat = localStorage.getItem(TTS_REPEAT_KEY);
+        const inputTtsRepeat = document.getElementById('tts-repeat-count');
+        if (savedTtsRepeat && inputTtsRepeat) inputTtsRepeat.value = savedTtsRepeat;
+
+        const savedRotationMode = localStorage.getItem(ROTATION_MODE_KEY);
+        if (savedRotationMode) {
+            const radio = document.querySelector(`input[name="rotation_mode"][value="${savedRotationMode}"]`);
+            if (radio) radio.checked = true;
+        }
+        const savedTargetGuest = localStorage.getItem(ROTATION_TARGET_GUEST_KEY);
+        const chkGuest = document.getElementById('rotation-target-guest');
+        if (savedTargetGuest && chkGuest) chkGuest.checked = (savedTargetGuest === 'true');
+
+        const savedTargetWorker = localStorage.getItem(ROTATION_TARGET_WORKER_KEY);
+        const chkWorker = document.getElementById('rotation-target-worker');
+        if (savedTargetWorker && chkWorker) chkWorker.checked = (savedTargetWorker === 'true');
+
+        const savedPopMode = localStorage.getItem(POPUP_MODE_KEY);
+        if (savedPopMode) {
+            const radio = document.querySelector(`input[name="popup_mode"][value="${savedPopMode}"]`);
+            if (radio) radio.checked = true;
+        }
+        
+        const savedManualSwitch = localStorage.getItem(POPUP_MANUAL_SWITCH_KEY) || "forced_off";
+        const manualRadio = document.querySelector(`input[name="popup_manual_switch"][value="${savedManualSwitch}"]`);
+        if (manualRadio) manualRadio.checked = true;
+        
+        const savedPopH = localStorage.getItem(POPUP_TRIGGER_HOUR_KEY) || "12";
+        const savedPopM = localStorage.getItem(POPUP_TRIGGER_MINUTE_KEY) || "00";
+        if (document.getElementById('popup-hour')) document.getElementById('popup-hour').value = savedPopH;
+        if (document.getElementById('popup-minute')) document.getElementById('popup-minute').value = savedPopM;
+        
+        const savedPopDur = localStorage.getItem(POPUP_DURATION_KEY);
+        if (savedPopDur !== null && document.getElementById('popup-duration-seconds')) {
+            document.getElementById('popup-duration-seconds').value = savedPopDur;
+        }
+
+        const savedPopMsg = localStorage.getItem(POPUP_MESSAGE_KEY);
+        if (savedPopMsg && document.getElementById('popup-message-text')) document.getElementById('popup-message-text').value = savedPopMsg;
+    }
+
+    // 날짜가 자정 정각을 지나 새로운 영업일이 개시될 시 매표 카운팅 데이터를 올클리어 리셋 처리하는 무인화 오토 와이퍼 함수
+    function checkMidnightReset() {
+        const today = new Date().toLocaleDateString();
+        const lastDate = localStorage.getItem(LAST_DATE_KEY);
+        if (lastDate && lastDate !== today) {
+            localStorage.removeItem(STORAGE_KEY); 
+            localStorage.removeItem(POPUP_ACTIVE_UNTIL_KEY);
+            localStorage.removeItem(POPUP_MANUAL_SWITCH_KEY);
+            boatData = JSON.parse(JSON.stringify(defaultBoatData)); 
+            save();
+            playedAlarms = {}; playedBroadcasts = {}; playedEmergencyPopups = {};
+            stopAllAlarms(); stopAllTtsBroadcasts(); 
+        }
+        localStorage.setItem(LAST_DATE_KEY, today); 
+    }
+
+    // 하단 일괄 상태 수정판 내 복수 시간대 멀티 선택 체크박스 드롭다운 컴포넌트 온오프 함수
+    function toggleDropdown(id) {
+        if(isGuest) return; 
+        const list = document.getElementById(`list-${id}`);
+        const isShow = list.classList.contains('show');
+        document.querySelectorAll('.checkbox-list').forEach(el => el.classList.remove('show')); // 타 드롭다운 박스 전체 닫기 유도
+        if(!isShow) list.classList.add('show');
+    }
+
+    // 복수 선택 체크박스 개수에 추종하여 일괄 조작 버튼 내 텍스트("n개 선택됨")를 연산 갱신하는 함수
+    function updateSelectBtnText(id) {
+        const checked = Array.from(document.querySelectorAll(`.chk-${id}:checked`));
+        const btn = document.getElementById(`select-btn-${id}`);
+        if(!btn) return;
+        if(checked.length === 0) btn.innerText = "시간 선택";
+        else if(checked.length === 1) btn.innerText = checked[0].value;
+        else btn.innerText = checked.length + "개 선택됨";
+    }
+
+    // 사이드바 전체 공장 초기화 복구 버튼 조작 인터랙션 핸들러 함수
+    function confirmResetAll() {
+        if (confirm("🚨 전체 데이터를 초기화하시겠습니까?\n모든 선박의 정보가 복구됩니다.")) {
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(POPUP_ACTIVE_UNTIL_KEY);
+            localStorage.removeItem(POPUP_MANUAL_SWITCH_KEY);
+            boatData = JSON.parse(JSON.stringify(defaultBoatData));
+            save(); location.reload();
+        }
+    }
+
+    // 특정 호선의 탑승정원, 소요시간, 운항코스 메타 변경 폼 디스크 반영 함수
+    function applyExtraInfo(id) {
+        const cap = parseInt(document.getElementById(`cap-direct-${id}`).value);
+        const dur = parseInt(document.getElementById(`dur-direct-${id}`).value);
+        const cou = document.getElementById(`course-direct-${id}`).value;
+        if (!isNaN(cap)) boatData[id].capacity = cap;
+        if (!isNaN(dur)) boatData[id].duration = dur;
+        boatData[id].course = cou;
+        save(); updateUI(); alert("정보가 변경되었습니다.");
+    }
+
+    // 특정 호선의 상부 흐름 실시간 공지 텍스트 수동 즉각 적용 함수
+    function applyNotice(id) {
+        const text = document.getElementById(`notice-direct-${id}`).value;
+        boatData[id].notice = text || "현재 정상 운항 중입니다.";
+        save(); updateUI(); alert(`${id}호의 실시간 공지사항이 반영되었습니다.`);
+    }
+
+    // 특정 호선의 실시간 공지사항 초기화 처리 함수
+    function deleteNotice(id) {
+        if(confirm(`${id}호의 실시간 공지사항을 삭제하시겠습니까?`)) {
+            boatData[id].notice = "현재 정상 운항 중입니다.";
+            const noticeIn = document.getElementById(`notice-direct-${id}`);
+            if(noticeIn) noticeIn.value = ""; 
+            save(); updateUI(); alert(`${id}호의 공지사항이 삭제되었습니다.`);
+        }
+    }
+
+    // 관리자 입력란에 기술한 쉼표(,) 구분 기반 신규 원시 시간표 목록 주입 오버라이드 처리 함수
+    function updateSettings(id) {
+        const timeStr = document.getElementById(`time-input-${id}`).value;
+        if (timeStr) boatData[id].times = timeStr.split(',').map(s => s.trim());
+        save(); updateUI(); alert("시간표가 적용되었습니다.");
+    }
+
+    // 균등 간격의 정형 운항 시간표를 즉각 원터치 일괄 자동 생성해주는 타임 라인 매직 위저드 오토빌더 함수
+    function wizard(id) {
+        const start = prompt("시작 시간 (예: 10:00)", "10:00"); if (!start) return;
+        const gap = prompt("간격(분)", "60"), count = prompt("총 횟수", "10");
+        let [hh, mm] = start.split(':').map(Number), newTimes = [];
+        for(let i=0; i<count; i++) {
+            newTimes.push(`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`);
+            mm += parseInt(gap); hh += Math.floor(mm/60); mm %= 60; hh %= 24;
+        }
+        boatData[id].times = newTimes; save(); updateUI();
+    }
+
+    // 하단 일괄 수정 콘솔에서 체크된 복수 시간대 항차를 대상으로 예약인원 및 강제 상태를 단번에 밀어 넣는 코어 트랜잭션 함수
+    function applyChanges(id) {
+        const checkedNodes = document.querySelectorAll(`.chk-${id}:checked`);
+        const input = document.getElementById('input-' + id).value;
+        const status = document.getElementById('status-' + id).value;
+        if (checkedNodes.length === 0) return alert("변경할 시간을 먼저 선택하세요.");
+        
+        checkedNodes.forEach(node => {
+            const time = node.value;
+            if (input !== "") { // 인원 공란 상태 입력 시에는 상태값만 변경 적용을 도모하는 방어 밸브 분기
+                const val = parseInt(input);
+                if (val >= 0) boatData[id].seats[time] = val;
+            }
+            boatData[id].customStatus[time] = status;
+            node.checked = false;
+        });
+        
+        document.getElementById('input-' + id).value = ""; 
+        document.getElementById('list-' + id).classList.remove('show');
+        updateSelectBtnText(id); save(); updateUI();
+        alert("선택한 시간의 운항 상태가 성공적으로 변경되었습니다.");
+    }
+
+    // 각 타임라인의 인원수 개별 한 칸 조절용 플러스/마이너스 증감 연산 처리 함수
+    function adjust(id, time, amt) {
+        let cur = boatData[id].seats[time] || 0, next = cur + amt, cap = boatData[id].capacity;
+        if (amt === 1 && cur < cap) { boatData[id].seats[time] = next; save(); updateUI(); }
+        else if (amt === -1 && cur > 0) { boatData[id].seats[time] = next; save(); updateUI(); }
+    }
+
+    // 특정 선박의 당일 가변 데이터(인원/수동상태) 완벽 올소거 및 메타 원상 복구 함수
+    function resetBoat(id) {
+        if(confirm('해당 선박의 현황을 초기화할까요?')) {
+            boatData[id].seats = {}; boatData[id].customStatus = {}; boatData[id].notice = "현재 정상 운항 중입니다."; save(); updateUI();
+        }
+    }
+
+    // 브라우저의 하드웨어 웹 오디오 주파수 합성 장치(Web Audio API)를 구동하여 맑고 청아한 도/라 화음 물리 비프 사이렌을 일으키는 신호 처리 함수
+    function playSingleBeepSignal(ctx, nowTime) {
+        const osc1 = ctx.createOscillator(); const gain1 = ctx.createGain();
+        osc1.type = 'sine'; osc1.frequency.setValueAtTime(587.33, nowTime); // 도# 주파수 튜닝
+        gain1.gain.setValueAtTime(0.25, nowTime); gain1.gain.exponentialRampToValueAtTime(0.01, nowTime + 0.35);
+        osc1.connect(gain1); gain1.connect(ctx.destination); osc1.start(nowTime); osc1.stop(nowTime + 0.35);
+
+        const osc2 = ctx.createOscillator(); const gain2 = ctx.createGain();
+        osc2.type = 'sine'; osc2.frequency.setValueAtTime(440.00, nowTime + 0.15); // 라 화음 지탱
+        gain2.gain.setValueAtTime(0.25, nowTime + 0.15); gain2.gain.exponentialRampToValueAtTime(0.01, nowTime + 0.6);
+        osc2.connect(gain2); gain2.connect(ctx.destination); osc2.start(nowTime + 0.15); osc2.stop(nowTime + 0.6);
+    }
+
+    // 출발 n분 전 도달 시 관리자 보드판의 행을 적색 사이렌 점멸 상태로 엮고 물리 비프음을 루프 실행하는 알람 활성 엔진 함수
+    function startInfiniteAlarmLoop(id, time) {
+        if (!activeVisualAlarms[id].includes(time)) activeVisualAlarms[id].push(time);
+        updateUI(); 
+
+        const alarmKey = `${id}-${time}`;
+        if (alarmSoundIntervals[alarmKey]) return; // 중복 타이머 구동 차단 인터록 보장
+
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext(); const alarmStartTime = Date.now();
+
+            // 1초 단위 인터벌 반복을 통한 주파수 부저 발송 루프
+            alarmSoundIntervals[alarmKey] = setInterval(() => {
+                const option = document.querySelector('input[name="alarm_sound"]:checked');
+                if (!option || option.value === 'off') { dismissAlarm(id, time); return; }
+
+                const setupDurationInput = document.getElementById('alarm-duration-seconds');
+                const maxDurationSeconds = setupDurationInput ? (parseInt(setupDurationInput.value) || 30) : 30;
+                const elapsedSeconds = (Date.now() - alarmStartTime) / 1000;
+
+                if (elapsedSeconds >= maxDurationSeconds) { dismissAlarm(id, time); return; } // 기설정 상한 시간 초과 시 오토 세이프티 다운
+                playSingleBeepSignal(ctx, ctx.currentTime);
+            }, 1000);
+        } catch(e) { console.log("오디오 디바이스 에러"); }
+    }
+
+    // 관리자가 알람 확인 단추를 눌렀거나 지속 한계 타이머에 봉착 시, 부저 및 적색 사이렌 효과를 끄고 해제하는 단일 알람 소거 함수
+    function dismissAlarm(id, time) {
+        const alarmKey = `${id}-${time}`;
+        if (alarmSoundIntervals[alarmKey]) { clearInterval(alarmSoundIntervals[alarmKey]); delete alarmSoundIntervals[alarmKey]; }
+        activeVisualAlarms[id] = activeVisualAlarms[id].filter(t => t !== time);
+        updateUI();
+    }
+
+    // 시스템 마스터 사운드 전면 강제 차단 오프 셧다운 장치 함수
+    function stopAllAlarms() {
+        for (let key in alarmSoundIntervals) clearInterval(alarmSoundIntervals[key]);
+        alarmSoundIntervals = {}; activeVisualAlarms = { 1: [], 2: [] };
+    }
+
+    // 특정 타임라인의 TTS 자동 한국어 안내방송의 점멸 및 음성 스트림 합성 진행을 수동 클리어하는 소거 함수
+    function dismissTtsBroadcast(id, time) {
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        activeTtsBroadcasts[id] = activeTtsBroadcasts[id].filter(t => t !== time);
+        updateUI();
+    }
+
+    // 시스템 내 모든 음성 합성 출력 가이드를 중단시키고 버퍼를 밀어내는 TTS 셧다운 함수
+    function stopAllTtsBroadcasts() {
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        activeTtsBroadcasts = { 1: [], 2: [] };
+    }
+
+    // 사이드바 알람 사운드 라디오 버튼 변경 핸들러
+    function handleAlarmToggle() {
+        const option = document.querySelector('input[name="alarm_sound"]:checked');
+        if (option && option.value === 'off') { stopAllAlarms(); updateUI(); }
+    }
+
+    // 사이드바 안내방송 라디오 버튼 변경 핸들러
+    function handleTtsToggle() {
+        saveAlarmConfig(); 
+        const ttsOption = document.querySelector('input[name="tts_broadcast"]:checked');
+        if (ttsOption && ttsOption.value === 'off') { stopAllTtsBroadcasts(); updateUI(); }
+    }
+
+    // 사이드바 자동 화면전환기 라디오 버튼 변경 핸들러
+    function handleRotationToggle() {
+        saveAlarmConfig(); updateUI();
+    }
+
+    /* 🔊 백그라운드 코어 엔진 1 : 실시간 메인 타이머 연동 출발 n분 전 부저 알람 정밀 대조 스캔 분석기 */
+    function checkTenMinutesAlarm(id, times) {
+        if (isGuest) return; 
+        const option = document.querySelector('input[name="alarm_sound"]:checked');
+        if (!option || option.value === 'off') return;
+
+        const setupInput = document.getElementById('alarm-trigger-minutes');
+        const triggerMinutes = setupInput ? (parseInt(setupInput.value) || 10) : 10;
+        const now = new Date();
+        
+        times.forEach(t => {
+            const [tH, tM] = t.split(':').map(Number);
+            const targetTime = new Date(); targetTime.setHours(tH, tM, 0, 0);
+            const diffMs = targetTime.getTime() - now.getTime();
+            const diffMins = diffMs / 60000;
+
+            // 기설정한 타겟 분 트리거 정밀 스캔 영역 진입 검사
+            if (diffMins > (triggerMinutes - 0.05) && diffMins <= triggerMinutes) {
+                const uniqueKey = `${id}-${t}-${now.getMinutes()}`;
+                if (!playedAlarms[uniqueKey]) {
+                    const cStat = boatData[id].customStatus[t] || "auto";
+                    const isHalted = cStat.includes("중지") || cStat === "운항없음" || cStat === "점 검 중" || cStat === "점검중";
+                    
+                    if (!isHalted) { playedAlarms[uniqueKey] = true; startInfiniteAlarmLoop(id, t); } // 특이 결항 항차가 아닐 경우 최종 부저 트리거 실행
+                }
+            }
+        });
+    }
+
+    /* 🛠️ 백그라운드 코어 엔진 2 : 설정된 정밀 출발 전 타임라인 도달 검증 시, 현장 유도 스피치 구문을 실시간 조립 후 TTS 엔진으로 넘기는 방송 스케줄러 */
+    function checkTtsSpeechBroadcast(id, times) {
+        if (isGuest) return; 
+        const ttsOption = document.querySelector('input[name="tts_broadcast"]:checked');
+        if (!ttsOption || ttsOption.value === 'off') return;
+
+        const ttsSetupInput = document.getElementById('tts-trigger-minutes');
+        const ttsTriggerMinutes = ttsSetupInput ? (parseInt(ttsSetupInput.value) || 5) : 5;
+        const ttsRepeatInput = document.getElementById('tts-repeat-count');
+        const maxLoops = ttsRepeatInput ? (parseInt(ttsRepeatInput.value) || 1) : 1;
+        const now = new Date();
+
+        times.forEach(t => {
+            const [tH, tM] = t.split(':').map(Number);
+            const targetTime = new Date(); targetTime.setHours(tH, tM, 0, 0);
+            const diffMs = targetTime.getTime() - now.getTime();
+            const diffMins = diffMs / 60000;
+
+            if (diffMins > (ttsTriggerMinutes - 0.05) && diffMins <= ttsTriggerMinutes) {
+                const broadcastKey = `${id}-${t}-${now.getMinutes()}`;
+                if (!playedBroadcasts[broadcastKey]) {
+                    const data = boatData[id]; const booked = data.seats[t] || 0;
+                    const cStat = data.customStatus[t] || "auto";
+                    
+                    if (booked <= 0) return; // 당해 타임라인에 티켓팅(발권) 처리된 승객 인원이 아예 0명일 경우 백그라운드 안내방송 소거 통과
+
+                    const isHalted = cStat.includes("중지") || cStat === "운항없음" || cStat === "점 검 중" || cStat === "점검중";
+
+                    if (!isHalted) {
+                        playedBroadcasts[broadcastKey] = true;
+                        if (!activeTtsBroadcasts[id].includes(t)) activeTtsBroadcasts[id].push(t);
+                        updateUI();
+
+                        const boatName = (id === 1) ? "김시민 1호" : "김시민 2호"; 
+                        // 현장 맞춤형 정형 정밀 안내 멘트 스피치 데이터 스트링 결합 선언
+                        const speechText = `김시민호 매표소에서 안내 드립니다. 잠시 후 ${tH}시 ${tM}분에 출발하는 ${boatName} 탑승하시는 탑승객분들은, 탑승장소인 망진나루로 이동하여 주시기 바랍니다. ${boatName}는 망진나루를 출발하여 경남문화예술회관까지, 약 30분 정도 소요되는 연장된 코스로 운항하고 있습니다. 감사합니다.`;
+
+                        executeNativeTTS(speechText, maxLoops, id, t);
+                    }
+                }
+            }
+        });
+    }
+
+    /* 🎙️ 네이티브 웹 스피치 가이드 코어 : 디바이스 내부 내장된 고음질 한국어 Google/Natural 보이스 어레이 스트림을 매칭 추종하여 사운드를 음성 합성 출력하는 재귀식 함수 */
+    function executeNativeTTS(phrase, remainingLoops, id, time) {
+        if (!('speechSynthesis' in window)) return;
+        if (remainingLoops <= 0 || !activeTtsBroadcasts[id].includes(time)) { dismissTtsBroadcast(id, time); return; }
+        const ttsOption = document.querySelector('input[name="tts_broadcast"]:checked');
+        if (!ttsOption || ttsOption.value === 'off') { dismissTtsBroadcast(id, time); return; }
+
+        window.speechSynthesis.cancel(); // 기 할당되어 스트림이 밀려있을 보이스 어레이 버퍼 완전 초기화 소거
+        const utterance = new SpeechSynthesisUtterance(phrase); const voices = window.speechSynthesis.getVoices();
+        
+        // 윈도우/안드로이드/크롬 내 내장된 안내방송 최적화 여성 고음질 엔진 검출 알고리즘 파트
+        let selectedVoice = voices.find(voice => voice.name.includes('Google') && voice.name.includes('Female') && voice.lang.includes('ko'));
+        if (!selectedVoice) selectedVoice = voices.find(voice => voice.name.includes('Google') && voice.lang.includes('ko'));
+        if (!selectedVoice) selectedVoice = voices.find(voice => voice.name.includes('Natural') && voice.lang.includes('ko'));
+        if (!selectedVoice) selectedVoice = voices.find(voice => voice.lang === 'ko-KR' || voice.lang.startsWith('ko'));
+        
+        if (selectedVoice) utterance.voice = selectedVoice;
+        utterance.lang = 'ko-KR'; utterance.rate = 0.94; utterance.pitch = 0.98; // 방송 톤 최적화 속도/피치 가공
+        
+        // n회차 다회성 반복 방송을 자연스럽게 구현하기 위한 재귀 루프 콜백 마이크로 핸들러
+        utterance.onend = function() {
+            const nextLoops = remainingLoops - 1;
+            if (nextLoops > 0 && activeTtsBroadcasts[id].includes(time)) { 
+                setTimeout(() => { executeNativeTTS(phrase, nextLoops, id, time); }, 3000); // 3초의 편안한 텀을 두고 재귀 루프 호출
+            } else { dismissTtsBroadcast(id, time); }
+        };
+        window.speechSynthesis.speak(utterance);
+    }
+
+    /* 🚨 백그라운드 코어 엔진 3 : 수동 강제 팝업 ON 상태 확인 및 예약 스케줄 기반 타임 팝업 가동 범위를 실시간 연산하여 최상위 블랙아웃 모달창을 제어하는 결합형 장치 */
+    function checkEmergencyPopupSchedule() {
+        const manualSwitchSetting = localStorage.getItem('namgang_popup_manual_switch') || 'forced_off';
+        const msgBox = document.getElementById('emergency-popup-msg');
+        const footerBox = document.getElementById('emergency-popup-footer');
+        const popupMsg = localStorage.getItem('namgang_popup_message_text') || "";
+        const overlay = document.getElementById('emergency-overlay');
+        const innerBox = document.getElementById('emergency-popup-inner-box');
+        const mainTitle = document.getElementById('emergency-popup-main-title');
+        const timeDisplay = document.getElementById('emergency-popup-dynamic-time');
+
+        // 🛠️ 대원칙 1. 조작을 가해야 하는 관리자 메인 본체 브라우저 화면이라면, 무조건 전체화면 팝업 차단 레이어를 완전 소거 비활성화함 (연속 제어 보장)
+        if (!isGuest) {
+            overlay.classList.remove('active'); return;
+        }
+
+        // 현재 날짜/시간 포맷팅 스트링 처리 파트 (2, 3번 소스 통합 반영)
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const date = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+
+        // 테마 및 헤더 동적 분기 로직 생성
+        if (mode === 'guest_h') { // 1번 화면: 손님용 (빨간색 경고, 분 단위 표시)
+            innerBox.className = "emergency-popup-box popup-customer-theme";
+            mainTitle.innerText = "🚨 긴급 공지사항";
+            timeDisplay.innerText = `${year}년 ${month}월 ${date}일 ${hours}시 ${minutes}분`;
+            timeDisplay.style.display = "inline-block";
+            if (footerBox) footerBox.innerText = "📢 물빛나루쉼터 김시민호 매표소";
+        } else if (mode === 'guest_v') { // 2번 화면: 근무자용 (다크그레이 톤 지시, 분 단위 표시)
+            innerBox.className = "emergency-popup-box popup-staff-theme";
+            mainTitle.innerText = "📢 [근무자 전파] 긴급 지시사항";
+            timeDisplay.innerText = `${year}년 ${month}월 ${date}일 ${hours}시${minutes}분`;
+            timeDisplay.style.display = "inline-block";
+            if (footerBox) footerBox.innerText = "📢 안전 수칙을 재점검하고 승객 안내에 만전을 기해 주시기 바랍니다.";
+        }
+
+        // 🛠️ 대원칙 2. 관리자가 무선 설정판에서 [수동 강제 즉시 발동 스위치]를 'forced_on'으로 켠 경우, 예약 타이머 무시하고 최우선 전면 표출
+        if (manualSwitchSetting === 'forced_on') {
+            if (msgBox) msgBox.innerText = popupMsg;
+            overlay.classList.add('active'); return;
+        }
+
+        // 🕒 대원칙 3. 수동 강제 발동이 해제 상태일 때 유효 동작하는 예약 자동 시간 기반 타임 트랙 연산
+        const modeSetting = localStorage.getItem('namgang_popup_mode') || 'on';
+        if (modeSetting === 'off') { overlay.classList.remove('active'); return; }
+
+        const triggerHour = localStorage.getItem('namgang_popup_trigger_hour') || "12";
+        const triggerMinute = localStorage.getItem('namgang_popup_trigger_minute') || "00";
+        const triggerTimeStr = triggerHour + ":" + triggerMinute;
+        const savedDur = localStorage.getItem('namgang_popup_duration_seconds'); const durationSeconds = savedDur !== null ? parseInt(savedDur) : 20;
+
+        const curTimeString = hours + ":" + minutes;
+
+        // 예약된 지정 타겟 시각에 정밀 안착한 최초 순간 만료 타임스탬프 계산 및 스토리지 공유 기록 파트
+        if (curTimeString === triggerTimeStr && !playedEmergencyPopups[curTimeString]) {
+            playedEmergencyPopups[curTimeString] = true;
+            if (durationSeconds === 0) {
+                localStorage.setItem(POPUP_ACTIVE_UNTIL_KEY, 'unlimited');
+            } else {
+                const activeUntilTimestamp = Date.now() + (durationSeconds * 1000);
+                localStorage.setItem(POPUP_ACTIVE_UNTIL_KEY, activeUntilTimestamp);
+            }
+        }
+
+        // 스토리지에 박힌 만료 잔여 타임스탬프 스캔을 기초로 팝업 모달 노출 유무 최종 물리 판정 연산
+        const activeUntil = localStorage.getItem(POPUP_ACTIVE_UNTIL_KEY); let isPopupVisible = false;
+
+        if (activeUntil === 'unlimited') {
+            isPopupVisible = true;
+        } else if (activeUntil !== null && activeUntil !== 'unlimited') {
+            const untilTime = parseInt(activeUntil) || 0;
+            if (Date.now() < untilTime) {
+                isPopupVisible = true;
+            }
+        }
+
+        // 연산 처리 결과 플래그에 따라 최상위 DOM 모달 CSS 클래스 동적 토글 스위칭
+        if (isPopupVisible) {
+            if (msgBox) msgBox.innerText = popupMsg; overlay.classList.add('active');
+        } else {
+            overlay.classList.remove('active');
+        }
+    }
+
+    // 비동기식 보이스 로딩 환경을 극복하기 위한 웹 인스턴스 보이스 어레이 로드 트래커 보장 장치 파트
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.getVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
+        }
+    }
+
+    /* ==========================================================================
+       [마스터 렌더러 엔진 UI] 스토리지와 현 도메인 데이터를 완전 파싱 조립 가공하여 실시간 동적 돔(DOM)을 완전 빌드하는 코어 함수
+       ========================================================================== */
+    function updateUI() {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('ko-KR', {month:'short', day:'numeric', weekday:'short'});
+        const storedInterval = localStorage.getItem(PAGE_INTERVAL_KEY); const rotationIntervalMs = (parseInt(storedInterval) || 5) * 1000;
+
+        const rotationMode = localStorage.getItem(ROTATION_MODE_KEY) || 'on';
+        const isGuestTargetOn = localStorage.getItem(ROTATION_TARGET_GUEST_KEY) !== 'false';
+        const isWorkerTargetOn = localStorage.getItem(ROTATION_TARGET_WORKER_KEY) !== 'false';
+
+        // 렌더링 루프 내부 매초 진입 시 긴급 전체화면 팝업 동기화 상태 연산 선행 수행
+        checkEmergencyPopupSchedule();
+
+        // 1호 및 2호 종합 순회 파싱 렌더링 개시
+        [1, 2].forEach(id => {
+            const data = boatData[id]; const totalItems = data.times.length;
+            const maxPage = Math.max(1, Math.ceil(totalItems / 10)); // 한 페이지 슬라이드 가용 최대 개수 10개 항차 그리드 한계선 제한 연산
+
+            const isGuestScreen = mode === 'guest_h'; const isWorkerScreen = mode === 'guest_v';
+
+            // 페이지 롤러 화면전환기 체크박스 표출 타겟 설정 기반 동적 페이징 전환 타임 도달 연산 파트
+            let canRotate = false;
+            if (rotationMode === 'on') {
+                if (isGuestScreen && isGuestTargetOn) canRotate = true;
+                if (isWorkerScreen && isWorkerTargetOn) canRotate = true;
+            }
+
+            if (isGuest && canRotate && (Date.now() - guestPageStatus[id].lastRotationTime >= rotationIntervalMs)) {
+                guestPageStatus[id].currentPage++;
+                if (guestPageStatus[id].currentPage > maxPage) guestPageStatus[id].currentPage = 1; 
+                guestPageStatus[id].lastRotationTime = Date.now();
+            } else if (isGuest && !canRotate) {
+                guestPageStatus[id].currentPage = 1;
+            }
+            
+            const targetPage = isGuest ? guestPageStatus[id].currentPage : 1;
+
+            // 관리자 윈도우 본체 레이어일 때, 폼 인풋창 내부 포커스 이탈 및 기재 내용 증발 방지용 홀딩 밸브 연동 파트
+            if(!isGuest) {
+                const capIn = document.getElementById(`cap-direct-${id}`); const durIn = document.getElementById(`dur-direct-${id}`);
+                const couIn = document.getElementById(`course-direct-${id}`); const timeIn = document.getElementById(`time-input-${id}`);
+                const noticeIn = document.getElementById(`notice-direct-${id}`);
+                if(capIn && !capIn.matches(':focus')) capIn.value = data.capacity;
+                if(durIn && !durIn.matches(':focus')) durIn.value = data.duration || 15;
+                if(couIn && !couIn.matches(':focus')) couIn.value = data.course || "";
+                if(timeIn && !timeIn.matches(':focus')) timeIn.value = data.times.join(", ");
+                if(noticeIn && !noticeIn.matches(':focus')) noticeIn.value = data.notice === "현재 정상 운항 중입니다." ? "" : data.notice;
+            }
+
+            // 전광판 전용 상단 미니 뷰 보드 문자열 파싱 렌더링
+            const gDur = document.getElementById(`g-dur-${id}`); const gCourse = document.getElementById(`g-course-${id}`);
+            if(gDur) gDur.innerText = data.duration || 15;
+            if(gCourse) gCourse.innerText = data.course || "미지정";
+
+            // 실시간 중간 안내사항 줄바꿈(New-line) 문자 태그 치환 주입 파트
+            const noticeTextEl = document.getElementById(`notice-text-${id}`);
+            if(noticeTextEl) noticeTextEl.innerHTML = (data.notice || "현재 정상 운항 중입니다.").replace(/\n/g, '<br>');
+
+            const tbody = document.getElementById(`table-${id}`); const list = document.getElementById(`list-${id}`);
+            let checkedBefore = [];
+            if(!isGuest) { checkedBefore = Array.from(document.querySelectorAll(`.chk-${id}:checked`)).map(c => c.value); }
+            
+            let tbodyHtml = ""; let listHtml = "";
+
+            // 우측 하단 현재 표출 페이징 인디케이터 배지 동적 스트링 파싱 주입
+            const indicator = document.getElementById('page-indicator-' + id);
+            if (indicator) {
+                if (totalItems > 10 && isGuest) { 
+                    indicator.innerText = `[1호] ${targetPage} / ${maxPage} 페이지`;
+                    if (id === 2) indicator.innerText = `[2호] ${targetPage} / ${maxPage} 페이지`;
+                    indicator.style.display = "inline-block"; 
+                } else { indicator.style.display = "none"; }
+            }
+
+            /* 🕒 마스터 실시간 도메인 매칭 알고리즘 루프 구역 : 각 타임라인 항차 정보 분석 가공 및 기계적 상태값 오토 디텍팅 판정 연산 */
+            data.times.forEach((t, index) => {
+                const booked = data.seats[t] || 0, remain = data.capacity - booked; const cStat = data.customStatus[t] || "auto";
+                let sTxt = "", sCls = "", rCls = "", remainCls = "remain-count"; let statusCellContent = ""; 
+
+                const [tH, tM] = t.split(':').map(Number);
+                const startTime = new Date(); startTime.setHours(tH, tM, 0, 0); 
+                const durationMinutes = parseInt(data.duration) || 15;
+                const endLimitTime = new Date(startTime.getTime() + durationMinutes * 60000); // 출발시각 + 소요시간 = 운항 한계 만료 타임스탬프 계산
+
+                const diffMs = startTime.getTime() - now.getTime(); const diffMins = diffMs / 60000;
+                const isHaltedState = cStat.includes("중지") || cStat === "운항없음" || cStat === "점 검 중" || cStat === "점검중";
+
+                // 규칙 분기 경로 A : 관리자가 수동 패널에서 특정 상태값("기상악화", "탑승시작(강제)" 등)을 수동 지정한 항차 리스트
+                if (cStat !== "auto") {
+                    sTxt = cStat; 
+                    if (isHaltedState) {
+                        rCls = "row-halted-gray-bg"; 
+                        if (cStat === "점 검 중" || cStat === "점검중") sCls = "text-maintenance-gray"; 
+                        else if (cStat === "운항없음") sCls = "text-ended-box"; 
+                        else sCls = "bg-dark-green-yellow"; 
+                    } else if (cStat === "탑승시작") {
+                        sCls = "text-boarding-start"; rCls = "row-boarding-start-bg";
+                    } else if (cStat === "티켓발권마감") {
+                        sCls = "bg-dark-green-yellow"; rCls = "row-ticketing-ended-bg";
+                    } else if (cStat === "탑승(승선)마감") {
+                        sCls = "text-boarding-close"; rCls = "row-boarding-close-solid"; 
+                    } else if (cStat === "매진" || cStat === "매  진") {
+                        sCls = "text-soldout"; rCls = "row-soldout-blink"; remainCls += " text-soldout-zero";
+                    } else if (cStat === "운항중" || cStat === "운 항 중") {
+                        sCls = "text-blue"; rCls = "row-sailing-bg";
+                    } else { sCls = "text-soldout"; }
+                } 
+                // 규칙 분기 경로 B : 실시간 타이머 시계 정밀 대조에 입각한 기계적 완전 오토매틱 상태 판정 파트
+                else {
+                    if (now >= startTime && booked === 0) { sTxt = "종  료"; sCls = "text-ended-box"; rCls = "row-ended"; }
+                    else if (now >= endLimitTime) { sTxt = "운항종료"; sCls = "text-ended-box"; rCls = "row-ended"; }
+                    else if (now >= startTime) { sTxt = "운 항 중"; sCls = "text-blue"; rCls = "row-sailing-bg"; }
+                    else if (remain <= 0) { sTxt = "매  진"; sCls = "text-soldout"; rCls = "row-soldout-blink"; remainCls += " text-soldout-zero"; }
+                    else if (diffMins > 0 && diffMins <= 3) { sTxt = "탑승(승선)마감"; sCls = "text-boarding-close"; rCls = "row-boarding-close-solid"; }
+                    else if (diffMins > 3 && diffMins <= 5) { sTxt = "티켓발권마감"; sCls = "bg-dark-green-yellow"; rCls = "row-ticketing-ended-bg"; }
+                    else if (diffMins > 5 && diffMins <= 10) { sTxt = "탑승시작"; sCls = "text-boarding-start"; rCls = "row-boarding-start-bg"; }
+                    else { sTxt = "티켓발권중"; sCls = "text-available"; rCls = "text-available"; }
+                }
+
+                // 현재 부저 사이렌 발송 대상 혹은 TTS 스피치 전파 대상일 때 관리자 폼 행 전용 우선권 스타일시트 오버라이딩 커버
+                let isCurrentAlarmRow = false; let isCurrentTtsRow = false;
+                
+                if (!isGuest && activeVisualAlarms[id].includes(t)) { rCls = "row-alarm-blink"; isCurrentAlarmRow = true; }
+                else if (!isGuest && activeTtsBroadcasts[id].includes(t)) { rCls = "row-tts-blink"; isCurrentTtsRow = true; }
+
+                const cleanTxt = sTxt.replace(/\s+/g, '');
+                if (['운항종료', '종료', '티켓발권마감', '운항중', '탑승(승선)마감'].includes(cleanTxt)) remainCls += " shrunk-size";
+
+                let forceGrayClass = "";
+                if (['종료', '운항중', '운항종료'].includes(cleanTxt) && rCls !== "row-alarm-blink" && rCls !== "row-tts-blink" && rCls !== "row-soldout-blink") {
+                    forceGrayClass = " force-gray-color"; remainCls += " force-gray-color"; 
+                }
+
+                // 총원/현원 텍스트 셀 및 증감 핸들러 버튼 동적 바인딩 컴포넌트 스트링 가공 조립
+                const capacityCellContent = `<div class="status-cell-flex${forceGrayClass}">
+                        <span>${data.capacity}</span><span class="slash-divider">/</span><span>${booked}</span>
+                        ${!isGuest ? `
+                        <div class="btn-group">
+                            <button class="btn-adj" onclick="adjust(${id},'${t}',-1)">-</button>
+                            <button class="btn-adj" onclick="adjust(${id},'${t}',1)">+</button>
+                        </div>` : ''}
+                    </div>`;
+
+                // 상태값 필드 내 확인(수동 제어 정지)용 동적 컴포넌트 교차 단추 결합 분기
+                if (isCurrentAlarmRow) {
+                    statusCellContent = `<button class="btn-alarm-stop" onclick="dismissAlarm(${id}, '${t}')">⚠️ 알람끄기(확인)</button>`;
+                } else if (isCurrentTtsRow) {
+                    statusCellContent = `<button class="btn-tts-stop" onclick="dismissTtsBroadcast(${id}, '${t}')">📢 안내방송중</button>`;
+                } else {
+                    statusCellContent = `<span class="status-text ${sCls}">${sTxt}</span>`;
+                }
+
+                // 손님 모드이고 전체 10개 항차 넘는 경우 슬라이딩 페이징 처리 단위 외의 TR 노출 완전 숨김 은닉화 엔진 파트
+                let displayStyle = "";
+                if (isGuest && totalItems > 10) {
+                    const startIndex = (targetPage - 1) * 10; const endIndex = startIndex + 9;
+                    if (index < startIndex || index > endIndex) displayStyle = ` style="display: none;"`; 
+                }
+
+                // 최종 완성본 TR 로우 단위 종합 스트링 축적 마크업 적재
+                tbodyHtml += `<tr class="${rCls}"${displayStyle}>
+                    <td class="line-through-cell${forceGrayClass}"><span>${t}</span></td>
+                    <td class="line-through-cell">${capacityCellContent}</td>
+                    <td class="line-through-cell ${remainCls}"><span>${remain}</span></td>
+                    <td>${statusCellContent}</td>
+                </tr>`;
+
+                // 관리자용 하단 복수 타임라인 제어 다중 체크박스 스트링 리스트 적재
+                if(!isGuest) {
+                    const isChecked = checkedBefore.includes(t) ? "checked" : "";
+                    listHtml += `<label class="time-item"><span>${t}</span><input type="checkbox" class="chk-${id}" value="${t}" ${isChecked} onchange="updateSelectBtnText(${id})"></label>`;
+                }
+            });
+
+            // 완전 조립 가공 완료된 HTML 최종 소스 본문을 실제 물리 DOM 객체 내부에 다이렉트 주입 마크업 단행
+            if (tbody) tbody.innerHTML = tbodyHtml;
+            if (list && !isGuest) list.innerHTML = listHtml;
+
+            if(!isGuest) updateSelectBtnText(id);
+            if(document.getElementById(`date-${id}`)) document.getElementById(`date-${id}`).innerText = dateStr;
+
+            // 실시간 백그라운드 타이머 연동 출발 전 부저 알람 및 TTS 한국어 원격 방송 체인 서브 엔진 오토 트리거 가동
+            checkTenMinutesAlarm(id, data.times); checkTtsSpeechBroadcast(id, data.times);
+        });
+    }
+
+    // 🌟 전광판용 윈도우 오픈 핸들러 : 실시간 구동 모니터의 하드웨어 가용 해상도(availWidth, Height)를 자동 판독하여 주소창 파라미터 분기와 함께 무선 전송 팝업창을 완전 풀스크린으로 실행하는 제어 함수
+    function openGuestWindow(type) { 
+        const maxW = screen.availWidth; const maxH = screen.availHeight; 
+        const windowFeatures = `width=${maxW},height=${maxH},top=0,left=0,fullscreen=yes,resizable=yes,scrollbars=yes,status=no,location=no,toolbar=no,menubar=no`;
+        window.open(window.location.pathname + '?mode=guest_' + type, '_blank', windowFeatures); 
+    }
+    
+    // 1초 단위 주 메인 마스터 하드웨어 디지털 클럭 엔진 타이머 함수
+    function tick() {
+        const now = new Date(); const ts = now.toTimeString().substring(0,8); 
+        [1, 2].forEach(id => { const el = document.getElementById(`clock-${id}`); if(el) el.innerText = ts; });
+        checkMidnightReset(); updateUI(); 
+    }
+
+    // 최초 시스템 로딩 콜 개시 시 하드웨어 구동부 작동 지점
+    load(); updateUI(); setInterval(tick, 1000); 
+
+    // 멀티 브라우저 디스플레이 전송 허브 구동 시 관리자 화면의 실시간 변화를 전광판 스크린 화면들이 지연 없이 강제 동기화 추종하도록 청취하는 스토리지 하드웨어 감지 인터페이스 리스너
+    window.addEventListener('storage', (e) => { 
+        if(e.key === STORAGE_KEY || e.key === PAGE_INTERVAL_KEY || e.key === TTS_BROADCAST_KEY || e.key === TTS_MINUTES_KEY || e.key === TTS_REPEAT_KEY || e.key === ROTATION_MODE_KEY || e.key === ROTATION_TARGET_GUEST_KEY || e.key === ROTATION_TARGET_WORKER_KEY || e.key === POPUP_MODE_KEY || e.key === POPUP_TRIGGER_HOUR_KEY || e.key === POPUP_TRIGGER_MINUTE_KEY || e.key === POPUP_DURATION_KEY || e.key === POPUP_MESSAGE_KEY || e.key === POPUP_ACTIVE_UNTIL_KEY || e.key === POPUP_MANUAL_SWITCH_KEY) { 
+            load(); updateUI(); 
+        } 
+    });
+
+    // 화면의 빈 보이드 공간 아무 곳이나 마우스 클릭 시, 노출 활성화되어 유실을 막고 있던 복수 시간 제어 체크박스 리스트 드롭다운 UI 창을 자동 은닉 처리해주는 휴먼 인터페이스 기능부
+    window.onclick = function(event) {
+        if (!event.target.matches('.select-btn') && !event.target.closest('.checkbox-list')) {
+            document.querySelectorAll('.checkbox-list').forEach(list => list.classList.remove('show'));
+        }
+    }
+</script>
+</body>
+</html>
