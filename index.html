@@ -390,7 +390,7 @@
                 </div>
                 <div class="boat-info-right">
                     <div class="boat-date" id="date-1"></div>
-                    <div class="boat-clock" id="clock-1">00:00:00</div>
+                    <div class="boat-clock" id="clock-1">00시00분00</div>
                 </div>
             </div>
             
@@ -484,7 +484,7 @@
                 </div>
                 <div class="boat-info-right">
                     <div class="boat-date" id="date-2"></div>
-                    <div class="boat-clock" id="clock-2">00:00:00</div>
+                    <div class="boat-clock" id="clock-2">00시00분00</div>
                 </div>
             </div>
             
@@ -701,7 +701,7 @@
 
     // ⚠️ 아래 firebaseConfig 객체의 값을 본인의 Firebase 프로젝트 설정값으로 변경하세요.
     const firebaseConfig = {
-  apiKey: "AIzaSyASAWsxM_6x5iFFme8wqePiFzNytsNOF5E",
+    apiKey: "AIzaSyASAWsxM_6x5iFFme8wqePiFzNytsNOF5E",
   authDomain: "mulbitnaru930.firebaseapp.com",
   databaseURL: "https://mulbitnaru930-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "mulbitnaru930",
@@ -717,8 +717,8 @@
 
     // 기본 선박 데이터 구조
     const defaultBoatData = {
-        1: { capacity: 25, duration: 30, course: "망진나루 ↔ (코스연장)문화예술회관", notice: "현재 정상 운항 중입니다.", times: ["10:15", "11:15", "13:15", "14:15", "15:15", "16:15", "17:15", "19:15", "20:15", "21:15"], seats: {}, customStatus: {} },
-        2: { capacity: 30, duration: 30, course: "망진나루 ↔ (코스연장)문화예술회관", notice: "현재 정상 운항 중입니다.", times: ["10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "19:00", "20:00", "21:00"], seats: {}, customStatus: {} }
+        1: { capacity: 25, duration: 30, course: "망진나루 ↔ 진주성(촉석루)", notice: "현재 정상 운항 중입니다.", times: ["13:10", "13:50", "14:30", "15:10", "15:50", "16:30", "17:10", "18:10", "18:50", "19:30", "20:10", "20:50", "21:30", "22:10", "22:40"], seats: {}, customStatus: {} },
+        2: { capacity: 30, duration: 30, course: "망진나루 ↔ 진주성(촉석루)", notice: "현재 정상 운항 중입니다.", times: ["13:00", "13:40", "14:20", "15:00", "15:40", "16:20", "17:00", "18:00", "18:40", "19:20", "20:00", "20:40", "21:20", "22:00", "22:30"], seats: {}, customStatus: {} }
     };
 
     // 기본 설정 데이터 구조
