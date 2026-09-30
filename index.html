@@ -1366,7 +1366,7 @@
                         rowClass = "row-ended";
                         statusClass = "text-ended-box";
                     } else if (diffMins <= 0) {
-                        statusText = "운항 중";
+                        statusText = "운 항 중";
                         rowClass = "row-sailing-bg";
                         statusClass = "text-blue";
                     } else if (diffMins <= 5) {
@@ -1395,7 +1395,7 @@
                     }
                 }
 
-                if (remain <= 0 && customStat === "auto" && !statusText.includes("종료") && statusText !== "운항 중") {
+                if (remain <= 0 && customStat === "auto" && !statusText.includes("종료") && statusText !== "운 항 중") {
                     rowClass = "row-soldout-blink";
                     remainClass += " text-soldout-zero";
                 }
