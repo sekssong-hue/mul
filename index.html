@@ -151,15 +151,14 @@
             font-size: 26px; font-weight: bold; border-radius: 30px; border: 2px solid #fff;
             box-shadow: 0 4px 12px rgba(0,0,0,0.6); z-index: 9999;
         }
-        /* 손님용(h) 또는 자동전환이 켜진 근무자용(v)에서 페이지 배지 표시 */
         .is-guest .page-badge { display: inline-block; }
 
         .boat3-title { background-color: var(--boat3-color); } 
         .boat4-title { background-color: var(--boat4-color); } 
 
         .boat-info-right { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
-        .boat-date { font-size: clamp(20px, 3vw, 39px); font-weight: 700; color: rgba(255,255,255,1); line-height: 1.1; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
-        .boat-clock { font-size: clamp(24px, 4vw, 47px); font-weight: 900; font-family: 'monospace'; line-height: 1.1; color: #ffffff !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.6); }
+        .boat-date { font-size: clamp(18px, 2.5vw, 35px); font-weight: 700; color: rgba(255,255,255,1); line-height: 1.1; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .boat-clock { font-size: clamp(22px, 3.5vw, 42px); font-weight: 900; line-height: 1.1; color: #ffffff !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.6); }
 
         /* [CSS] 선박 제어 및 설정 영역 */
         .setting-area { background: #f8f9fa; padding: 12px; border-bottom: 1px solid #ddd; display: flex; flex-direction: column; gap: 8px; }
@@ -200,6 +199,80 @@
         .mode-v .notice-view-container { display: flex; }
         .notice-title { font-size: 22px; font-weight: 800; color: #d63031; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
         .notice-content { font-size: clamp(20px, 3.5vw, 30px); font-weight: 900; color: #2d3436; line-height: 1.3; white-space: normal; word-break: break-all; }
+
+        /* [CSS] 긴급 전체화면 공지 팝업 스타일 (디스플레이 반응형 자동 맞춤) */
+        .emergency-fullscreen-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.88);
+            z-index: 999999;
+            justify-content: center;
+            align-items: center;
+            padding: 2vw;
+            box-sizing: border-box;
+        }
+        .emergency-fullscreen-overlay.active {
+            display: flex;
+        }
+        .emergency-popup-box {
+            width: 100%; 
+            max-width: min(92vw, 1100px);
+            max-height: min(90vh, 850px);
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 5px solid #ff4d4d;
+            animation: popupScaleIn 0.3s ease-in-out;
+        }
+        @keyframes popupScaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .popup-customer-theme { border-color: #ff4d4d; }
+        .popup-staff-theme { border-color: #ff9f43; }
+
+        .emergency-popup-header {
+            background-color: #ff4d4d;
+            color: #ffffff;
+            padding: min(2vh, 20px) min(2.5vw, 25px);
+            font-size: clamp(20px, 3vw, 36px);
+            font-weight: 900;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .popup-staff-theme .emergency-popup-header { background-color: #ff9f43; color: #000; }
+
+        .emergency-popup-body {
+            padding: min(4vh, 40px) min(3vw, 30px);
+            font-size: clamp(20px, 3.2vw, 38px);
+            font-weight: 900;
+            color: #222222;
+            line-height: 1.4;
+            text-align: center;
+            word-break: break-all;
+            background: #fff;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .emergency-popup-footer {
+            background-color: #f8f9fa;
+            border-top: 2px solid #eee;
+            padding: min(1.5vh, 15px) min(2.5vw, 25px);
+            font-size: clamp(14px, 2vw, 22px);
+            font-weight: bold;
+            color: #666;
+            text-align: center;
+        }
 
         /* [CSS] 시간표 테이블 및 행 상태 디자인 */
         .table-wrapper { flex: 1; overflow-y: auto; }
@@ -310,91 +383,7 @@
         .is-guest .setting-area, 
         .is-guest .btn-group { display: none !important; }
         
-        .mode-v .main-container { flex-direction: row !important; }
-
-        /* [CSS] 긴급 전체화면 팝업 오버레이 스타일 */
-        .emergency-fullscreen-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: rgba(0, 0, 0, 0.95); z-index: 999999;
-            flex-direction: column; justify-content: center; align-items: center; padding: 40px; box-sizing: border-box;
-        }
-        .emergency-fullscreen-overlay.active { display: flex; }
-        .emergency-popup-box {
-            background-color: #ffffff; border: 10px solid var(--popup-highlight); border-radius: 30px;
-            width: 90%; max-width: 1400px; padding: 50px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-            box-sizing: border-box; animation: popupPulse 1.5s infinite alternate;
-        }
-        
-        .popup-customer-theme {
-            border: 8px solid #ff4d4d !important;
-            background-color: #ffffff !important;
-            max-width: 1200px !important;
-            font-family: sans-serif !important;
-        }
-        .popup-customer-theme .emergency-popup-header {
-            font-size: 70px; font-weight: 900; color: #ff4d4d; margin-bottom: 30px; letter-spacing: -2px; 
-            display: flex; align-items: center; justify-content: center; gap: 20px;
-            border-bottom: 4px solid #ff4d4d; padding-bottom: 15px;
-        }
-        .popup-customer-theme .emergency-popup-body {
-            font-size: 55px; font-weight: 900; color: #111; line-height: 1.5; word-break: break-all; white-space: pre-wrap; margin-bottom: 40px; padding-top: 10px; border-top: none;
-        }
-        
-        .popup-staff-theme {
-            border: 8px solid #4A5568 !important;
-            background-color: #F7FAFC !important;
-            max-width: 1200px !important;
-            font-family: sans-serif !important;
-        }
-        .popup-staff-theme .emergency-popup-header {
-            font-size: 60px; font-weight: 900; color: #2D3748; margin-bottom: 30px; letter-spacing: -1px;
-            display: flex; align-items: center; justify-content: space-between; gap: 20px;
-            border-bottom: 4px solid #4A5568; padding-bottom: 15px;
-        }
-        .popup-staff-theme .emergency-popup-body {
-            font-size: 50px; font-weight: 900; color: #2D3748; line-height: 1.6; word-break: break-all; white-space: pre-wrap; margin-bottom: 40px; padding-top: 10px; border-top: none;
-        }
-
-        .emergency-popup-footer { font-size: 32px; font-weight: bold; color: #666; background: #f5f5f5; padding: 15px 30px; border-radius: 15px; display: inline-block; }
-        
-        /* [CSS] 애니메이션 효과 (깜빡임, 펄스 등) */
-        @keyframes textBlinker { 0% { opacity: 1.0; } 50% { opacity: 0.35; } 100% { opacity: 1.0; } }
-        @keyframes alarmStrongBlinker {
-            0% { background-color: #ff1251 !important; color: #ffffff !important; }
-            50% { background-color: #ffffff !important; color: #ff1251 !important; }
-            100% { background-color: #ff1251 !important; color: #ffffff !important; }
-        }
-        @keyframes ttsActiveBlinker {
-            0% { background-color: #ff8400 !important; color: #ffffff !important; }
-            50% { background-color: #ffffff !important; color: #ff8400 !important; }
-            100% { background-color: #ff8400 !important; color: #ffffff !important; }
-        }
-        @keyframes popupPulse {
-            0% { transform: scale(1.0); box-shadow: 0 20px 50px rgba(255, 77, 77, 0.4); }
-            100% { transform: scale(1.02); box-shadow: 0 20px 60px rgba(255, 77, 77, 0.8); }
-        }
-
-        body:not(.is-guest) tr.row-alarm-blink { box-shadow: 0 0 25px 8px #ff1251 !important; position: relative; z-index: 50; }
-        body:not(.is-guest) tr.row-alarm-blink td { animation: alarmStrongBlinker 0.5s ease-in-out infinite; font-weight: 900 !important; border-top: 3px solid #000 !important; border-bottom: 3px solid #000 !important; }
-        body:not(.is-guest) tr.row-alarm-blink td:first-child span { font-size: 50px !important; text-shadow: 2px 2px 0px #000; }
-        body:not(.is-guest) tr.row-alarm-blink td span, body:not(.is-guest) tr.row-alarm-blink td div { color: inherit !important; }
-
-        body:not(.is-guest) tr.row-tts-blink { box-shadow: 0 0 25px 8px #ff8400 !important; position: relative; z-index: 49; }
-        body:not(.is-guest) tr.row-tts-blink td { animation: ttsActiveBlinker 0.6s ease-in-out infinite; font-weight: 900 !important; border-top: 3px solid #000 !important; border-bottom: 3px solid #000 !important; }
-        body:not(.is-guest) tr.row-tts-blink td:first-child span { font-size: 50px !important; text-shadow: 2px 2px 0px #000; }
-        body:not(.is-guest) tr.row-tts-blink td span, body:not(.is-guest) tr.row-tts-blink td div { color: inherit !important; }
-
-        .is-guest tr td { font-size: clamp(20px, 3vw, 37px) !important; }
-        .is-guest tr td:first-child { font-size: clamp(22px, 3.5vw, 45px) !important; }
-        .is-guest .status-cell-flex { font-size: clamp(22px, 3.5vw, 42px) !important; font-weight: 900 !important; }
-        .is-guest .status-text { font-size: clamp(24px, 4vw, 47px) !important; display: inline-block; }
-        .is-guest .remain-count { font-size: clamp(26px, 4.5vw, 55px) !important; }
-        .is-guest .row-ended .remain-count, .is-guest .row-sailing-bg .remain-count { font-size: clamp(28px, 5vw, 60px); }
-        .is-guest .remain-count.shrunk-size { font-size: clamp(26px, 4.5vw, 55px) !important; }
-
-        .force-gray-color, .force-gray-color span, .force-gray-color div { color: var(--ended-text-color) !important; }
-
-        @media (max-width: 1024px) {
+        @media (max-width: 1024px) or (orientation: portrait) {
             body {
                 flex-direction: column;
                 height: auto;
@@ -444,9 +433,9 @@
         <div id="emergency-popup-inner-box" class="emergency-popup-box">
             <div id="emergency-popup-title-area" class="emergency-popup-header">
                 <span id="emergency-popup-main-title">📢 안내(공지) 사항</span>
-                <span id="emergency-popup-dynamic-time" style="font-size: 2rem; font-weight: bold; display: none;"></span>
+                <span id="emergency-popup-dynamic-time" style="font-size: 1.5rem; font-weight: bold; display: none;"></span>
             </div>
-            <div id="emergency-popup-msg" class="emergency-popup-body">공지사항 내용이 여기에 들어갑니다.</div>
+            <div id="emergency-popup-msg" class="emergency-popup-body"></div>
             <div id="emergency-popup-footer" class="emergency-popup-footer">잠시 후 정상 화면으로 자동 복귀됩니다.</div>
         </div>
     </div>
@@ -460,7 +449,7 @@
                 </div>
                 <div class="boat-info-right">
                     <div class="boat-date" id="date-1"></div>
-                    <div class="boat-clock" id="clock-1">00시00분00</div>
+                    <div class="boat-clock" id="clock-1">00시 00분 00초</div>
                 </div>
             </div>
             
@@ -554,13 +543,13 @@
                 </div>
                 <div class="boat-info-right">
                     <div class="boat-date" id="date-2"></div>
-                    <div class="boat-clock" id="clock-2">00시00분00</div>
+                    <div class="boat-clock" id="clock-2">00시 00분 00초</div>
                 </div>
             </div>
             
             <div class="notice-view-container" id="notice-view-container-2">
                 <div class="notice-title">📢 김시민 2호 안내사항</div>
-                <div class="notice-content" id="notice-text-2">현재 정상 운항 중입니다.</div>
+                <div class="notice-content" id="notice-text-2">현재 정상 운항 중입니다. /  안전 수칙을 재점검하고 승객들의 안전과 안내에 만전을 기해 주시기 바랍니다.</div>
             </div>
 
             <div class="guest-info-banner" id="guest-banner-2">
@@ -727,6 +716,16 @@
         <div class="alarm-toggle-container" style="border-color: var(--popup-highlight);">
             <div class="box-title-sm" style="color: var(--popup-highlight);">🚨 긴급 전체화면 공지 팝업 설정</div>
             
+            <!-- 표출 대상 화면 선택 옵션 (손님용 화면 / 근무자용 화면) -->
+            <div style="background: #1a1e24; padding: 8px; border-radius: 6px; border: 1px dashed var(--popup-highlight); margin-bottom: 3px;">
+                <div class="box-title-sm" style="color: #fff; font-size: 13px; margin-bottom: 5px;">📺 표출 대상 화면 선택</div>
+                <div style="display: flex; justify-content: space-around; gap: 5px;">
+                    <label style="font-size: 14px; font-weight: normal; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="all" checked onchange="saveAlarmConfig()"> 전체</label>
+                    <label style="font-size: 14px; font-weight: normal; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="guest" onchange="saveAlarmConfig()"> 손님용</label>
+                    <label style="font-size: 14px; font-weight: normal; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="worker" onchange="saveAlarmConfig()"> 근무자용</label>
+                </div>
+            </div>
+
             <div style="background: #1a1e24; padding: 8px; border-radius: 6px; border: 1px dashed var(--popup-highlight); margin-bottom: 3px;">
                 <div class="box-title-sm" style="color: #fff; font-size: 13px; margin-bottom: 5px;">🔴 수동 즉시 발동 스위치</div>
                 <div class="alarm-radio-row">
@@ -807,7 +806,7 @@
         2: { capacity: 30, duration: 20, course: "망진나루 ↔ 진주성(촉석루)", notice: "현재 정상 운항 중입니다.", times: ["13:00", "14:00", "15:00", "16:00", "17:00", "19:00", "20:00", "21:00"], seats: {}, customStatus: {} }
     };
 
-    // 기본 시스템 설정 데이터 초기값 구조
+    // 기본 시스템 설정 데이터 초기값 구조 (popupTargetScreen 추가: 기본값 'all')
     const defaultConfigData = {
         lastDate: "",
         alarmMinutes: 10,
@@ -825,7 +824,8 @@
         popupDurationSeconds: 20,
         popupMessageText: "기상 악화 및 정비 관계로 인하여 잠시 후 다음 항차 운항이 지연될 예정이오니 양해 바랍니다.",
         popupActiveUntil: 0,
-        popupManualSwitch: "forced_off"
+        popupManualSwitch: "forced_off",
+        popupTargetScreen: "all"
     };
 
     let boatData = JSON.parse(JSON.stringify(defaultBoatData));
@@ -923,6 +923,9 @@
 
         const popupOption = document.querySelector('input[name="popup_mode"]:checked');
         if (popupOption) configData.popupMode = popupOption.value;
+
+        const popupTargetScreenOption = document.querySelector('input[name="popup_target_screen"]:checked');
+        if (popupTargetScreenOption) configData.popupTargetScreen = popupTargetScreenOption.value;
         
         configData.popupHour = document.getElementById('popup-hour').value;
         configData.popupMinute = document.getElementById('popup-minute').value;
@@ -1169,7 +1172,6 @@
             const diffMins = diffMs / 60000;
 
             if (diffMins > (triggerMinutes - 0.05) && diffMins <= triggerMinutes) {
-                // 발권 인원이 0명 이하인 경우 알람을 울리지 않고 리턴[cite: 1]
                 const booked = (boatData[id].seats && boatData[id].seats[t]) || 0;
                 if (booked <= 0) return;
 
@@ -1207,7 +1209,6 @@
                     const booked = (data.seats && data.seats[t]) || 0;
                     const cStat = (data.customStatus && data.customStatus[t]) || "auto";
                     
-                    // 발권 인원이 0명 이하인 경우 방송을 실행하지 않음[cite: 1]
                     if (booked <= 0) return;
 
                     const isHalted = cStat.includes("중지") || cStat === "운항없음" || cStat === "점 검 중" || cStat === "점검중";
@@ -1227,15 +1228,18 @@
         });
     }
 
-    // 브라우저 내장 SpeechSynthesis API를 통한 음성 출력 실행
+    // 브라우저 내장 SpeechSynthesis API를 통한 음성 출력 실행 (중복 겹침 방지를 위해 시작 전 무조건 cancel 처리)
     function executeNativeTTS(phrase, remainingLoops, id, time) {
         if (!('speechSynthesis' in window)) return;
+        
+        window.speechSynthesis.cancel();
+
         if (remainingLoops <= 0 || !activeTtsBroadcasts[id].includes(time)) { window.dismissTtsBroadcast(id, time); return; }
         const ttsOption = document.querySelector('input[name="tts_broadcast"]:checked');
         if (!ttsOption || ttsOption.value === 'off') { window.dismissTtsBroadcast(id, time); return; }
 
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(phrase); const voices = window.speechSynthesis.getVoices();
+        const utterance = new SpeechSynthesisUtterance(phrase); 
+        const voices = window.speechSynthesis.getVoices();
         
         let selectedVoice = voices.find(voice => voice.name.includes('Google') && voice.name.includes('Female') && voice.lang.includes('ko'));
         if (!selectedVoice) selectedVoice = voices.find(voice => voice.name.includes('Google') && voice.lang.includes('ko'));
@@ -1254,7 +1258,7 @@
         window.speechSynthesis.speak(utterance);
     }
 
-    // 긴급 공지 팝업 스케줄 체크 및 제어 함수
+    // 긴급 공지 팝업 스케줄 체크 및 표출 대상 화면 선택 반영 함수
     function checkEmergencyPopupSchedule() {
         const manualSwitchSetting = configData.popupManualSwitch || 'forced_off';
         const msgBox = document.getElementById('emergency-popup-msg');
@@ -1269,6 +1273,19 @@
             overlay.classList.remove('active'); return;
         }
 
+        // 대상 화면 설정 확인 ('all', 'guest', 'worker')
+        const targetScreenSetting = configData.popupTargetScreen || 'all';
+        
+        // 현재 창의 모드 판별 ('guest_h'는 손님용, 'guest_v'는 근무자용)
+        if (targetScreenSetting === 'guest' && mode !== 'guest_h') {
+            overlay.classList.remove('active');
+            return;
+        }
+        if (targetScreenSetting === 'worker' && mode !== 'guest_v') {
+            overlay.classList.remove('active');
+            return;
+        }
+
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -1276,16 +1293,18 @@
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
 
+        let targetScreenLabel = (targetScreenSetting === 'guest') ? ' [손님용 화면 전용]' : (targetScreenSetting === 'worker') ? ' [근무자용 화면 전용]' : '';
+
         if (mode === 'guest_h') {
             innerBox.className = "emergency-popup-box popup-customer-theme";
-            mainTitle.innerText = "🚨 긴급 공지사항";
+            mainTitle.innerText = `🚨 긴급 공지사항${targetScreenLabel}`;
             timeDisplay.innerText = `${year}년 ${month}월 ${date}일 ${hours}시 ${minutes}분`;
             timeDisplay.style.display = "inline-block";
             if (footerBox) footerBox.innerText = "📢 물빛나루쉼터 김시민호 매표소";
         } else if (mode === 'guest_v') {
             innerBox.className = "emergency-popup-box popup-staff-theme";
-            mainTitle.innerText = "📢 [근무자 전파] 긴급 지시사항";
-            timeDisplay.innerText = `${year}년 ${month}월 ${date}일 ${hours}시${minutes}분`;
+            mainTitle.innerText = `📢 [근무자 전파] 긴급 지시사항${targetScreenLabel}`;
+            timeDisplay.innerText = `${year}년 ${month}월 ${date}일 ${hours}시 ${minutes}분`;
             timeDisplay.style.display = "inline-block";
             if (footerBox) footerBox.innerText = "📢 안전 수칙을 재점검하고 승객 안내에 만전을 기해 주시기 바랍니다.";
         }
@@ -1310,7 +1329,7 @@
         targetDate.setHours(parseInt(pH), parseInt(pM), 0, 0);
 
         if (Math.abs(now.getTime() - targetDate.getTime()) < 1000) {
-            const popupKey = `${now.toLocaleDateString()}-${pH}:${pM}`;
+            const popupKey = `${now.toLocaleDateString()}-${pH}:${pM}-${targetScreenSetting}`;
             if (!playedEmergencyPopups[popupKey]) {
                 playedEmergencyPopups[popupKey] = true;
                 const expireTimestamp = (durSecs === 0) ? 9999999999999 : (now.getTime() + (durSecs * 1000));
@@ -1357,8 +1376,12 @@
         const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
         const dayStr = dayNames[now.getDay()];
         
-        const dateFormatted = `${year}.${month}.${date}(${dayStr})`;
-        const timeFormatted = now.toTimeString().split(' ')[0];
+        const dateFormatted = `${year}년 ${month}월 ${date}일 (${dayStr})`;
+        
+        const hoursStr = String(now.getHours()).padStart(2, '0');
+        const minutesStr = String(now.getMinutes()).padStart(2, '0');
+        const secondsStr = String(now.getSeconds()).padStart(2, '0');
+        const timeFormatted = `${hoursStr}시 ${minutesStr}분 ${secondsStr}초`;
 
         [1, 2].forEach(id => {
             const dEl = document.getElementById(`date-${id}`);
@@ -1367,7 +1390,7 @@
             if (cEl) cEl.innerText = timeFormatted;
 
             const noticeTextEl = document.getElementById(`notice-text-${id}`);
-            if (noticeTextEl) noticeTextEl.innerText = boatData[id].notice || "현재 정상 운항 중입니다.";
+            if (noticeTextEl) noticeTextEl.innerText = boatData[id].notice || "현재 정상 운항 중입니다. ";
 
             const gDur = document.getElementById(`g-dur-${id}`);
             const gCourse = document.getElementById(`g-course-${id}`);
@@ -1463,6 +1486,9 @@
                 const flightTime = new Date(); flightTime.setHours(tH, tM, 0, 0);
                 const diffMins = (flightTime.getTime() - now.getTime()) / 60000;
 
+                // 선박별 설정된 소요시간 가져오기 (기본값 20분)
+                const duration = parseInt(boatData[id].duration) || 20;
+
                 let rowClass = "";
                 let statusText = "";
                 let statusClass = "";
@@ -1492,13 +1518,18 @@
                         statusClass = "text-boarding-close";
                     }
                 } else {
-                    // 자동 상태 판별 로직
-                    if (diffMins < -30) {
-                        statusText = "종료";
-                        rowClass = "row-ended";
-                        statusClass = "text-ended-box";
+                    // 변경된 소요시간(duration)을 기준으로 동적 상태 판별 로직 적용
+                    if (diffMins < -duration) {
+                        if (booked > 0) {
+                            statusText = "운항종료";
+                            rowClass = "row-ended";
+                            statusClass = "text-ended-box";
+                        } else {
+                            statusText = "종료";
+                            rowClass = "row-ended";
+                            statusClass = "text-ended-box";
+                        }
                     } else if (diffMins <= 0) {
-                        // 출발 시간이 지났을 때, 발권 인원이 0명 이하이면 '종료'로 표시[cite: 1]
                         if (booked <= 0) {
                             statusText = "종료";
                             rowClass = "row-ended";
@@ -1509,7 +1540,6 @@
                             statusClass = "text-blue";
                         }
                     } else if (diffMins <= 5) {
-                        // 발권 인원이 0명 이하인 경우 탑승마감 대신 '티켓발권가능' 상태 유지
                         if (booked <= 0) {
                             statusText = "티켓발권가능";
                             rowClass = "row-available-bg";
@@ -1520,7 +1550,6 @@
                             statusClass = "text-boarding-close";
                         }
                     } else if (diffMins <= 10) {
-                        // 발권 인원이 0명 이하인 경우 탑승시작 대신 '티켓발권가능' 상태 유지
                         if (booked <= 0) {
                             statusText = "티켓발권가능";
                             rowClass = "row-available-bg";
@@ -1531,7 +1560,6 @@
                             statusClass = "text-boarding-start";
                         }
                     } else if (diffMins <= 15) {
-                        // 발권 인원이 0명 이하인 경우 티켓발권종료 대신 '티켓발권가능' 상태 유지
                         if (booked <= 0) {
                             statusText = "티켓발권가능";
                             rowClass = "row-available-bg";
@@ -1666,6 +1694,9 @@
 
                 const popRadio = document.querySelector(`input[name="popup_mode"][value="${configData.popupMode || 'on'}"]`);
                 if (popRadio) popRadio.checked = true;
+
+                const popTargetScreenRadio = document.querySelector(`input[name="popup_target_screen"][value="${configData.popupTargetScreen || 'all'}"]`);
+                if (popTargetScreenRadio) popTargetScreenRadio.checked = true;
 
                 const manualRadio = document.querySelector(`input[name="popup_manual_switch"][value="${configData.popupManualSwitch || 'forced_off'}"]`);
                 if (manualRadio) manualRadio.checked = true;
