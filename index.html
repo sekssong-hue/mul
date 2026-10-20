@@ -13,7 +13,7 @@
 
     <style>
         /* ==========================================================================
-           [CSS] 테마 스타일 및 전역 색상 변수 설정 (:root)
+           [CSS] 전역 색상 변수 설정 (:root) - 테마 색상 및 UI 디자인 변수 정의
            ========================================================================== */
         :root {
             --primary-dark: #002d5a;        /* 일괄 변경 버튼 등 주요 어두운 파란색[cite: 1] */
@@ -43,6 +43,7 @@
             --popup-highlight: #ff4d4d;     /* 긴급 팝업 설정 강조색 (밝은 빨간색)[cite: 1] */
         }
 
+        /* [CSS] 기본 레이아웃 및 본문 설정 */
         body {
             font-family: 'Pretendard', -apple-system, sans-serif;
             background-color: var(--bg-color);
@@ -54,6 +55,7 @@
 
         .main-container { display: flex; gap: 10px; flex: 1; min-height: 0; }
         
+        /* [CSS] 선박별 카드 영역 스타일 */
         .boat-section {
             flex: 1; background: var(--card-bg); border-radius: 15px;
             display: flex; flex-direction: column; overflow: hidden;
@@ -61,6 +63,7 @@
             position: relative;
         }
 
+        /* [CSS] 우측 설정 및 관리 사이드바 영역 */
         #right-sidebar {
             width: 320px; background-color: #1e222b; padding: 15px;
             display: flex; flex-direction: column; gap: 15px; border-radius: 15px;
@@ -83,6 +86,7 @@
         .btn-open-guest:hover { filter: brightness(1.1); }
         .btn-reset-all { background-color: #ff4d4d !important; color: white !important; }
 
+        /* [CSS] 알람 및 사운드 설정 토글 컨테이너 스타일 */
         .alarm-toggle-container {
             display: flex; flex-direction: column; gap: 10px; background: #282e38; 
             padding: 12px; border-radius: 8px; border: 1px solid #444; width: 100%;
@@ -132,6 +136,7 @@
 
         .box-title-sm { color: #fff; font-size: 15px; font-weight: bold; text-align: center; margin-bottom: 2px; }
 
+        /* [CSS] 선박 상단 헤더 (타이틀 및 시계) 디자인 */
         .boat-header { 
             padding: 10px 15px; color: white; 
             display: flex; align-items: center; justify-content: space-between; 
@@ -156,6 +161,7 @@
         .boat-date { font-size: clamp(20px, 3vw, 39px); font-weight: 700; color: rgba(255,255,255,1); line-height: 1.1; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
         .boat-clock { font-size: clamp(24px, 4vw, 47px); font-weight: 900; font-family: 'monospace'; line-height: 1.1; color: #ffffff !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.6); }
 
+        /* [CSS] 선박 제어 및 설정 영역 */
         .setting-area { background: #f8f9fa; padding: 12px; border-bottom: 1px solid #ddd; display: flex; flex-direction: column; gap: 8px; }
         .setting-area .setting-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .setting-row input[type="text"], .setting-row input[type="number"] { padding: 0 10px; font-size: 20px; border: 1px solid #ccc; border-radius: 6px; height: 50px; box-sizing: border-box; }
@@ -195,6 +201,7 @@
         .notice-title { font-size: 22px; font-weight: 800; color: #d63031; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
         .notice-content { font-size: clamp(20px, 3.5vw, 30px); font-weight: 900; color: #2d3436; line-height: 1.3; white-space: normal; word-break: break-all; }
 
+        /* [CSS] 시간표 테이블 및 행 상태 디자인 */
         .table-wrapper { flex: 1; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; table-layout: auto; } 
         th { background: #eee; padding: 12px 4px; border-bottom: 3px solid #ddd; position: sticky; top: 0; z-index: 10; font-size: clamp(18px, 2.5vw, 30px); font-weight: 900; white-space: nowrap; }
@@ -305,6 +312,7 @@
         
         .mode-v .main-container { flex-direction: row !important; }
 
+        /* [CSS] 긴급 전체화면 팝업 오버레이 스타일 */
         .emergency-fullscreen-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background-color: rgba(0, 0, 0, 0.95); z-index: 999999;
@@ -349,6 +357,7 @@
 
         .emergency-popup-footer { font-size: 32px; font-weight: bold; color: #666; background: #f5f5f5; padding: 15px 30px; border-radius: 15px; display: inline-block; }
         
+        /* [CSS] 애니메이션 효과 (깜빡임, 펄스 등) */
         @keyframes textBlinker { 0% { opacity: 1.0; } 50% { opacity: 0.35; } 100% { opacity: 1.0; } }
         @keyframes alarmStrongBlinker {
             0% { background-color: #ff1251 !important; color: #ffffff !important; }
@@ -404,6 +413,7 @@
             }
         }
 
+        /* [CSS] 네트워크 오프라인 알림 배너 스타일 */
         #offline-banner {
             display: none;
             position: fixed;
@@ -426,8 +436,10 @@
 </head>
 <body id="main-body">
 
+    <!-- 네트워크 연결 끊김 경고 배너 -->
     <div id="offline-banner">⚠️ 네트워크 연결 끊김 - 재연결 시도 중...</div>
 
+    <!-- 긴급 전체화면 공지 팝업 오버레이 -->
     <div id="emergency-overlay" class="emergency-fullscreen-overlay">
         <div id="emergency-popup-inner-box" class="emergency-popup-box">
             <div id="emergency-popup-title-area" class="emergency-popup-header">
@@ -440,7 +452,7 @@
     </div>
 
     <div class="main-container">
-        <!-- 김시민 1호 -->
+        <!-- [HTML] 김시민 1호 메인 섹션 -->
         <div class="boat-section" id="section-1">
             <div class="boat-header boat3-title">
                 <div class="boat-title-area">
@@ -462,6 +474,7 @@
                 <div class="info-item">●운항코스 : <span class="info-val" id="g-course-1">-</span></div>
             </div>
 
+            <!-- 1호 설정 입력 영역 (시간표, 정원, 소요시간, 코스, 공지) -->
             <div class="setting-area">
                 <div class="setting-row">
                     <input type="text" id="time-input-1" placeholder="시간표 (쉼표 구분)" style="flex: 1;">
@@ -494,6 +507,7 @@
                 </div>
             </div>
 
+            <!-- 1호 시간표 현황 테이블 -->
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -508,6 +522,7 @@
                 </table>
             </div>
 
+            <!-- 1호 관리자 제어 패널 (예약인원 수정 및 상태 강제변경) -->
             <div class="admin-panel">
                 <div class="control-row-single">
                     <div class="custom-multiselect">
@@ -531,7 +546,7 @@
             <span id="page-indicator-1" class="page-badge">[-]</span>
         </div>
 
-        <!-- 김시민 2호 -->
+        <!-- [HTML] 김시민 2호 메인 섹션 -->
         <div class="boat-section" id="section-2">
             <div class="boat-header boat4-title">
                 <div class="boat-title-area">
@@ -553,6 +568,7 @@
                 <div class="info-item">●운항코스 : <span class="info-val" id="g-course-2">-</span></div>
             </div>
 
+            <!-- 2호 설정 입력 영역 -->
             <div class="setting-area">
                 <div class="setting-row">
                     <input type="text" id="time-input-2" placeholder="시간표 (쉼표 구분)" style="flex: 1;">
@@ -585,6 +601,7 @@
                 </div>
             </div>
 
+            <!-- 2호 시간표 현황 테이블 -->
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -599,6 +616,7 @@
                 </table>
             </div>
 
+            <!-- 2호 관리자 제어 패널 -->
             <div class="admin-panel">
                 <div class="control-row-single">
                     <div class="custom-multiselect">
@@ -623,7 +641,7 @@
         </div>
     </div>
 
-    <!-- 우측 제어 사이드바 -->
+    <!-- 우측 제어 사이드바 (알람, 방송, 화면전환, 팝업 설정 등) -->
     <div id="right-sidebar">
         <div id="sidebar-title">⚙️ 시스템 설정 및 관리</div>
         
@@ -633,6 +651,7 @@
             <button class="btn-open-guest btn-reset-all" onclick="confirmResetAll()">⚠️ 전체 데이터 초기화</button>
         </div>
 
+        <!-- 알람 사운드 설정 영역 -->
         <div class="alarm-toggle-container">
             <div class="alarm-radio-row">
                 <label><input type="radio" name="alarm_sound" value="on" checked onchange="handleAlarmToggle()"> 🔊 알람 ON</label>
@@ -654,6 +673,7 @@
             </div>
         </div>
 
+        <!-- TTS 음성 안내방송 설정 영역 -->
         <div class="alarm-toggle-container" style="border-color: var(--tts-highlight);">
             <div class="alarm-radio-row">
                 <label><input type="radio" name="tts_broadcast" class="tts-accent" value="on" checked onchange="handleTtsToggle()"> 📢 방송 ON</label>
@@ -675,6 +695,7 @@
             </div>
         </div>
 
+        <!-- 자동 화면전환기 설정 영역 -->
         <div class="alarm-toggle-container" style="border-color: var(--rotation-highlight);">
             <div class="box-title-sm" style="color: var(--rotation-highlight);">📺 자동 화면전환기 설정</div>
             <div class="alarm-radio-row">
@@ -702,6 +723,7 @@
             </div>
         </div>
 
+        <!-- 긴급 전체화면 공지 팝업 설정 영역 -->
         <div class="alarm-toggle-container" style="border-color: var(--popup-highlight);">
             <div class="box-title-sm" style="color: var(--popup-highlight);">🚨 긴급 전체화면 공지 팝업 설정</div>
             
@@ -741,12 +763,13 @@
     </div>
 
 <!-- ==========================================================================
-   Firebase 모듈형 SDK 스크립트 연결 및 통합 로직
+   [JavaScript] Firebase 모듈 연동 및 실시간 데이터 처리 로직
    ========================================================================== -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+    // Firebase 연동 설정 객체
     const firebaseConfig = {
         apiKey: "AIzaSyASAWsxM_6x5iFFme8wqePiFzNytsNOF5E",
         authDomain: "mulbitnaru930.firebaseapp.com",
@@ -761,6 +784,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    // 네트워크 상태 감지 이벤트 (온/오프라인 배너 토글)
     window.addEventListener('online', () => {
         document.getElementById('offline-banner').classList.remove('active');
     });
@@ -768,6 +792,7 @@
         document.getElementById('offline-banner').classList.add('active');
     });
 
+    // PWA Service Worker 등록
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js').catch(err => {
@@ -776,15 +801,17 @@
         });
     }
 
+    // 기본 선박 데이터 초기값 구조
     const defaultBoatData = {
         1: { capacity: 25, duration: 20, course: "망진나루 ↔ 진주성(촉석루)", notice: "현재 정상 운항 중입니다.", times: ["13:15", "14:15", "15:15", "16:15", "17:15", "19:15", "20:15", "21:15"], seats: {}, customStatus: {} },
         2: { capacity: 30, duration: 20, course: "망진나루 ↔ 진주성(촉석루)", notice: "현재 정상 운항 중입니다.", times: ["13:00", "14:00", "15:00", "16:00", "17:00", "19:00", "20:00", "21:00"], seats: {}, customStatus: {} }
     };
 
+    // 기본 시스템 설정 데이터 초기값 구조
     const defaultConfigData = {
         lastDate: "",
         alarmMinutes: 10,
-        alarmSeconds: 30,
+        alarmSeconds: 20,
         pageIntervalSeconds: 5,
         ttsBroadcast: "on",
         ttsMinutes: 5,
@@ -804,6 +831,7 @@
     let boatData = JSON.parse(JSON.stringify(defaultBoatData));
     let configData = JSON.parse(JSON.stringify(defaultConfigData));
 
+    // 알람, 방송, 팝업 상태 제어용 변수들
     let playedAlarms = {};
     let playedBroadcasts = {};
     let playedEmergencyPopups = {};
@@ -816,6 +844,7 @@
         2: { currentPage: 1, lastRotationTime: Date.now() }
     };
 
+    // URL 파라미터 분석 (손님용/근무자용 화면 모드 구분)
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('mode'); 
     if (mode === 'guest_h') document.body.classList.add('is-guest', 'mode-h'); 
@@ -824,6 +853,7 @@
     const isCustomerGuest = (mode === 'guest_h'); // 순수 손님용 화면(guest_h) 여부 판별
     const isWorker = (mode === 'guest_v'); // 근무자용 화면(guest_v) 여부 판별
 
+    // 팝업 시간 선택 셀렉트박스 옵션 동적 생성
     function buildPopupTimeSelectOptions() {
         const hourSelect = document.getElementById('popup-hour');
         const minuteSelect = document.getElementById('popup-minute');
@@ -841,6 +871,7 @@
     }
     buildPopupTimeSelectOptions();
 
+    // Firebase 데이터 저장 함수들
     function saveBoatData() {
         set(ref(db, 'namgang/boatData'), boatData);
     }
@@ -850,12 +881,14 @@
         set(ref(db, 'namgang/configData'), configData);
     }
 
+    // [함수] 긴급 팝업 수동 토글 변경 처리
     window.handleManualPopupToggle = function(val) {
         if (isGuest) return;
         configData.popupManualSwitch = val;
         saveConfigData();
     };
 
+    // [함수] 사이드바 알람 및 환경 설정 값 저장
     window.saveAlarmConfig = function() {
         if (isGuest) return; 
 
@@ -903,6 +936,7 @@
         saveConfigData();
     };
 
+    // [함수] 시간 선택 드롭다운 토글 제어
     window.toggleDropdown = function(id) {
         if(isGuest) return; 
         const list = document.getElementById(`list-${id}`);
@@ -911,6 +945,7 @@
         if(!isShow) list.classList.add('show');
     };
 
+    // [함수] 선택된 시간 개수에 따라 드롭다운 버튼 텍스트 갱신
     window.updateSelectBtnText = function(id) {
         const checked = Array.from(document.querySelectorAll(`.chk-${id}:checked`));
         const btn = document.getElementById(`select-btn-${id}`);
@@ -920,6 +955,7 @@
         else btn.innerText = checked.length + "개 선택됨";
     };
 
+    // [함수] 전체 데이터 초기화 확인 및 실행
     window.confirmResetAll = function() {
         if (confirm("🚨 전체 데이터를 초기화하시겠습니까?\n모든 선박의 정보가 복구됩니다.")) {
             boatData = JSON.parse(JSON.stringify(defaultBoatData));
@@ -929,6 +965,7 @@
         }
     };
 
+    // [함수] 선박 추가 정보 (정원, 소요시간, 코스) 반영
     window.applyExtraInfo = function(id) {
         const cap = parseInt(document.getElementById(`cap-direct-${id}`).value);
         const dur = parseInt(document.getElementById(`dur-direct-${id}`).value);
@@ -939,12 +976,14 @@
         saveBoatData(); updateUI(); alert("정보가 변경되었습니다.");
     };
 
+    // [함수] 실시간 공지사항 적용
     window.applyNotice = function(id) {
         const text = document.getElementById(`notice-direct-${id}`).value;
         boatData[id].notice = text || "현재 정상 운항 중입니다.";
         saveBoatData(); updateUI(); alert(`${id}호의 실시간 공지사항이 반영되었습니다.`);
     };
 
+    // [함수] 공지사항 삭제
     window.deleteNotice = function(id) {
         if(confirm(`${id}호의 실시간 공지사항을 삭제하시겠습니까?`)) {
             boatData[id].notice = "현재 정상 운항 중입니다.";
@@ -954,12 +993,14 @@
         }
     };
 
+    // [함수] 시간표 수동 설정 적용
     window.updateSettings = function(id) {
         const timeStr = document.getElementById(`time-input-${id}`).value;
         if (timeStr) boatData[id].times = timeStr.split(',').map(s => s.trim());
         saveBoatData(); updateUI(); alert("시간표가 적용되었습니다.");
     };
 
+    // [함수] 시간표 자동 생성 마법사 (위저드)
     window.wizard = function(id) {
         const start = prompt("시작 시간 (예: 10:00)", "10:00"); if (!start) return;
         const gap = prompt("간격(분)", "60"), count = prompt("총 횟수", "10");
@@ -971,6 +1012,7 @@
         boatData[id].times = newTimes; saveBoatData(); updateUI();
     };
 
+    // [함수] 관리자 패널 변경 사항 적용 (예약인원 및 상태 일괄 변경)
     window.applyChanges = function(id) {
         const checkedNodes = document.querySelectorAll(`.chk-${id}:checked`);
         const input = document.getElementById('input-' + id).value;
@@ -997,6 +1039,7 @@
         alert("선택한 시간의 운항 상태가 성공적으로 변경되었습니다.");
     };
 
+    // [함수] 개별 예약 인원 증감 조절 (+ / - 버튼)
     window.adjust = function(id, time, amt) {
         if (!boatData[id].seats) boatData[id].seats = {};
         let cur = boatData[id].seats[time] || 0, next = cur + amt, cap = boatData[id].capacity;
@@ -1013,6 +1056,7 @@
         }
     };
 
+    // [함수] 개별 선박 데이터 리셋
     window.resetBoat = function(id) {
         if(confirm('해당 선박의 현황을 초기화할까요?')) {
             boatData[id].seats = {}; boatData[id].customStatus = {}; boatData[id].notice = "현재 정상 운항 중입니다."; 
@@ -1020,25 +1064,30 @@
         }
     };
 
+    // [함수] 손님용/근무자용 별도 팝업 창 오픈
     window.openGuestWindow = function(type) {
         window.open(window.location.pathname + `?mode=guest_${type}`, `GuestWin_${type}_` + Date.now(), 'width=1200,height=900');
     };
 
+    // [함수] 알람 사운드 토글 OFF 처리
     window.handleAlarmToggle = function() {
         const option = document.querySelector('input[name="alarm_sound"]:checked');
         if (option && option.value === 'off') { stopAllAlarms(); updateUI(); }
     };
 
+    // [함수] TTS 방송 토글 OFF 처리
     window.handleTtsToggle = function() {
         window.saveAlarmConfig(); 
         const ttsOption = document.querySelector('input[name="tts_broadcast"]:checked');
         if (ttsOption && ttsOption.value === 'off') { stopAllTtsBroadcasts(); updateUI(); }
     };
 
+    // [함수] 화면 전환기 토글 변경 처리
     window.handleRotationToggle = function() {
         window.saveAlarmConfig(); updateUI();
     };
 
+    // [함수] 개별 시각 알람 확인/해제
     window.dismissAlarm = function(id, time) {
         const alarmKey = `${id}-${time}`;
         if (alarmSoundIntervals[alarmKey]) { clearInterval(alarmSoundIntervals[alarmKey]); delete alarmSoundIntervals[alarmKey]; }
@@ -1046,12 +1095,14 @@
         updateUI();
     };
 
+    // [함수] 개별 TTS 안내방송 확인/해제
     window.dismissTtsBroadcast = function(id, time) {
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         activeTtsBroadcasts[id] = activeTtsBroadcasts[id].filter(t => t !== time);
         updateUI();
     };
 
+    // Web Audio API를 활용한 단일 비프음 신호 생성
     function playSingleBeepSignal(ctx, nowTime) {
         const osc1 = ctx.createOscillator(); const gain1 = ctx.createGain();
         osc1.type = 'sine'; osc1.frequency.setValueAtTime(587.33, nowTime);
@@ -1064,6 +1115,7 @@
         osc2.connect(gain2); gain2.connect(ctx.destination); osc2.start(nowTime + 0.15); osc2.stop(nowTime + 0.6);
     }
 
+    // 반복 알람 루프 시작 함수
     function startInfiniteAlarmLoop(id, time) {
         if (!activeVisualAlarms[id].includes(time)) activeVisualAlarms[id].push(time);
         updateUI(); 
@@ -1089,16 +1141,19 @@
         } catch(e) { console.log("오디오 디바이스 에러"); }
     }
 
+    // 모든 알람 중지
     function stopAllAlarms() {
         for (let key in alarmSoundIntervals) clearInterval(alarmSoundIntervals[key]);
         alarmSoundIntervals = {}; activeVisualAlarms = { 1: [], 2: [] };
     }
 
+    // 모든 TTS 방송 중지
     function stopAllTtsBroadcasts() {
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         activeTtsBroadcasts = { 1: [], 2: [] };
     }
 
+    // 출발 전 설정 시간(예: 10분 전) 도달 시 시각/청각 알람 트리거 체크
     function checkTenMinutesAlarm(id, times) {
         if (isGuest) return; 
         const option = document.querySelector('input[name="alarm_sound"]:checked');
@@ -1125,6 +1180,7 @@
         });
     }
 
+    // TTS 음성 안내방송 조건 체크 함수
     function checkTtsSpeechBroadcast(id, times) {
         if (isGuest) return; 
         const ttsOption = document.querySelector('input[name="tts_broadcast"]:checked');
@@ -1166,6 +1222,7 @@
         });
     }
 
+    // 브라우저 내장 SpeechSynthesis API를 통한 음성 출력 실행
     function executeNativeTTS(phrase, remainingLoops, id, time) {
         if (!('speechSynthesis' in window)) return;
         if (remainingLoops <= 0 || !activeTtsBroadcasts[id].includes(time)) { window.dismissTtsBroadcast(id, time); return; }
@@ -1192,6 +1249,7 @@
         window.speechSynthesis.speak(utterance);
     }
 
+    // 긴급 공지 팝업 스케줄 체크 및 제어 함수
     function checkEmergencyPopupSchedule() {
         const manualSwitchSetting = configData.popupManualSwitch || 'forced_off';
         const msgBox = document.getElementById('emergency-popup-msg');
@@ -1265,6 +1323,7 @@
         }
     }
 
+    // 자정(날짜 변경) 시 데이터 자동 초기화 체크
     function checkMidnightReset() {
         const today = new Date().toLocaleDateString();
         const lastDate = configData.lastDate;
@@ -1283,6 +1342,7 @@
         }
     }
 
+    // [함수] 메인 UI 갱신 및 상태 판별 핵심 함수
     function updateUI() {
         const now = new Date();
         const year = now.getFullYear();
@@ -1356,14 +1416,12 @@
             let isRotationActiveForThisMode = false;
             if (rotationMode === "on") {
                 if (mode === 'guest_h' && targetGuest) isRotationActiveForThisMode = true;
-                /* 근무자용(v) 화면은 관리자가 사이드바에서 "2번 화면 근무자용 적용"을 체크했을 때만 자동전환 활성화 */
                 if (mode === 'guest_v' && targetWorker) isRotationActiveForThisMode = true;
             }
 
             const totalCount = times.length;
             const pageIndicator = document.getElementById(`page-indicator-${id}`);
 
-            /* 10개 초과이면서 해당 모드에 자동전환이 켜져 있을 때만 페이지네이션 분할 적용 */
             if (isGuest && totalCount > 10 && isRotationActiveForThisMode) {
                 const totalPages = Math.ceil(totalCount / 10);
                 let pStat = guestPageStatus[id];
@@ -1406,6 +1464,7 @@
                 let remainText = remain;
                 let remainClass = "remain-count";
 
+                // 관리자 강제 상태 설정값이 있는 경우 우선 적용
                 if (customStat !== "auto") {
                     statusText = customStat;
                     if (customStat === "운항없음") {
@@ -1428,14 +1487,22 @@
                         statusClass = "text-boarding-close";
                     }
                 } else {
+                    // 자동 상태 판별 로직
                     if (diffMins < -30) {
                         statusText = "운항종료";
                         rowClass = "row-ended";
                         statusClass = "text-ended-box";
                     } else if (diffMins <= 0) {
-                        statusText = "운 항 중";
-                        rowClass = "row-sailing-bg";
-                        statusClass = "text-blue";
+                        // [수정 핵심 반영] 출발 시간이 지났을 때, 발권 인원이 0명 이하이면 '운항종료'로 표시[cite: 1]
+                        if (booked <= 0) {
+                            statusText = "종 료";
+                            rowClass = "row-ended";
+                            statusClass = "text-ended-box";
+                        } else {
+                            statusText = "운 항 중";
+                            rowClass = "row-sailing-bg";
+                            statusClass = "text-blue";
+                        }
                     } else if (diffMins <= 5) {
                         statusText = "탑승마감";
                         rowClass = "row-boarding-close-solid";
@@ -1531,6 +1598,7 @@
         checkEmergencyPopupSchedule();
     }
 
+    // Firebase 실시간 데이터 동기화 리스너 등록 (선박 데이터)
     const boatDataRef = ref(db, 'namgang/boatData');
     onValue(boatDataRef, (snapshot) => {
         const val = snapshot.val();
@@ -1546,6 +1614,7 @@
         }
     });
 
+    // Firebase 실시간 데이터 동기화 리스너 등록 (환경 설정 데이터)
     const configDataRef = ref(db, 'namgang/configData');
     onValue(configDataRef, (snapshot) => {
         const val = snapshot.val();
@@ -1588,12 +1657,14 @@
         }
     });
 
+    // 드롭다운 외부 클릭 시 닫기 처리
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.custom-multiselect')) {
             document.querySelectorAll('.checkbox-list').forEach(el => el.classList.remove('show'));
         }
     });
 
+    // 1초마다 시계 및 상태 UI 실시간 갱신 인터벌 실행
     setInterval(() => {
         updateUI();
     }, 1000);
