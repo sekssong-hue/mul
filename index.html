@@ -111,18 +111,104 @@
         .btn-open-guest:hover { filter: brightness(1.1); }
         .btn-reset-all { background-color: #ff4d4d !important; color: white !important; }
 
-        /* [CSS] 엑셀 업로드 영역 스타일 */
+        /* [CSS] 프리셋 및 엑셀 업로드 영역 스타일 */
         .excel-upload-container {
             display: flex; flex-direction: column; gap: 8px; background: #1b382b; 
             padding: 12px; border-radius: 8px; border: 1px solid var(--excel-btn-bg); width: 100%;
             box-sizing: border-box; text-align: center;
         }
+        .preset-container {
+            display: flex; flex-direction: column; gap: 8px; background: #1a2a3a; 
+            padding: 12px; border-radius: 8px; border: 1px solid #2c7be5; width: 100%;
+            box-sizing: border-box; text-align: center;
+        }
+        .preset-btn-group { display: flex; gap: 6px; }
+        .btn-preset {
+            flex: 1; padding: 10px 4px; font-size: 14px; font-weight: bold; border: none; border-radius: 6px;
+            cursor: pointer; transition: all 0.2s; color: #fff; background: #2c7be5; touch-action: manipulation;
+        }
+        .btn-preset:hover { filter: brightness(1.15); }
+        .btn-preset.active { background: var(--highlight); color: #000; box-shadow: 0 0 8px var(--highlight); }
+
         .btn-excel-upload {
             background-color: var(--excel-btn-bg); color: #ffffff; border: none; padding: 12px;
             font-size: 17px; font-weight: bold; border-radius: 8px; cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;
         }
         .btn-excel-upload:hover { filter: brightness(1.15); }
+
+        /* [CSS] 카카오톡 스타일 실시간 채팅 메모장 영역 */
+        .chat-container {
+            display: flex; flex-direction: column; background: #171a21; 
+            border-radius: 10px; border: 1px solid #00ffcc; width: 100%;
+            height: 280px; box-sizing: border-box; overflow: hidden;
+            transition: border-color 0.3s ease;
+        }
+        .chat-container.chat-alert-border {
+            border-color: #ff4d4d !important;
+            animation: borderPulse 0.8s infinite alternate;
+        }
+        @keyframes borderPulse {
+            from { box-shadow: 0 0 4px #ff4d4d; }
+            to { box-shadow: 0 0 16px #ff4d4d; }
+        }
+
+        .chat-header-title {
+            background: #252a34; color: #00ffcc; font-size: 14px; font-weight: bold;
+            padding: 8px 10px; text-align: center; border-bottom: 1px solid #333;
+        }
+        .chat-messages-box {
+            flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;
+            background: #11141a;
+        }
+        .chat-msg-row {
+            display: flex; flex-direction: column; max-width: 85%;
+        }
+        .chat-msg-row.admin { align-self: flex-end; align-items: flex-end; }
+        .chat-msg-row.worker { align-self: flex-start; align-items: flex-start; }
+
+        .chat-sender { font-size: 11px; color: #888; margin-bottom: 2px; }
+        .chat-bubble {
+            padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: bold;
+            word-break: break-all; white-space: pre-wrap; line-height: 1.3;
+        }
+        .chat-msg-row.admin .chat-bubble { background: #00ffcc; color: #000; border-top-right-radius: 2px; }
+        .chat-msg-row.worker .chat-bubble { background: #2c7be5; color: #fff; border-top-left-radius: 2px; }
+        .chat-time { font-size: 10px; color: #666; margin-top: 2px; }
+
+        .chat-input-area {
+            display: flex; background: #1f242d; padding: 8px; gap: 6px; border-top: 1px solid #333;
+        }
+        .chat-input {
+            flex: 1; background: #121418; color: #fff; border: 1px solid #444; border-radius: 6px;
+            padding: 8px; font-size: 13px; font-family: inherit; outline: none;
+        }
+        .chat-input:focus { border-color: #00ffcc; }
+        .btn-chat-send {
+            background-color: #00ffcc; color: #000; border: none; padding: 0 12px;
+            font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; white-space: nowrap;
+        }
+        .btn-chat-send:hover { filter: brightness(1.1); }
+
+        /* 근무자 화면 전용 채팅 보기 영역 배너 */
+        .worker-chat-banner {
+            display: none; background: #1a2332; padding: 10px 15px; border-bottom: 2px solid #00ffcc;
+            flex-direction: column; gap: 6px; box-sizing: border-box; max-height: 150px;
+            transition: all 0.3s ease;
+        }
+        .worker-chat-banner.chat-alert-active {
+            background: #3b1118 !important;
+            border-bottom-color: #ff4d4d !important;
+            animation: bannerBlink 0.8s infinite alternate;
+        }
+        @keyframes bannerBlink {
+            from { background-color: #3b1118; }
+            to { background-color: #611824; }
+        }
+
+        .mode-v .worker-chat-banner { display: flex; }
+        .worker-chat-header { font-size: 15px; font-weight: bold; color: #00ffcc; display: flex; justify-content: space-between; align-items: center; }
+        .worker-chat-scroll { max-height: 90px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding-right: 4px; }
 
         /* [CSS] 알람 및 사운드 설정 토글 컨테이너 스타일 */
         .alarm-toggle-container {
@@ -395,12 +481,17 @@
         .btn-group { display: flex; gap: 4px; }
         
         .btn-adj { 
-            min-width: 52px; min-height: 52px; width: 52px; height: 52px; 
+            min-width: 58px; min-height: 58px; width: 58px; height: 58px; 
             border: 2px solid #bbb; background: #ffffff; 
-            font-size: 28px; font-weight: bold; cursor: pointer; border-radius: 10px; 
+            font-size: 30px; font-weight: bold; cursor: pointer; border-radius: 12px; 
             display: flex; align-items: center; justify-content: center; color: #333 !important;
             touch-action: manipulation;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            transition: transform 0.1s, background-color 0.1s;
+        }
+        .btn-adj:active {
+            transform: scale(0.92);
+            background-color: #e2e8f0;
         }
 
         .status-text { 
@@ -512,7 +603,7 @@
 <body id="main-body">
 
     <!-- 네트워크 연결 끊김 경고 배너 -->
-    <div id="offline-banner">⚠️ 네트워크 연결 끊김 - 재연결 시도 중...</div>
+    <div id="offline-banner">⚠️ 네트워크 연결 끊김 - 로컬 대기열 모드로 전환되었습니다.</div>
 
     <!-- [전체 긴급 공지 팝업] 화면 정중앙 오버레이 -->
     <div id="emergency-overlay" class="emergency-fullscreen-overlay">
@@ -539,6 +630,14 @@
                     <div id="boat-popup-msg-1" class="emergency-popup-body"></div>
                     <div class="emergency-popup-footer">📢 물빛나루쉼터 김시민 1호 매표소</div>
                 </div>
+            </div>
+
+            <!-- 근무자용 화면 상단 카톡 스타일 실시간 채팅 배너 -->
+            <div class="worker-chat-banner" id="worker-chat-banner-1">
+                <div class="worker-chat-header">
+                    <span>💬 관리자 ↔ 근무자 실시간 대화방</span>
+                </div>
+                <div class="worker-chat-scroll" id="worker-chat-scroll-1"></div>
             </div>
 
             <div class="boat-header boat3-title">
@@ -647,6 +746,14 @@
                 </div>
             </div>
 
+            <!-- 근무자용 화면 상단 카톡 스타일 실시간 채팅 배너 -->
+            <div class="worker-chat-banner" id="worker-chat-banner-2">
+                <div class="worker-chat-header">
+                    <span>💬 관리자 ↔ 근무자 실시간 대화방</span>
+                </div>
+                <div class="worker-chat-scroll" id="worker-chat-scroll-2"></div>
+            </div>
+
             <div class="boat-header boat4-title">
                 <div class="boat-title-area">
                     <div class="boat-title">&nbsp;&nbsp;&nbsp;김시민 2호</div>
@@ -753,6 +860,16 @@
             <button class="btn-open-guest btn-reset-all" onclick="confirmResetAll()">⚠️ 전체 데이터 초기화</button>
         </div>
 
+        <!-- 시간표 프리셋 선택 영역 -->
+        <div class="preset-container">
+            <div class="box-title-sm" style="color: #61b3ff;">📅 운항 시간표 프리셋</div>
+            <div class="preset-btn-group">
+                <button id="preset-btn-weekday" class="btn-preset active" onclick="applySchedulePreset('weekday')">평일 모드</button>
+                <button id="preset-btn-weekend" class="btn-preset" onclick="applySchedulePreset('weekend')">주말/공휴일</button>
+                <button id="preset-btn-festival" class="btn-preset" onclick="applySchedulePreset('festival')">축제 기간</button>
+            </div>
+        </div>
+
         <!-- 엑셀 데이터 자동 카운트 업로드 영역 -->
         <div class="excel-upload-container">
             <div class="box-title-sm" style="color: #61d800;">📊 사전예매 엑셀 자동 반영</div>
@@ -760,6 +877,16 @@
             <button class="btn-excel-upload" onclick="document.getElementById('excel-file-input').click()">
                 📁 사전예매자 엑셀 업로드
             </button>
+        </div>
+
+        <!-- 카카오톡 스타일 실시간 채팅 메모장 영역 -->
+        <div class="chat-container" id="admin-chat-container">
+            <div class="chat-header-title">💬 관리자 ↔ 근무자 실시간 대화방</div>
+            <div class="chat-messages-box" id="admin-chat-messages"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input-field" class="chat-input" placeholder="메시지를 입력하세요..." onkeypress="handleChatKeyPress(event)">
+                <button class="btn-chat-send" onclick="sendChatMessage('관리자')">전송</button>
+            </div>
         </div>
 
         <!-- 알람 사운드 설정 영역 -->
@@ -997,21 +1124,65 @@
         });
     }
 
+    // [네트워크 오프라인 로컬 대기열(Queue) 동기화 상태 관리]
+    let isOnlineStatus = navigator.onLine;
+    let pendingOfflineQueue = JSON.parse(localStorage.getItem('kimsimin_pending_queue') || "[]");
+
+    function saveOfflineQueue() {
+        localStorage.setItem('kimsimin_pending_queue', JSON.stringify(pendingOfflineQueue));
+    }
+
+    function processOfflineQueue() {
+        if (!isOnlineStatus || pendingOfflineQueue.length === 0) return;
+
+        const queueCopy = [...pendingOfflineQueue];
+        pendingOfflineQueue = [];
+        saveOfflineQueue();
+
+        queueCopy.forEach(item => {
+            if (item.type === 'seat_adjust') {
+                window.adjust(item.boatId, item.time, item.amt);
+            } else if (item.type === 'boat_data') {
+                saveBoatData();
+            } else if (item.type === 'config_data') {
+                saveConfigData();
+            }
+        });
+    }
+
     window.addEventListener('online', () => {
+        isOnlineStatus = true;
         document.getElementById('offline-banner').classList.remove('active');
         processOfflineQueue();
     });
     window.addEventListener('offline', () => {
+        isOnlineStatus = false;
         document.getElementById('offline-banner').classList.add('active');
     });
 
+    const presetSchedules = {
+        weekday: {
+            1: ["10:15", "11:15", "13:15", "14:15", "15:15", "16:15", "17:15", "19:15", "20:15"],
+            2: ["10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "19:00", "20:00"]
+        },
+        weekend: {
+            1: ["10:15", "11:15", "13:15", "14:15", "15:15", "16:15", "17:15", "18:15", "19:15", "20:15", "21:15"],
+            2: ["10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"]
+        },
+        festival: {
+            1: ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"],
+            2: ["10:30", "11:30", "12:30", "13:30", "14:30", "15:30", "16:30", "17:30", "18:30", "19:30", "20:30", "21:30", "22:30"]
+        }
+    };
+
     const defaultBoatData = {
-        1: { capacity: 25, duration: 20, course: "망진나루 ↔ 진주성(촉석루)", notice: "현재 정상 운항 중입니다.", times: ["10:15", "11:15", "13:15", "14:15", "15:15", "16:15", "17:15", "19:15", "20:15", "21:15"], seats: {}, customStatus: {} },
-        2: { capacity: 30, duration: 20, course: "망진나루 ↔ 진주성(촉석루)", notice: "현재 정상 운항 중입니다.", times: ["10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "19:00", "20:00", "21:00"], seats: {}, customStatus: {} }
+        1: { capacity: 25, duration: 20, course: "망진나루 ↔ 진주성(촉석루)", notice: "현재 정상 운항 중입니다.", times: presetSchedules.weekday[1], seats: {}, customStatus: {} },
+        2: { capacity: 30, duration: 20, course: "망진나루 ↔ 진주성(촉석루)", notice: "현재 정상 운항 중입니다.", times: presetSchedules.weekday[2], seats: {}, customStatus: {} }
     };
 
     const defaultConfigData = {
         lastDate: "",
+        selectedPreset: "weekday",
         alarmMinutes: 10,
         alarmSeconds: 30,
         pageIntervalSeconds: 5,
@@ -1040,6 +1211,8 @@
 
     let boatData = JSON.parse(JSON.stringify(defaultBoatData));
     let configData = JSON.parse(JSON.stringify(defaultConfigData));
+    let chatMessagesList = [];
+    let lastChatMessageCount = 0;
 
     let playedAlarms = {};
     let playedBroadcasts = {};
@@ -1073,60 +1246,92 @@
     buildPopupTimeSelectOptions();
 
     function saveBoatData() {
-        if (!navigator.onLine) {
-            queueOfflineAction('boatData', boatData);
+        if (!isOnlineStatus) {
+            pendingOfflineQueue.push({ type: 'boat_data', timestamp: Date.now() });
+            saveOfflineQueue();
             return;
         }
         set(ref(db, 'namgang/boatData'), boatData)
             .catch((error) => {
                 console.error("선박 데이터 저장 실패:", error);
-                queueOfflineAction('boatData', boatData);
+                pendingOfflineQueue.push({ type: 'boat_data', timestamp: Date.now() });
+                saveOfflineQueue();
             });
     }
 
     function saveConfigData() {
         if (isGuest && !isWorker) return;
-        if (!navigator.onLine) {
-            queueOfflineAction('configData', configData);
+        if (!isOnlineStatus) {
+            pendingOfflineQueue.push({ type: 'config_data', timestamp: Date.now() });
+            saveOfflineQueue();
             return;
         }
         set(ref(db, 'namgang/configData'), configData)
             .catch((error) => {
                 console.error("설정 데이터 저장 실패:", error);
-                queueOfflineAction('configData', configData);
+                pendingOfflineQueue.push({ type: 'config_data', timestamp: Date.now() });
+                saveOfflineQueue();
             });
     }
 
-    function queueOfflineAction(type, data) {
-        try {
-            const queue = JSON.parse(localStorage.getItem('offline_actions_queue') || '[]');
-            queue.push({ type, data, timestamp: Date.now() });
-            localStorage.setItem('offline_actions_queue', JSON.stringify(queue));
-        } catch(e) {
-            console.error("오프라인 큐 저장 실패", e);
-        }
-    }
-
-    function processOfflineQueue() {
-        try {
-            const queue = JSON.parse(localStorage.getItem('offline_actions_queue') || '[]');
-            if (queue.length === 0) return;
+    window.applySchedulePreset = function(presetKey) {
+        if (!presetSchedules[presetKey]) return;
+        if (confirm(`'${presetKey === 'weekday' ? '평일' : presetKey === 'weekend' ? '주말/공휴일' : '축제 기간'}' 시간표 프리셋을 적용하시겠습니까?`)) {
+            boatData[1].times = [...presetSchedules[presetKey][1]];
+            boatData[2].times = [...presetSchedules[presetKey][2]];
+            configData.selectedPreset = presetKey;
             
-            queue.forEach(item => {
-                if (item.type === 'boatData') {
-                    set(ref(db, 'namgang/boatData'), item.data);
-                } else if (item.type === 'configData') {
-                    set(ref(db, 'namgang/configData'), item.data);
-                }
-            });
-            localStorage.removeItem('offline_actions_queue');
-            console.log("오프라인 큐 동기화 완료");
-        } catch(e) {
-            console.error("오프라인 큐 동기화 실패", e);
+            saveBoatData();
+            saveConfigData();
+            updateUI();
+            alert("운항 시간표 프리셋이 변경되었습니다.");
         }
+    };
+
+    function updatePresetButtonsUI() {
+        const curPreset = configData.selectedPreset || 'weekday';
+        ['weekday', 'weekend', 'festival'].forEach(p => {
+            const btn = document.getElementById(`preset-btn-${p}`);
+            if (btn) {
+                if (p === curPreset) btn.classList.add('active');
+                else btn.classList.remove('active');
+            }
+        });
     }
 
-    // 엑셀 업로드 파일 처리 및 유연한 컬럼 탐색/당일 날짜 검증 함수
+    // 카톡 스타일 채팅 메시지 전송 함수
+    window.sendChatMessage = function(senderType) {
+        const inputField = document.getElementById('chat-input-field');
+        if (!inputField) return;
+        const text = inputField.value.trim();
+        if (!text) return;
+
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const senderName = (senderType === '관리자') ? '관리자' : '근무자';
+
+        const newMsgRef = push(ref(db, 'namgang/chatMessages'));
+        set(newMsgRef, {
+            sender: senderName,
+            text: text,
+            time: timeStr,
+            timestamp: Date.now()
+        }).then(() => {
+            inputField.value = "";
+        }).catch((err) => {
+            console.error("메시지 전송 실패:", err);
+            alert("메시지 전송에 실패했습니다.");
+        });
+    };
+
+    window.handleChatKeyPress = function(e) {
+        if (e.key === 'Enter') {
+            const sender = isWorker ? '근무자' : '관리자';
+            window.sendChatMessage(sender);
+        }
+    };
+
+    // 엑셀 유연한 헤더 매핑 및 데이터 처리 함수
     window.handleExcelUpload = function(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -1145,14 +1350,20 @@
                     return;
                 }
 
+                // 동적 유연 컬럼 탐색 (탑승시각, 출발시간, 예약시각, 시간 등)
+                let timeColumnKey = null;
                 const sampleRow = jsonRows[0];
-                const keys = Object.keys(sampleRow);
+                const targetKeywords = ['탑승시각', '탑승시간', '출발시간', '출발시각', '예약시간', '시간'];
                 
-                let timeKey = keys.find(k => k.includes('시각') || k.includes('시간') || k.includes('예약시간'));
-                let dateKey = keys.find(k => k.includes('날짜') || k.includes('일자') || k.includes('일시'));
+                for (const key of Object.keys(sampleRow)) {
+                    if (targetKeywords.some(kw => key.includes(kw))) {
+                        timeColumnKey = key;
+                        break;
+                    }
+                }
 
-                if (!timeKey) {
-                    alert("❌ [업로드 실패]\n엑셀 파일에서 '탑승시각' 또는 '시간' 컬럼을 찾을 수 없습니다.");
+                if (!timeColumnKey) {
+                    alert("❌ 엑셀 파일에서 '시간' 또는 '탑승시각' 관련 컬럼을 찾을 수 없습니다.");
                     return;
                 }
 
@@ -1167,26 +1378,27 @@
                 let foundDates = new Set();
 
                 jsonRows.forEach(row => {
-                    let rawVal = String(row[timeKey] || "").trim();
-                    if (!rawVal) return;
+                    const rawTime = row[timeColumnKey];
+                    if (rawTime) {
+                        let fullStr = String(rawTime).trim();
+                        if (fullStr.includes(" ")) {
+                            let parts = fullStr.split(" ");
+                            let datePart = parts[0];
+                            let timePart = parts[1];
 
-                    let datePart = todayStr;
-                    let timePart = rawVal;
+                            foundDates.add(datePart);
 
-                    if (dateKey && row[dateKey]) {
-                        datePart = String(row[dateKey]).trim().substring(0, 10);
-                    } else if (rawVal.includes(" ")) {
-                        let parts = rawVal.split(" ");
-                        datePart = parts[0];
-                        timePart = parts[1];
-                    }
-
-                    foundDates.add(datePart);
-
-                    if (datePart === todayStr || datePart.includes(curMonth + '-' + curDay)) {
-                        hasValidDateData = true;
-                        if (timePart.length >= 5) {
-                            let timeStr = timePart.substring(0, 5);
+                            if (datePart === todayStr) {
+                                hasValidDateData = true;
+                                if (timePart.length >= 5) {
+                                    let timeStr = timePart.substring(0, 5);
+                                    timeCounts[timeStr] = (timeCounts[timeStr] || 0) + 1;
+                                }
+                            }
+                        } else if (fullStr.length >= 5 && fullStr.includes(":")) {
+                            // 날짜 없이 시간만 표기된 엑셀 지원
+                            hasValidDateData = true;
+                            let timeStr = fullStr.substring(0, 5);
                             timeCounts[timeStr] = (timeCounts[timeStr] || 0) + 1;
                         }
                     }
@@ -1195,7 +1407,7 @@
                 if (!hasValidDateData) {
                     let foundDatesArr = Array.from(foundDates);
                     let foundStr = foundDatesArr.length > 0 ? foundDatesArr.join(", ") : "날짜 정보 없음";
-                    alert(`❌ [업로드 실패]\n\n오늘 날짜(${todayStr})와 일치하는 탑승 예약 데이터가 없습니다.\n(감지된 날짜: ${foundStr})`);
+                    alert(`❌ [업로드 실패]\n\n오늘 날짜(${todayStr})와 일치하는 탑승 예약 데이터가 없습니다.\n(감지된 컬럼: [${timeColumnKey}], 감지된 날짜: ${foundStr})`);
                     return;
                 }
 
@@ -1227,9 +1439,9 @@
                 updateUI();
 
                 if (totalUpdated > 0) {
-                    alert(`✅ 금일(${todayStr}) 사전예매자 엑셀 파일이 성공적으로 반영되었습니다!\n\n[반영 내역]\n` + matchSummary.join("\n"));
+                    alert(`✅ 사전예매자 엑셀 파일이 성공적으로 반영되었습니다!\n\n[반영 내역]\n` + matchSummary.join("\n"));
                 } else {
-                    alert(`⚠️ 오늘 날짜 데이터는 확인되었으나, 현재 1호/2호 시간표와 일치하는 출발 시간이 없습니다.`);
+                    alert(`⚠️ 데이터는 확인되었으나, 현재 1호/2호 시간표와 일치하는 출발 시간이 없습니다.`);
                 }
 
             } catch (err) {
@@ -1358,17 +1570,6 @@
     };
 
     window.wizard = function(id) {
-        const choice = prompt("시간 생성 방식을 선택하세요.\n1: 직접 입력\n2: 평일 기본 시간표 적용\n3: 주말/축제 야간 시간표 적용", "1");
-        if (choice === "2") {
-            boatData[id].times = ["10:15", "11:15", "13:15", "14:15", "15:15", "16:15", "17:15", "19:15", "20:15", "21:15"];
-            saveBoatData(); updateUI(); alert("평일 기본 시간표가 적용되었습니다.");
-            return;
-        } else if (choice === "3") {
-            boatData[id].times = ["10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"];
-            saveBoatData(); updateUI(); alert("주말/축제 야간 시간표가 적용되었습니다.");
-            return;
-        }
-
         const start = prompt("시작 시간 (예: 10:00)", "10:00"); if (!start) return;
         const gap = prompt("간격(분)", "60"), count = prompt("총 횟수", "10");
         let [hh, mm] = start.split(':').map(Number), newTimes = [];
@@ -1406,7 +1607,18 @@
     };
 
     window.adjust = function(id, time, amt) {
-        if (navigator.vibrate) navigator.vibrate(50);
+        if (navigator.vibrate) navigator.vibrate(40);
+        
+        if (!isOnlineStatus) {
+            if (!boatData[id].seats) boatData[id].seats = {};
+            let cur = boatData[id].seats[time] || 0;
+            boatData[id].seats[time] = Math.max(0, cur + amt);
+            pendingOfflineQueue.push({ type: 'seat_adjust', boatId: id, time: time, amt: amt, timestamp: Date.now() });
+            saveOfflineQueue();
+            updateUI();
+            return;
+        }
+
         const safeTimeKey = time.replace('.', '_');
         const seatRef = ref(db, `namgang/boatData/${id}/seats/${safeTimeKey}`);
         
@@ -1426,12 +1638,8 @@
             }
         }).catch((error) => {
             console.error("인원 수정 트랜잭션 오류:", error);
-            // 오프라인 fallback
-            if (!boatData[id].seats) boatData[id].seats = {};
-            let current = boatData[id].seats[time] || 0;
-            boatData[id].seats[time] = Math.max(0, current + amt);
-            saveBoatData();
-            updateUI();
+            pendingOfflineQueue.push({ type: 'seat_adjust', boatId: id, time: time, amt: amt, timestamp: Date.now() });
+            saveOfflineQueue();
         });
     };
 
@@ -1744,6 +1952,66 @@
         }
     }
 
+    function renderChatMessages() {
+        const adminBox = document.getElementById('admin-chat-messages');
+        const workerBox1 = document.getElementById('worker-chat-scroll-1');
+        const workerBox2 = document.getElementById('worker-chat-scroll-2');
+        const adminContainer = document.getElementById('admin-chat-container');
+        const workerBanner1 = document.getElementById('worker-chat-banner-1');
+        const workerBanner2 = document.getElementById('worker-chat-banner-2');
+
+        let html = "";
+        if (chatMessagesList && chatMessagesList.length > 0) {
+            chatMessagesList.forEach(m => {
+                const isAdmin = (m.sender === '관리자');
+                const rowClass = isAdmin ? "admin" : "worker";
+                html += `
+                    <div class="chat-msg-row ${rowClass}">
+                        <div class="chat-sender">${m.sender}</div>
+                        <div class="chat-bubble">${m.text}</div>
+                        <div class="chat-time">${m.time}</div>
+                    </div>
+                `;
+            });
+        } else {
+            html = `<div style="text-align: center; color: #666; font-size: 12px; margin-top: 20px;">대화 내용이 없습니다.</div>`;
+        }
+
+        if (adminBox) {
+            adminBox.innerHTML = html;
+            adminBox.scrollTop = adminBox.scrollHeight;
+        }
+        if (workerBox1) {
+            workerBox1.innerHTML = html;
+            workerBox1.scrollTop = workerBox1.scrollHeight;
+        }
+        if (workerBox2) {
+            workerBox2.innerHTML = html;
+            workerBox2.scrollTop = workerBox2.scrollHeight;
+        }
+
+        // 새 메시지 수신 시 알림 진동/시각적 강조 트래킹
+        if (lastChatMessageCount > 0 && chatMessagesList.length > lastChatMessageCount) {
+            const latestMsg = chatMessagesList[chatMessagesList.length - 1];
+            const isMyOwn = (isWorker && latestMsg.sender === '근무자') || (!isWorker && latestMsg.sender === '관리자');
+            
+            if (!isMyOwn) {
+                if (navigator.vibrate) navigator.vibrate([150, 100, 150]);
+                
+                if (adminContainer) adminContainer.classList.add('chat-alert-border');
+                if (workerBanner1) workerBanner1.classList.add('chat-alert-active');
+                if (workerBanner2) workerBanner2.classList.add('chat-alert-active');
+
+                setTimeout(() => {
+                    if (adminContainer) adminContainer.classList.remove('chat-alert-border');
+                    if (workerBanner1) workerBanner1.classList.remove('chat-alert-active');
+                    if (workerBanner2) workerBanner2.classList.remove('chat-alert-active');
+                }, 4000);
+            }
+        }
+        lastChatMessageCount = chatMessagesList.length;
+    }
+
     function updateUI() {
         const now = new Date();
         const year = now.getFullYear();
@@ -1759,6 +2027,8 @@
         const minutesStr = String(now.getMinutes()).padStart(2, '0');
         const secondsStr = String(now.getSeconds()).padStart(2, '0');
         const timeFormatted = `${hoursStr}시 ${minutesStr}분 ${secondsStr}초`;
+
+        updatePresetButtonsUI();
 
         [1, 2].forEach(id => {
             const dEl = document.getElementById(`date-${id}`);
@@ -2092,6 +2362,21 @@
         } else {
             saveConfigData();
         }
+    });
+
+    // 실시간 채팅 메시지 리스너 연동
+    const chatRef = ref(db, 'namgang/chatMessages');
+    onValue(chatRef, (snapshot) => {
+        const val = snapshot.val();
+        chatMessagesList = [];
+        if (val) {
+            Object.keys(val).forEach(key => {
+                chatMessagesList.push({ id: key, ...val[key] });
+            });
+            // 시간순 정렬
+            chatMessagesList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        }
+        renderChatMessages();
     });
 
     document.addEventListener('click', function(e) {
