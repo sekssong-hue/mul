@@ -137,79 +137,6 @@
         }
         .btn-excel-upload:hover { filter: brightness(1.15); }
 
-        /* [CSS] 카카오톡 스타일 실시간 채팅 메모장 영역 */
-        .chat-container {
-            display: flex; flex-direction: column; background: #171a21; 
-            border-radius: 10px; border: 1px solid #00ffcc; width: 100%;
-            height: 280px; box-sizing: border-box; overflow: hidden;
-            transition: border-color 0.3s ease;
-        }
-        .chat-container.chat-alert-border {
-            border-color: #ff4d4d !important;
-            animation: borderPulse 0.8s infinite alternate;
-        }
-        @keyframes borderPulse {
-            from { box-shadow: 0 0 4px #ff4d4d; }
-            to { box-shadow: 0 0 16px #ff4d4d; }
-        }
-
-        .chat-header-title {
-            background: #252a34; color: #00ffcc; font-size: 14px; font-weight: bold;
-            padding: 8px 10px; text-align: center; border-bottom: 1px solid #333;
-        }
-        .chat-messages-box {
-            flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;
-            background: #11141a;
-        }
-        .chat-msg-row {
-            display: flex; flex-direction: column; max-width: 85%;
-        }
-        .chat-msg-row.admin { align-self: flex-end; align-items: flex-end; }
-        .chat-msg-row.worker { align-self: flex-start; align-items: flex-start; }
-
-        .chat-sender { font-size: 11px; color: #888; margin-bottom: 2px; }
-        .chat-bubble {
-            padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: bold;
-            word-break: break-all; white-space: pre-wrap; line-height: 1.3;
-        }
-        .chat-msg-row.admin .chat-bubble { background: #00ffcc; color: #000; border-top-right-radius: 2px; }
-        .chat-msg-row.worker .chat-bubble { background: #2c7be5; color: #fff; border-top-left-radius: 2px; }
-        .chat-time { font-size: 10px; color: #666; margin-top: 2px; }
-
-        .chat-input-area {
-            display: flex; background: #1f242d; padding: 8px; gap: 6px; border-top: 1px solid #333;
-        }
-        .chat-input {
-            flex: 1; background: #121418; color: #fff; border: 1px solid #444; border-radius: 6px;
-            padding: 8px; font-size: 13px; font-family: inherit; outline: none;
-        }
-        .chat-input:focus { border-color: #00ffcc; }
-        .btn-chat-send {
-            background-color: #00ffcc; color: #000; border: none; padding: 0 12px;
-            font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; white-space: nowrap;
-        }
-        .btn-chat-send:hover { filter: brightness(1.1); }
-
-        /* 근무자 화면 전용 채팅 보기 영역 배너 */
-        .worker-chat-banner {
-            display: none; background: #1a2332; padding: 10px 15px; border-bottom: 2px solid #00ffcc;
-            flex-direction: column; gap: 6px; box-sizing: border-box; max-height: 150px;
-            transition: all 0.3s ease;
-        }
-        .worker-chat-banner.chat-alert-active {
-            background: #3b1118 !important;
-            border-bottom-color: #ff4d4d !important;
-            animation: bannerBlink 0.8s infinite alternate;
-        }
-        @keyframes bannerBlink {
-            from { background-color: #3b1118; }
-            to { background-color: #611824; }
-        }
-
-        .mode-v .worker-chat-banner { display: flex; }
-        .worker-chat-header { font-size: 15px; font-weight: bold; color: #00ffcc; display: flex; justify-content: space-between; align-items: center; }
-        .worker-chat-scroll { max-height: 90px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding-right: 4px; }
-
         /* [CSS] 알람 및 사운드 설정 토글 컨테이너 스타일 */
         .alarm-toggle-container {
             display: flex; flex-direction: column; gap: 10px; background: #282e38; 
@@ -632,14 +559,6 @@
                 </div>
             </div>
 
-            <!-- 근무자용 화면 상단 카톡 스타일 실시간 채팅 배너 -->
-            <div class="worker-chat-banner" id="worker-chat-banner-1">
-                <div class="worker-chat-header">
-                    <span>💬 관리자 ↔ 근무자 실시간 대화방</span>
-                </div>
-                <div class="worker-chat-scroll" id="worker-chat-scroll-1"></div>
-            </div>
-
             <div class="boat-header boat3-title">
                 <div class="boat-title-area">
                     <div class="boat-title">&nbsp;&nbsp;&nbsp;김시민 1호</div>
@@ -744,14 +663,6 @@
                     <div id="boat-popup-msg-2" class="emergency-popup-body"></div>
                     <div class="emergency-popup-footer">📢 물빛나루쉼터 김시민 2호 매표소</div>
                 </div>
-            </div>
-
-            <!-- 근무자용 화면 상단 카톡 스타일 실시간 채팅 배너 -->
-            <div class="worker-chat-banner" id="worker-chat-banner-2">
-                <div class="worker-chat-header">
-                    <span>💬 관리자 ↔ 근무자 실시간 대화방</span>
-                </div>
-                <div class="worker-chat-scroll" id="worker-chat-scroll-2"></div>
             </div>
 
             <div class="boat-header boat4-title">
@@ -877,16 +788,6 @@
             <button class="btn-excel-upload" onclick="document.getElementById('excel-file-input').click()">
                 📁 사전예매자 엑셀 업로드
             </button>
-        </div>
-
-        <!-- 카카오톡 스타일 실시간 채팅 메모장 영역 -->
-        <div class="chat-container" id="admin-chat-container">
-            <div class="chat-header-title">💬 관리자 ↔ 근무자 실시간 대화방</div>
-            <div class="chat-messages-box" id="admin-chat-messages"></div>
-            <div class="chat-input-area">
-                <input type="text" id="chat-input-field" class="chat-input" placeholder="메시지를 입력하세요..." onkeypress="handleChatKeyPress(event)">
-                <button class="btn-chat-send" onclick="sendChatMessage('관리자')">전송</button>
-            </div>
         </div>
 
         <!-- 알람 사운드 설정 영역 -->
@@ -1211,8 +1112,6 @@
 
     let boatData = JSON.parse(JSON.stringify(defaultBoatData));
     let configData = JSON.parse(JSON.stringify(defaultConfigData));
-    let chatMessagesList = [];
-    let lastChatMessageCount = 0;
 
     let playedAlarms = {};
     let playedBroadcasts = {};
@@ -1299,38 +1198,6 @@
         });
     }
 
-    // 카톡 스타일 채팅 메시지 전송 함수
-    window.sendChatMessage = function(senderType) {
-        const inputField = document.getElementById('chat-input-field');
-        if (!inputField) return;
-        const text = inputField.value.trim();
-        if (!text) return;
-
-        const now = new Date();
-        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        const senderName = (senderType === '관리자') ? '관리자' : '근무자';
-
-        const newMsgRef = push(ref(db, 'namgang/chatMessages'));
-        set(newMsgRef, {
-            sender: senderName,
-            text: text,
-            time: timeStr,
-            timestamp: Date.now()
-        }).then(() => {
-            inputField.value = "";
-        }).catch((err) => {
-            console.error("메시지 전송 실패:", err);
-            alert("메시지 전송에 실패했습니다.");
-        });
-    };
-
-    window.handleChatKeyPress = function(e) {
-        if (e.key === 'Enter') {
-            const sender = isWorker ? '근무자' : '관리자';
-            window.sendChatMessage(sender);
-        }
-    };
-
     // 엑셀 유연한 헤더 매핑 및 데이터 처리 함수
     window.handleExcelUpload = function(event) {
         const file = event.target.files[0];
@@ -1350,7 +1217,6 @@
                     return;
                 }
 
-                // 동적 유연 컬럼 탐색 (탑승시각, 출발시간, 예약시각, 시간 등)
                 let timeColumnKey = null;
                 const sampleRow = jsonRows[0];
                 const targetKeywords = ['탑승시각', '탑승시간', '출발시간', '출발시각', '예약시간', '시간'];
@@ -1396,7 +1262,6 @@
                                 }
                             }
                         } else if (fullStr.length >= 5 && fullStr.includes(":")) {
-                            // 날짜 없이 시간만 표기된 엑셀 지원
                             hasValidDateData = true;
                             let timeStr = fullStr.substring(0, 5);
                             timeCounts[timeStr] = (timeCounts[timeStr] || 0) + 1;
@@ -1952,66 +1817,6 @@
         }
     }
 
-    function renderChatMessages() {
-        const adminBox = document.getElementById('admin-chat-messages');
-        const workerBox1 = document.getElementById('worker-chat-scroll-1');
-        const workerBox2 = document.getElementById('worker-chat-scroll-2');
-        const adminContainer = document.getElementById('admin-chat-container');
-        const workerBanner1 = document.getElementById('worker-chat-banner-1');
-        const workerBanner2 = document.getElementById('worker-chat-banner-2');
-
-        let html = "";
-        if (chatMessagesList && chatMessagesList.length > 0) {
-            chatMessagesList.forEach(m => {
-                const isAdmin = (m.sender === '관리자');
-                const rowClass = isAdmin ? "admin" : "worker";
-                html += `
-                    <div class="chat-msg-row ${rowClass}">
-                        <div class="chat-sender">${m.sender}</div>
-                        <div class="chat-bubble">${m.text}</div>
-                        <div class="chat-time">${m.time}</div>
-                    </div>
-                `;
-            });
-        } else {
-            html = `<div style="text-align: center; color: #666; font-size: 12px; margin-top: 20px;">대화 내용이 없습니다.</div>`;
-        }
-
-        if (adminBox) {
-            adminBox.innerHTML = html;
-            adminBox.scrollTop = adminBox.scrollHeight;
-        }
-        if (workerBox1) {
-            workerBox1.innerHTML = html;
-            workerBox1.scrollTop = workerBox1.scrollHeight;
-        }
-        if (workerBox2) {
-            workerBox2.innerHTML = html;
-            workerBox2.scrollTop = workerBox2.scrollHeight;
-        }
-
-        // 새 메시지 수신 시 알림 진동/시각적 강조 트래킹
-        if (lastChatMessageCount > 0 && chatMessagesList.length > lastChatMessageCount) {
-            const latestMsg = chatMessagesList[chatMessagesList.length - 1];
-            const isMyOwn = (isWorker && latestMsg.sender === '근무자') || (!isWorker && latestMsg.sender === '관리자');
-            
-            if (!isMyOwn) {
-                if (navigator.vibrate) navigator.vibrate([150, 100, 150]);
-                
-                if (adminContainer) adminContainer.classList.add('chat-alert-border');
-                if (workerBanner1) workerBanner1.classList.add('chat-alert-active');
-                if (workerBanner2) workerBanner2.classList.add('chat-alert-active');
-
-                setTimeout(() => {
-                    if (adminContainer) adminContainer.classList.remove('chat-alert-border');
-                    if (workerBanner1) workerBanner1.classList.remove('chat-alert-active');
-                    if (workerBanner2) workerBanner2.classList.remove('chat-alert-active');
-                }, 4000);
-            }
-        }
-        lastChatMessageCount = chatMessagesList.length;
-    }
-
     function updateUI() {
         const now = new Date();
         const year = now.getFullYear();
@@ -2362,21 +2167,6 @@
         } else {
             saveConfigData();
         }
-    });
-
-    // 실시간 채팅 메시지 리스너 연동
-    const chatRef = ref(db, 'namgang/chatMessages');
-    onValue(chatRef, (snapshot) => {
-        const val = snapshot.val();
-        chatMessagesList = [];
-        if (val) {
-            Object.keys(val).forEach(key => {
-                chatMessagesList.push({ id: key, ...val[key] });
-            });
-            // 시간순 정렬
-            chatMessagesList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-        }
-        renderChatMessages();
     });
 
     document.addEventListener('click', function(e) {
