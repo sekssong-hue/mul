@@ -1,804 +1,2193 @@
 <!DOCTYPE html>
-<html lang="ko" class="dark">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>대한민국 기상청 기반 1주일 날씨 및 해양 대시보드</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        weather: {
-                            blue: '#2563eb',
-                            sky: '#0284c7',
-                            dark: '#0f172a',
-                            cardDark: '#1e293b',
-                            cardBorder: '#334155'
-                        }
-                    }
-                }
+    <title>김시민호 실시간 잔여석 관리 프로그램 (Firebase 실시간 연동)</title>
+
+    <!-- PWA 적용: 웹 앱 Manifest 및 메타 태그 연결 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121418">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- 엑셀 파일 파싱을 위한 SheetJS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        /* ==========================================================================
+           [CSS] 전역 색상 변수 설정 (:root) - 테마 색상 및 UI 디자인 변수 정의
+           ========================================================================== */
+        :root {
+            --primary-dark: #002d5a;        /* 일괄 변경 버튼 등 주요 어두운 파란색 */
+            --boat3-color: #28a745;         /* 1호 타이틀 배경 (초록) */
+            --boat4-color: #2c7be5;         /* 2호 타이틀 배경 (파란) */
+            --bg-color: #121418;            /* 전체 화면 바탕색 (어두운 회색) */
+            --card-bg: #ffffff;             /* 각 선박 섹션의 배경색 (흰색) */
+            --success: #0040ff;             /* 티켓발권 가능 인원 글자색 (파란) */
+            --danger: #e60000;              /* 매진 및 경고 색상 (빨간) */
+
+            --ended-gray: #f0f0f0;          /* 운항 종료 및 중지 행의 배경색 (연회색) */
+            --ended-text-color: #999999;    /* 운항 종료 및 중지 행의 글자색 (흐린 회색) */
+            --dark-green: #006400;          /* 티켓발권종료 박스 배경색 (진녹색) */
+            --yellow-btn: #fbc02d;          /* 설정 변경 버튼 배경색 (노란) */
+            --yellow-btn-border: #f9a825;   /* 설정 변경 버튼 테두리색 */
+
+            --available-bg: #b3e5fc;        /* 예약 가능 행: 선명한 시안/하늘색 (햇빛 가독성 강화) */
+            --sailing-bg: #fff59d;          /* 운항 중 행: 선명한 노란색 */
+            --ticketing-ended-bg: #c8e6c9;  /* 발권 종료 행: 진한 연두/초록색 */
+            --boarding-start-bg: #ffe0b2;   /* 탑승시작 행: 뚜렷한 주황색 */
+            --boarding-close-bg: #fff9c4;   /* 탑승마감 행: 선명한 개나리색 */
+            --soldout-blink-bg: #ff3b30;    /* 매진 행: 눈에 확 띄는 강렬한 다홍/주황 경고 배경 */
+
+            --highlight: #00ffcc;           /* 최상단 바 버튼 강조색 (민트) */
+            --tts-highlight: #ff9f43;       /* 안내방송 설정 강조색 (오렌지) */
+            --rotation-highlight: #00ecff;  /* 화면전환기 설정 강조색 (하늘색) */
+            --popup-highlight: #ff4d4d;     /* 긴급 팝업 설정 강조색 (밝은 빨간색) */
+            --excel-btn-bg: #107c41;        /* 엑셀 업로드 버튼 배경색 (엑셀 대표 초록색) */
+        }
+
+        /* [CSS] 기본 레이아웃 및 본문 설정 */
+        body {
+            font-family: 'Pretendard', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0; padding: 10px; color: #333;
+            display: flex; flex-direction: row; height: 100vh; box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .main-container { display: flex; gap: 10px; flex: 1; min-height: 0; min-width: 0; }
+
+        /* [CSS] 선박별 카드 영역 스타일 */
+        .boat-section {
+            flex: 1; background: var(--card-bg); border-radius: 15px;
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            position: relative;
+            min-width: 0;
+        }
+
+        /* [CSS] 좌우 크기 조절 리사이저 바 */
+        #resizer {
+            width: 8px;
+            background-color: #343a40;
+            cursor: col-resize;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            user-select: none;
+            touch-action: none;
+            flex-shrink: 0;
+            margin: 0 2px;
+        }
+        #resizer:hover, #resizer.resizing {
+            background-color: var(--highlight);
+        }
+
+        /* [CSS] 우측 설정 및 관리 사이드바 영역 */
+        #right-sidebar {
+            width: 320px;
+            min-width: 240px;
+            max-width: 600px;
+            background-color: #1e222b; padding: 15px;
+            display: flex; flex-direction: column; gap: 15px; border-radius: 15px;
+            box-sizing: border-box; border: 1px solid #343a40;
+            overflow-y: auto; z-index: 10;
+            flex-shrink: 0;
+        }
+
+        #sidebar-title {
+            color: #fff; font-size: 20px; font-weight: 900; text-align: center;
+            padding-bottom: 12px; border-bottom: 2px dashed #444; margin-bottom: 5px;
+            line-height: 1.3;
+        }
+
+        .btn-group-top { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .btn-open-guest {
+            background-color: var(--highlight); color: #000; border: none; padding: 12px;
+            font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.2s; touch-action: manipulation;
+        }
+        .btn-open-guest:hover { filter: brightness(1.1); }
+        .btn-reset-all { background-color: #ff4d4d !important; color: white !important; }
+
+        /* [CSS] 프리셋 및 엑셀 업로드 영역 스타일 */
+        .excel-upload-container {
+            display: flex; flex-direction: column; gap: 8px; background: #1b382b; 
+            padding: 12px; border-radius: 8px; border: 1px solid var(--excel-btn-bg); width: 100%;
+            box-sizing: border-box; text-align: center;
+        }
+        .preset-container {
+            display: flex; flex-direction: column; gap: 8px; background: #1a2a3a; 
+            padding: 12px; border-radius: 8px; border: 1px solid #2c7be5; width: 100%;
+            box-sizing: border-box; text-align: center;
+        }
+        .preset-btn-group { display: flex; gap: 6px; }
+        .btn-preset {
+            flex: 1; padding: 10px 4px; font-size: 14px; font-weight: bold; border: none; border-radius: 6px;
+            cursor: pointer; transition: all 0.2s; color: #fff; background: #2c7be5; touch-action: manipulation;
+        }
+        .btn-preset:hover { filter: brightness(1.15); }
+        .btn-preset.active { background: var(--highlight); color: #000; box-shadow: 0 0 8px var(--highlight); }
+
+        .btn-excel-upload {
+            background-color: var(--excel-btn-bg); color: #ffffff; border: none; padding: 12px;
+            font-size: 17px; font-weight: bold; border-radius: 8px; cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-excel-upload:hover { filter: brightness(1.15); }
+
+        /* [CSS] 알람 및 사운드 설정 토글 컨테이너 스타일 */
+        .alarm-toggle-container {
+            display: flex; flex-direction: column; gap: 10px; background: #282e38; 
+            padding: 12px; border-radius: 8px; border: 1px solid #444; width: 100%;
+            box-sizing: border-box;
+        }
+
+        .alarm-radio-row { display: flex; gap: 15px; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .alarm-toggle-container label {
+            color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;
+        }
+
+        .alarm-toggle-container input[type="radio"] {
+            width: 18px; height: 18px; cursor: pointer; accent-color: var(--highlight); margin: 0;
+        }
+        .alarm-toggle-container input[type="radio"].tts-accent { accent-color: var(--tts-highlight); }
+        .alarm-toggle-container input[type="radio"].rotation-accent { accent-color: var(--rotation-highlight); }
+        .alarm-toggle-container input[type="radio"].popup-accent { accent-color: var(--popup-highlight); }
+        .alarm-toggle-container input[type="checkbox"].rotation-accent {
+            width: 18px; height: 18px; cursor: pointer; accent-color: var(--rotation-highlight); margin: 0;
+        }
+
+        .alarm-time-setting {
+            display: flex; flex-direction: column; gap: 8px; color: #ccc; font-size: 15px; font-weight: bold;
+            border-top: 1px solid #444; padding-top: 10px; width: 100%;
+        }
+        .setting-item-row { display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 4px; }
+
+        .alarm-time-setting input[type="number"] {
+            width: 60px; height: 32px; text-align: center; font-size: 16px; font-weight: bold;
+            border: 1px solid var(--highlight); background: #000; color: var(--highlight); border-radius: 4px;
+        }
+        .alarm-time-setting input[type="number"].tts-input { border-color: var(--tts-highlight); color: var(--tts-highlight); }
+        .alarm-time-setting input[type="number"].rotation-input { border-color: var(--rotation-highlight); color: var(--rotation-highlight); }
+        .alarm-time-setting input[type="number"].popup-input { border-color: var(--popup-highlight); color: var(--popup-highlight); }
+
+        .popup-select-container { display: flex; align-items: center; gap: 4px; }
+        .popup-select {
+            width: 58px; height: 32px; font-size: 14px; font-weight: bold; text-align: center;
+            border: 1px solid var(--popup-highlight); background: #000; color: var(--popup-highlight); border-radius: 4px;
+            outline: none; padding-left: 2px;
+        }
+
+        .alarm-time-setting textarea.popup-textarea {
+            width: 100%; height: 55px; font-size: 13px; background: #000; color: #fff; 
+            border: 1px solid #555; border-radius: 4px; padding: 5px; box-sizing: border-box; resize: none;
+        }
+
+        .box-title-sm { color: #fff; font-size: 15px; font-weight: bold; text-align: center; margin-bottom: 2px; }
+
+        /* [CSS] 선박 상단 헤더 (타이틀 및 시계) 디자인 */
+        .boat-header { 
+            padding: 10px 15px; color: white; 
+            display: flex; align-items: center; justify-content: space-between; 
+            position: relative; min-height: 120px; flex-wrap: nowrap;
+        }
+        .boat-title-area { display: flex; align-items: center; gap: 20px; }
+        .boat-title { font-size: clamp(36px, 6vw, 78px); font-weight: 900; letter-spacing: -2px; text-shadow: 3px 3px 6px rgba(0,0,0,0.4); }
+
+        .page-badge {
+            display: none; position: absolute; right: 20px; bottom: 20px;
+            background: rgba(0, 0, 0, 0.85); color: #ffffff; padding: 6px 18px;
+            font-size: 26px; font-weight: bold; border-radius: 30px; border: 2px solid #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6); z-index: 9999;
+        }
+        .is-guest .page-badge { display: inline-block; }
+
+        .boat3-title { background-color: var(--boat3-color); } 
+        .boat4-title { background-color: var(--boat4-color); } 
+
+        .boat-info-right { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+        .boat-date { font-size: clamp(18px, 2.5vw, 35px); font-weight: 700; color: rgba(255,255,255,1); line-height: 1.1; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .boat-clock { font-size: clamp(22px, 3.5vw, 42px); font-weight: 900; line-height: 1.1; color: #ffffff !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.6); }
+
+        /* [CSS] 선박 제어 및 설정 영역 */
+        .setting-area { background: #f8f9fa; padding: 12px; border-bottom: 1px solid #ddd; display: flex; flex-direction: column; gap: 8px; }
+        .setting-area .setting-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .setting-row input[type="text"], .setting-row input[type="number"] { padding: 0 10px; font-size: 20px; border: 1px solid #ccc; border-radius: 6px; height: 50px; box-sizing: border-box; }
+
+        .btn-apply-unified {
+            height: 50px; width: 120px; font-size: 20px !important; cursor: pointer; font-weight: bold; border-radius: 6px;
+            background-color: var(--yellow-btn) !important; color: #000 !important; border: 1px solid var(--yellow-btn-border) !important;
+            display: flex; align-items: center; justify-content: center; white-space: nowrap; touch-action: manipulation;
+        }
+        .btn-action-unified {
+            height: 50px; width: 150px; font-size: 20px !important; cursor: pointer; font-weight: bold; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center; white-space: nowrap; touch-action: manipulation;
+        }
+        .btn-wizard { background-color: #e1f5fe !important; color: #01579b; border: 1px solid #b3e5fc !important; }
+        .btn-section-reset { background-color: #fff0f0 !important; color: #d63031; border: 1px solid #ccc; }
+        .btn-notice-delete { background-color: #ff4d4d !important; color: #fff !important; border: 1px solid #ff3333 !important; }
+
+        .cap-container { display: flex; align-items: center; gap: 5px; background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 0 10px; flex: 1.2; height: 50px; box-sizing: border-box;}
+        .course-container { flex: 2 !important; }
+        .cap-label { font-size: 18px; font-weight: bold; color: #333; white-space: nowrap; }
+        .cap-edit-input { width: 100% !important; border: none !important; text-align: center; font-size: 20px; font-weight: bold; outline: none; background: transparent; }
+        .notice-edit-input { width: 100% !important; border: none !important; text-align: left; font-size: 18px; font-weight: bold; outline: none; background: transparent; resize: none; height: 44px; padding: 10px 0 0 10px; box-sizing: border-box; font-family: inherit; }
+
+        .guest-info-banner { 
+            display: none; background: #f0f7ff; padding: 10px; border-bottom: 2px solid #2c7be5;
+            justify-content: space-around; align-items: center; font-size: 28px; font-weight: 900;
+        }
+        .is-guest .guest-info-banner { display: flex; }
+        .info-item { color: #002d5a; }
+        .info-val { color: #e60000; margin-left: 5px; }
+
+        .notice-view-container {
+            display: none; background: #fffdeb; padding: 15px 20px; border-bottom: 3px dashed #f9a825;
+            min-height: 90px; box-sizing: border-box; flex-direction: column; justify-content: center;
+        }
+        .mode-v .notice-view-container { display: flex; }
+        .notice-title { font-size: 22px; font-weight: 800; color: #d63031; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+        .notice-content { font-size: clamp(20px, 3.5vw, 30px); font-weight: 900; color: #2d3436; line-height: 1.3; white-space: normal; word-break: break-all; }
+
+        /* [CSS] 긴급 전체화면 및 개별 팝업 오버레이 스타일 */
+        .emergency-fullscreen-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.88);
+            z-index: 999999;
+            justify-content: center;
+            align-items: center;
+            padding: 2vw;
+            box-sizing: border-box;
+        }
+        .emergency-fullscreen-overlay.active { display: flex; }
+
+        .emergency-popup-box {
+            width: 100%; 
+            max-width: min(94vw, 1200px);
+            max-height: min(92vh, 900px);
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 6px solid #ff4d4d;
+            animation: popupScaleIn 0.3s ease-in-out;
+        }
+
+        .boat-popup-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .boat-popup-overlay.active { display: flex; }
+
+        .boat-popup-box {
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 6px solid #ff4d4d;
+            animation: popupScaleIn 0.3s ease-in-out;
+        }
+
+        @keyframes popupScaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .popup-customer-theme { border-color: #28a745 !important; }
+        .popup-staff-theme { border-color: #2c7be5 !important; }
+        .popup-global-theme { border-color: #ff4d4d !important; }
+
+        .emergency-popup-header {
+            background-color: #ff4d4d;
+            color: #ffffff;
+            padding: 20px 25px;
+            font-size: clamp(24px, 3.5vw, 40px);
+            font-weight: 900;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .popup-customer-theme .emergency-popup-header { background-color: var(--boat3-color); color: #fff; }
+        .popup-staff-theme .emergency-popup-header { background-color: var(--boat4-color); color: #fff; }
+        .popup-global-theme .emergency-popup-header { background-color: #ff4d4d; color: #fff; }
+
+        .emergency-popup-body {
+            padding: 40px 30px;
+            font-size: clamp(26px, 4.5vw, 55px);
+            font-weight: 900;
+            color: #111111;
+            line-height: 1.5;
+            text-align: center;
+            word-break: break-all;
+            background: #fff;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .emergency-popup-footer {
+            background-color: #f8f9fa;
+            border-top: 2px solid #eee;
+            padding: 15px 25px;
+            font-size: clamp(16px, 2.2vw, 24px);
+            font-weight: bold;
+            color: #555;
+            text-align: center;
+        }
+
+        /* [CSS] 시간표 테이블 및 행 상태 디자인 */
+        .table-wrapper { flex: 1; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; table-layout: auto; } 
+        th { background: #eee; padding: 12px 4px; border-bottom: 3px solid #ddd; position: sticky; top: 0; z-index: 10; font-size: clamp(18px, 2.5vw, 30px); font-weight: 900; white-space: nowrap; }
+
+        td { padding: 8px 4px; text-align: center; border-bottom: 1px solid #eee; font-weight: 900; font-size: clamp(20px, 3vw, 37px); letter-spacing: -1.5px; position: relative; line-height: 1.2; white-space: nowrap; }
+        td:first-child { font-size: clamp(22px, 3.2vw, 40px); font-weight: 900; letter-spacing: -1px; }
+
+        .total-booked-flex { display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+        .remain-count { font-size: clamp(24px, 3.5vw, 45px); font-weight: 900; color: #0040ff; }
+        .text-soldout-zero { color: #ffffff !important; font-size: clamp(26px, 4vw, 48px); }
+        .slash-divider { margin: 0 8px; font-weight: 700; color: #ffffff; font-size: clamp(20px, 3vw, 38px); }
+
+        .over-capacity-text {
+            color: #ff0000 !important;
+            background-color: #ffe6e6;
+            padding: 2px 8px;
+            border-radius: 6px;
+            border: 2px dashed #ff0000;
+            display: inline-block;
+            font-size: clamp(18px, 2.5vw, 32px);
+        }
+
+        .row-available-bg td { background-color: #b3e5fc !important; color: #0d47a1 !important; }
+        .row-sailing-bg td { background-color: #fff59d !important; color: #f57f17 !important; }
+        .row-ticketing-ended-bg td { background-color: #c8e6c9 !important; color: #1b5e20 !important; }
+        .row-boarding-start-bg td { background-color: #ffe0b2 !important; color: #e65100 !important; }
+        .row-boarding-close-solid td { background-color: #fff9c4 !important; color: #f57f17 !important; }
+
+        /* 매진 행 스타일: 진한 다홍/주황 배경에 글자를 흰색으로 확실하게 대비 */
+        tr.row-soldout-blink td { background-color: var(--soldout-blink-bg) !important; }
+        tr.row-soldout-blink td,
+        tr.row-soldout-blink td span,
+        tr.row-soldout-blink td div,
+        tr.row-soldout-blink td .remain-count,
+        tr.row-soldout-blink td .slash-divider { color: #ffffff !important; }
+
+        .is-guest .row-soldout-blink td { animation: textBlinker 1.5s linear infinite; }
+
+        .row-halted-gray-bg td { background-color: var(--ended-gray) !important; color: var(--ended-text-color) !important; }
+        .row-halted-gray-bg .remain-count,
+        .row-halted-gray-bg .slash-divider { color: var(--ended-text-color) !important; }
+
+        .is-guest .row-halted-gray-bg td.line-through-cell {
+            text-decoration: line-through; text-decoration-color: #000000 !important; text-decoration-thickness: 4px; 
+        }
+        .row-ended td { background-color: var(--ended-gray) !important; color: var(--ended-text-color) !important; }
+        .row-ended .remain-count { color: var(--ended-text-color) !important; }
+
+        .status-cell-flex { display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-group { display: flex; gap: 4px; }
+
+        .btn-adj { 
+            min-width: 58px; min-height: 58px; width: 58px; height: 58px; 
+            border: 2px solid #bbb; background: #ffffff; 
+            font-size: 30px; font-weight: bold; cursor: pointer; border-radius: 12px; 
+            display: flex; align-items: center; justify-content: center; color: #333 !important;
+            touch-action: manipulation;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            transition: transform 0.1s, background-color 0.1s;
+        }
+        .btn-adj:active {
+            transform: scale(0.92);
+            background-color: #e2e8f0;
+        }
+
+        .status-text { 
+            font-size: clamp(20px, 3vw, 37px); font-weight: 900; position: relative; z-index: 10; 
+            display: inline-block; line-height: 1.1; white-space: nowrap; 
+            padding: 6px 16px; border-radius: 10px; min-width: 140px; text-align: center;
+            text-decoration: none !important; 
+        }
+
+        .text-ended-box { background-color: #000000 !important; color: #ffffff !important; } 
+        .text-blue { background-color: #ffcc00 !important; color: #000000 !important; border: 2px solid #000000 !important; }       
+        .bg-dark-green-yellow { background-color: var(--dark-green) !important; color: #ffff00 !important; } 
+        .text-available { background-color: #0288d1 !important; color: #ffffff !important; border: 2px solid #01579b !important; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); } 
+        .text-dark-green { background-color: #2e7d32 !important; color: #ffffff !important; border: 2px solid #1b5e20 !important; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .text-maintenance-gray { background-color: #616161 !important; color: #ffffff !important; border: 2px solid #212121 !important; font-weight: 900; } 
+        
+        /* 매진 뱃지 강조 디자인 */
+        .text-soldout { 
+            background-color: #000000 !important; 
+            color: #ff3b30 !important; 
+            border: 2px solid #ffffff !important; 
+            font-weight: 900; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5); 
+        }    
+
+        .text-boarding-start { background-color: #ff9800 !important; color: #000000 !important; border: 2px solid #e65100 !important; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); } 
+        .text-boarding-close { background-color: #fbc02d !important; color: #000000 !important; border: 2px solid #f57f17 !important; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); } 
+
+        .btn-alarm-stop {
+            background-color: #ffffff !important; color: #ff1251 !important; border: 3px solid #000000 !important; 
+            padding: 5px 12px; font-size: 28px !important; font-weight: 900; border-radius: 8px; cursor: pointer; 
+            animation: textBlinker 0.8s linear infinite; box-shadow: 0 4px 10px rgba(0,0,0,0.3); touch-action: manipulation;
+        }
+        .btn-tts-stop {
+            background-color: #ffffff !important; color: #ff8400 !important; border: 3px solid #000000 !important; 
+            padding: 5px 12px; font-size: 28px !important; font-weight: 900; border-radius: 8px; cursor: pointer; 
+            animation: textBlinker 1.2s linear infinite; box-shadow: 0 4px 10px rgba(0,0,0,0.3); touch-action: manipulation;
+        }
+
+        .admin-panel { background: #eee; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .control-row-single { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+        .custom-multiselect { position: relative; flex: 1; height: 55px; min-width: 140px; }
+        .select-btn { width: 100%; height: 100%; padding: 0 10px; font-size: 20px; font-weight: bold; background: white; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; text-align: left; touch-action: manipulation; }
+        .checkbox-list { 
+            display: none; position: absolute; bottom: 56px; left: 0; right: 0;
+            background: white; border: 1px solid #ccc; border-radius: 6px; 
+            max-height: 300px; overflow-y: auto; z-index: 1000; box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
+        }
+        .checkbox-list.show { display: block; }
+
+        .time-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; font-size: 22px; font-weight: bold; border-bottom: 1px solid #eee; cursor: pointer; }
+
+        .admin-panel input, .admin-panel select, .btn-update { flex: 1; min-width: 120px; height: 55px; text-align: center; font-size: 20px; font-weight: bold; border-radius: 6px; border: 1px solid #ccc; }
+        .btn-update { background: var(--primary-dark); color: white; cursor: pointer; border: none; touch-action: manipulation; } 
+
+        .is-guest #right-sidebar,
+        .is-guest #resizer,
+        .is-guest .admin-panel, 
+        .is-guest .setting-area, 
+        .is-guest .btn-group { display: none !important; }
+
+        @media (max-width: 1024px) or (orientation: portrait) {
+            body {
+                flex-direction: column;
+                height: auto;
+                overflow-y: auto;
+            }
+            .main-container {
+                flex-direction: column !important;
+            }
+            #resizer {
+                display: none;
+            }
+            #right-sidebar {
+                width: 100% !important;
+                max-width: none;
+                margin-top: 10px;
+            }
+            .boat-section {
+                min-height: 500px;
+            }
+            .checkbox-list {
+                position: fixed;
+                bottom: 20px;
+                left: 5vw;
+                right: 5vw;
+                width: 90vw;
+                max-height: 50vh;
+                z-index: 1000000;
             }
         }
-    </script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Google Font: Inter & Noto Sans KR -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
+
+        #offline-banner {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #d63031;
+            color: #ffffff;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 900;
+            padding: 12px;
+            z-index: 9999999;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
-        /* Glassmorphism utility */
-        .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .light .glass-card {
-            background: rgba(255, 255, 255, 0.8);
-            border: 1px solid rgba(0, 0, 0, 0.08);
-        }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.5);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 9999px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
+        #offline-banner.active { display: block; }
+
+        @keyframes textBlinker {
+            0% { opacity: 1.0; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1.0; }
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen transition-colors duration-300">
-    <div id="app" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+<body id="main-body">
 
-        <!-- HEADER / NAVIGATION -->
-        <header class="flex flex-col md:flex-row justify-between items-center pb-6 border-b border-slate-800 gap-4">
-            <div class="flex items-center gap-3">
-                <div class="bg-gradient-to-tr from-blue-600 to-sky-400 p-3 rounded-2xl shadow-lg shadow-sky-500/20">
-                    <i class="fa-solid font-bold text-2xl fa-cloud-sun-rain text-white"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-                        기상청 라이브 날씨 & 해양 대시보드
-                    </h1>
-                    <p class="text-xs text-slate-400 flex items-center gap-2">
-                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span id="last-updated">실시간 업데이트 중...</span>
-                    </p>
+    <!-- 네트워크 연결 끊김 경고 배너 -->
+    <div id="offline-banner">⚠️ 네트워크 연결 끊김 - 로컬 대기열 모드로 전환되었습니다.</div>
+
+    <!-- [전체 긴급 공지 팝업] 화면 정중앙 오버레이 -->
+    <div id="emergency-overlay" class="emergency-fullscreen-overlay">
+        <div id="emergency-popup-inner-box" class="emergency-popup-box popup-global-theme">
+            <div class="emergency-popup-header">
+                <span id="emergency-popup-main-title">🚨 긴급 공지사항</span>
+                <span id="emergency-popup-dynamic-time" style="font-size: 1.4rem; font-weight: bold;"></span>
+            </div>
+            <div id="emergency-popup-msg" class="emergency-popup-body"></div>
+            <div class="emergency-popup-footer">📢 물빛나루쉼터 김시민호 매표소</div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- [HTML] 김시민 1호 메인 섹션 -->
+        <div class="boat-section" id="section-1">
+            <!-- 1호 전용 팝업 오버레이 -->
+            <div id="boat-popup-overlay-1" class="boat-popup-overlay">
+                <div class="boat-popup-box popup-customer-theme">
+                    <div class="emergency-popup-header">
+                        <span>🚨 [김시민 1호] 긴급 공지</span>
+                        <span id="boat-popup-time-1" style="font-size: 1.2rem; font-weight: bold;"></span>
+                    </div>
+                    <div id="boat-popup-msg-1" class="emergency-popup-body"></div>
+                    <div class="emergency-popup-footer">📢 물빛나루쉼터 김시민 1호 매표소</div>
                 </div>
             </div>
 
-            <!-- SEARCH & CONTROLS -->
-            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                <!-- Location Selector -->
-                <div class="relative flex-1 sm:w-64">
-                    <i class="fa-solid fa-location-dot absolute left-3 top-1/2 -translate-y-1/2 text-sky-400"></i>
-                    <select id="location-select" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-xl pl-9 pr-8 py-2.5 focus:ring-2 focus:ring-sky-500 focus:outline-none transition appearance-none cursor-pointer">
-                        <option value="jinju">경상남도 진주시 (현재 위치)</option>
-                        <option value="seoul">서울특별시</option>
-                        <option value="busan">부산광역시</option>
-                        <option value="daegu">대구광역시</option>
-                        <option value="incheon">인천광역시</option>
-                        <option value="gwangju">광주광역시</option>
-                        <option value="daejeon">대전광역시</option>
-                        <option value="ulsan">울산광역시</option>
-                        <option value="jeju">제주특별자치도</option>
-                        <option value="changwon">경상남도 창원시</option>
+            <div class="boat-header boat3-title">
+                <div class="boat-title-area">
+                    <div class="boat-title">&nbsp;&nbsp;&nbsp;김시민 1호</div>
+                </div>
+                <div class="boat-info-right">
+                    <div class="boat-date" id="date-1"></div>
+                    <div class="boat-clock" id="clock-1">00시 00분 00초</div>
+                </div>
+            </div>
+
+            <div class="notice-view-container" id="notice-view-container-1">
+                <div class="notice-title">📢 김시민 1호 안내사항</div>
+                <div class="notice-content" id="notice-text-1">현재 정상 운항 중입니다.</div>
+            </div>
+
+            <div class="guest-info-banner" id="guest-banner-1">
+                <div class="info-item">●소요시간 : <span class="info-val" id="g-dur-1">-</span>분</div>
+                <div class="info-item">●운항코스 : <span class="info-val" id="g-course-1">-</span></div>
+            </div>
+
+            <!-- 1호 설정 입력 영역 -->
+            <div class="setting-area">
+                <div class="setting-row">
+                    <input type="text" id="time-input-1" placeholder="시간표 (쉼표 구분)" style="flex: 1;">
+                    <button onclick="updateSettings(1)" class="btn-apply-unified">변경 적용</button>
+                    <button class="btn-action-unified btn-wizard" onclick="wizard(1)">시간 자동 생성</button>
+                </div>
+                <div class="setting-row">
+                    <div class="cap-container">
+                        <span class="cap-label">탑승정원 :</span>
+                        <input type="number" id="cap-direct-1" class="cap-edit-input">
+                    </div>
+                    <div class="cap-container">
+                        <span class="cap-label">소요시간 :</span>
+                        <input type="number" id="dur-direct-1" class="cap-edit-input">
+                    </div>
+                    <div class="cap-container course-container">
+                        <span class="cap-label">운항코스 :</span>
+                        <input type="text" id="course-direct-1" class="cap-edit-input" placeholder="코스명">
+                    </div>
+                    <button class="btn-apply-unified" onclick="applyExtraInfo(1)">변경 적용</button>
+                    <button class="btn-action-unified btn-section-reset" onclick="resetBoat(1)">데이터 리셋</button>
+                </div>
+                <div class="setting-row" style="border-top: 1px dashed #ccc; padding-top: 8px;">
+                    <div class="cap-container" style="flex: 1; height: 50px;">
+                        <span class="cap-label" style="color: #d63031;">📢 1호 공지 :</span>
+                        <textarea id="notice-direct-1" class="notice-edit-input" placeholder="실시간 공지사항 입력"></textarea>
+                    </div>
+                    <button class="btn-apply-unified" onclick="applyNotice(1)">공지 적용</button>
+                    <button class="btn-action-unified btn-notice-delete" onclick="deleteNotice(1)">공지 삭제</button>
+                </div>
+            </div>
+
+            <!-- 1호 시간표 현황 테이블 -->
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>출발시간</th>
+                            <th>총 인원/<br>발권한 인원</th>
+                            <th>티켓발권<br>가능한 인원</th>
+                            <th>운항상태</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-1"></tbody>
+                </table>
+            </div>
+
+            <!-- 1호 관리자 제어 패널 -->
+            <div class="admin-panel">
+                <div class="control-row-single">
+                    <div class="custom-multiselect">
+                        <button class="select-btn" id="select-btn-1" onclick="toggleDropdown(1)">시간 선택</button>
+                        <div class="checkbox-list" id="list-1"></div>
+                    </div>
+                    <input type="number" id="input-1" placeholder="예약인원수">
+                    <select id="status-1">
+                        <option value="auto">자동상태</option>
+                        <option value="운항없음">운항없음</option>
+                        <option value="기상악화 운항중지">기상악화</option>
+                        <option value="수문방류 운항중지">수문방류</option>
+                        <option value="폭죽놀이 운항중지">폭죽놀이</option>
+                        <option value="에너지절약 운항중지">에너지절약</option>
+                        <option value="점 검 중">점검중</option>
                     </select>
-                    <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 pointer-events-none"></i>
+                    <button class="btn-update" onclick="applyChanges(1)">변경 적용</button>
                 </div>
-
-                <!-- API Refresh Button -->
-                <button id="btn-refresh" class="p-2.5 bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-300 rounded-xl transition hover:rotate-180 duration-500" title="새로고침">
-                    <i class="fa-solid fa-arrows-rotate"></i>
-                </button>
-
-                <!-- API Key Config Modal Trigger -->
-                <button id="btn-open-modal" class="px-3.5 py-2.5 bg-sky-600/20 border border-sky-500/30 hover:bg-sky-600/30 text-sky-400 text-xs font-semibold rounded-xl transition flex items-center gap-2">
-                    <i class="fa-solid fa-key"></i>
-                    <span>기상청 API 키 설정</span>
-                </button>
             </div>
-        </header>
 
-        <!-- MAIN NAVIGATION TABS -->
-        <div class="flex border-b border-slate-800 my-6">
-            <button id="tab-btn-weekly" onclick="switchTab('weekly')" class="px-6 py-3 font-semibold text-sm border-b-2 border-sky-400 text-sky-400 flex items-center gap-2 transition">
-                <i class="fa-solid fa-calendar-week"></i>
-                1주일 날씨 예보 (7-Day Forecast)
-            </button>
-            <button id="tab-btn-today" onclick="switchTab('today')" class="px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
-                <i class="fa-solid fa-clock"></i>
-                오늘의 상세 날씨 & 시간별 예보
-            </button>
+            <span id="page-indicator-1" class="page-badge">[-]</span>
         </div>
 
-        <!-- TAB CONTENT 1: WEEKLY FORECAST -->
-        <div id="tab-weekly" class="space-y-6">
-            <!-- CURRENT LOCATION HERO BANNER -->
-            <div class="glass-card rounded-3xl p-6 md:p-8 relative overflow-hidden bg-gradient-to-r from-slate-900/90 via-sky-950/40 to-slate-900/90">
-                <div class="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
-                    <i class="fa-solid fa-cloud-sun-rain text-[240px]"></i>
-                </div>
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div>
-                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 text-sky-400 text-xs font-medium border border-sky-500/20 mb-3">
-                            <i class="fa-solid fa-shield-halved"></i> 기상청 통합 주간예보 & 해양 조석 정보
-                        </div>
-                        <h2 id="weekly-location-name" class="text-3xl font-extrabold text-white mb-2">경상남도 진주시 1주일 예보</h2>
-                        <p class="text-slate-400 text-sm">앞으로 7일 동안의 기온 추이, 강수 확률, 일출/일몰 및 물때 현황을 실시간으로 확인하세요.</p>
+        <!-- [HTML] 김시민 2호 메인 섹션 -->
+        <div class="boat-section" id="section-2">
+            <!-- 2호 전용 팝업 오버레이 -->
+            <div id="boat-popup-overlay-2" class="boat-popup-overlay">
+                <div class="boat-popup-box popup-staff-theme">
+                    <div class="emergency-popup-header">
+                        <span>🚨 [김시민 2호] 긴급 공지</span>
+                        <span id="boat-popup-time-2" style="font-size: 1.2rem; font-weight: bold;"></span>
                     </div>
-                    <div class="flex items-center gap-6 bg-slate-900/60 p-4 rounded-2xl border border-slate-800/80">
-                        <div class="text-center px-2">
-                            <p class="text-xs text-slate-400 mb-1">주간 평균 기온</p>
-                            <p id="avg-temp" class="text-2xl font-bold text-sky-400">18.5°C</p>
-                        </div>
-                        <div class="h-8 w-px bg-slate-800"></div>
-                        <div class="text-center px-2">
-                            <p class="text-xs text-slate-400 mb-1">최고 강수 확률</p>
-                            <p id="max-pop" class="text-2xl font-bold text-indigo-400">80%</p>
-                        </div>
-                    </div>
+                    <div id="boat-popup-msg-2" class="emergency-popup-body"></div>
+                    <div class="emergency-popup-footer">📢 물빛나루쉼터 김시민 2호 매표소</div>
                 </div>
             </div>
 
-            <!-- SUNRISE / SUNSET & TIDE INFORMATION SECTION -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Sunrise / Sunset -->
-                <div class="glass-card p-5 rounded-2xl border border-slate-800 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="p-3 bg-amber-500/10 text-amber-400 rounded-xl text-xl">
-                            <i class="fa-solid fa-sun font-bold"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs text-slate-400">일출 / 일몰</p>
-                            <p id="sun-times" class="text-base font-bold text-slate-100">06:48 / 17:32</p>
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-mountain-sun text-slate-600 text-2xl"></i>
+            <div class="boat-header boat4-title">
+                <div class="boat-title-area">
+                    <div class="boat-title">&nbsp;&nbsp;&nbsp;김시민 2호</div>
                 </div>
-
-                <!-- Moonrise / Moon Phase -->
-                <div class="glass-card p-5 rounded-2xl border border-slate-800 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="p-3 bg-indigo-500/10 text-indigo-300 rounded-xl text-xl">
-                            <i class="fa-solid fa-moon"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs text-slate-400">월출 / 월령 (달 모양)</p>
-                            <p id="moon-times" class="text-base font-bold text-slate-100">14:10 / 상현달</p>
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-regular fa-moon text-slate-600 text-2xl"></i>
-                </div>
-
-                <!-- Current Tide Status -->
-                <div class="glass-card p-5 rounded-2xl border border-slate-800 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl text-xl">
-                            <i class="fa-solid fa-water"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs text-slate-400">오늘 물때 (조석)</p>
-                            <p id="tide-level-name" class="text-base font-bold text-cyan-300">7물 (사리구간)</p>
-                        </div>
-                    </div>
-                    <span id="tide-type-badge" class="px-2 py-1 bg-cyan-500/20 text-cyan-300 text-xs rounded-md font-semibold">사리</span>
-                </div>
-
-                <!-- Tide High/Low Times -->
-                <div class="glass-card p-5 rounded-2xl border border-slate-800 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="p-3 bg-teal-500/10 text-teal-400 rounded-xl text-xl">
-                            <i class="fa-solid fa-arrows-up-down font-bold"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs text-slate-400">만조(▲) / 간조(▼)</p>
-                            <p id="tide-times" class="text-xs font-semibold text-slate-200">▲ 05:20 (820) | ▼ 11:45 (110)</p>
-                            <p id="tide-times-2" class="text-xs font-semibold text-slate-200">▲ 17:40 (850) | ▼ 23:55 (90)</p>
-                        </div>
-                    </div>
+                <div class="boat-info-right">
+                    <div class="boat-date" id="date-2"></div>
+                    <div class="boat-clock" id="clock-2">00시 00분 00초</div>
                 </div>
             </div>
 
-            <!-- 7-DAY CARDS GRID -->
-            <div>
-                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-calendar-days text-sky-400"></i>
-                    7일간 일별 상세 날씨 & 물때 현황
-                </h3>
-                <div id="weekly-cards-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                    <!-- Dynamic insertion via JavaScript -->
+            <div class="notice-view-container" id="notice-view-container-2">
+                <div class="notice-title">📢 김시민 2호 안내사항</div>
+                <div class="notice-content" id="notice-text-2">현재 정상 운항 중입니다. </div>
+            </div>
+
+            <div class="guest-info-banner" id="guest-banner-2">
+                <div class="info-item">●소요시간 : <span class="info-val" id="g-dur-2">-</span>분</div>
+                <div class="info-item">●운항코스 : <span class="info-val" id="g-course-2">-</span></div>
+            </div>
+
+            <!-- 2호 설정 입력 영역 -->
+            <div class="setting-area">
+                <div class="setting-row">
+                    <input type="text" id="time-input-2" placeholder="시간표 (쉼표 구분)" style="flex: 1;">
+                    <button onclick="updateSettings(2)" class="btn-apply-unified">변경 적용</button>
+                    <button class="btn-action-unified btn-wizard" onclick="wizard(2)">시간 자동 생성</button>
+                </div>
+                <div class="setting-row">
+                    <div class="cap-container">
+                        <span class="cap-label">탑승정원 :</span>
+                        <input type="number" id="cap-direct-2" class="cap-edit-input">
+                    </div>
+                    <div class="cap-container">
+                        <span class="cap-label">소요시간 :</span>
+                        <input type="number" id="dur-direct-2" class="cap-edit-input">
+                    </div>
+                    <div class="cap-container course-container">
+                        <span class="cap-label">운항코스 :</span>
+                        <input type="text" id="course-direct-2" class="cap-edit-input" placeholder="코스명">
+                    </div>
+                    <button class="btn-apply-unified" onclick="applyExtraInfo(2)">변경 적용</button>
+                    <button class="btn-action-unified btn-section-reset" onclick="resetBoat(2)">데이터 리셋</button>
+                </div>
+                <div class="setting-row" style="border-top: 1px dashed #ccc; padding-top: 8px;">
+                    <div class="cap-container" style="flex: 1; height: 50px;">
+                        <span class="cap-label" style="color: #d63031;">📢 2호 공지 :</span>
+                        <textarea id="notice-direct-2" class="notice-edit-input" placeholder="실시간 공지사항 입력"></textarea>
+                    </div>
+                    <button class="btn-apply-unified" onclick="applyNotice(2)">공지 적용</button>
+                    <button class="btn-action-unified btn-notice-delete" onclick="deleteNotice(2)">공지 삭제</button>
                 </div>
             </div>
 
-            <!-- WEEKLY CHART SECTION -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Temperature Trend Line Chart -->
-                <div class="lg:col-span-2 glass-card rounded-2xl p-6 border border-slate-800">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-base font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-chart-line text-sky-400"></i>
-                            주간 최고/최저 기온 변화 추이 (°C)
-                        </h3>
-                        <span class="text-xs text-slate-400 bg-slate-800 px-2.5 py-1 rounded-md">기상청 단기/중기 예보</span>
-                    </div>
-                    <div class="h-64 relative">
-                        <canvas id="weeklyTempChart"></canvas>
-                    </div>
-                </div>
+            <!-- 2호 시간표 현황 테이블 -->
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>출발시간</th>
+                            <th>총 인원/<br>발권한 인원</th>
+                            <th>티켓발권<br>가능한 인원</th>
+                            <th>운항상태</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-2"></tbody>
+                </table>
+            </div>
 
-                <!-- Precipitation Bar Chart -->
-                <div class="glass-card rounded-2xl p-6 border border-slate-800">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-base font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-umbrella text-indigo-400"></i>
-                            강수 확률 (%)
-                        </h3>
-                        <span class="text-xs text-slate-400 bg-slate-800 px-2.5 py-1 rounded-md">일별 강우/강설</span>
+            <!-- 2호 관리자 제어 패널 -->
+            <div class="admin-panel">
+                <div class="control-row-single">
+                    <div class="custom-multiselect">
+                        <button class="select-btn" id="select-btn-2" onclick="toggleDropdown(2)">시간 선택</button>
+                        <div class="checkbox-list" id="list-2"></div>
                     </div>
-                    <div class="h-64 relative">
-                        <canvas id="weeklyPopChart"></canvas>
-                    </div>
+                    <input type="number" id="input-2" placeholder="예약인원수">
+                    <select id="status-2">
+                        <option value="auto">자동상태</option>
+                        <option value="운항없음">운항없음</option>
+                        <option value="기상악화 운항중지">기상악화</option>
+                        <option value="수문방류 운항중지">수문방류</option>
+                        <option value="폭죽놀이 운항중지">폭죽놀이</option>
+                        <option value="에너지절약 운항중지">에너지절약</option>
+                        <option value="점 검 중">점검중</option>
+                    </select>
+                    <button class="btn-update" onclick="applyChanges(2)">변경 적용</button>
                 </div>
             </div>
 
-            <!-- WEEKLY SUMMARY METRICS -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="glass-card p-5 rounded-2xl border border-slate-800 flex items-center gap-4">
-                    <div class="p-3 bg-amber-500/10 text-amber-400 rounded-xl text-xl">
-                        <i class="fa-solid fa-sun"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs text-slate-400">주간 최다 맑은 날</p>
-                        <p id="sunny-days-count" class="text-lg font-bold text-slate-100">4일간 화창함</p>
-                    </div>
-                </div>
-                <div class="glass-card p-5 rounded-2xl border border-slate-800 flex items-center gap-4">
-                    <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl text-xl">
-                        <i class="fa-solid fa-cloud-rain"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs text-slate-400">비/눈 예보일</p>
-                        <p id="rainy-days-count" class="text-lg font-bold text-slate-100">2일 비 예상</p>
-                    </div>
-                </div>
-                <div class="glass-card p-5 rounded-2xl border border-slate-800 flex items-center gap-4">
-                    <div class="p-3 bg-teal-500/10 text-teal-400 rounded-xl text-xl">
-                        <i class="fa-solid fa-wind"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs text-slate-400">평균 바람 세기</p>
-                        <p id="avg-wind-speed" class="text-lg font-bold text-slate-100">3.2 m/s (약한 바람)</p>
-                    </div>
-                </div>
-            </div>
+            <span id="page-indicator-2" class="page-badge">[-]</span>
         </div>
-
-        <!-- TAB CONTENT 2: TODAY / HOURLY FORECAST -->
-        <div id="tab-today" class="space-y-6 hidden">
-            <!-- TODAY HERO METRICS -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Current Big Card -->
-                <div class="glass-card rounded-3xl p-6 bg-gradient-to-br from-sky-900/40 via-slate-900 to-slate-900 flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <span class="px-3 py-1 bg-sky-500/20 text-sky-300 text-xs font-medium rounded-full">실시간 관측</span>
-                                <h3 id="current-location-text" class="text-xl font-bold text-white mt-2">경상남도 진주시</h3>
-                            </div>
-                            <i id="current-weather-icon" class="fa-solid fa-sun text-5xl text-amber-400"></i>
-                        </div>
-                        <div class="mt-6">
-                            <div id="current-temp" class="text-6xl font-extrabold text-white tracking-tight">21°</div>
-                            <p id="current-weather-desc" class="text-lg font-medium text-slate-300 mt-1">맑음 (체감 22.4°)</p>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-2 mt-6 pt-4 border-t border-slate-800/80 text-center">
-                        <div>
-                            <p class="text-xs text-slate-400">최저 기온</p>
-                            <p id="today-min-temp" class="text-sm font-bold text-blue-400">12°C</p>
-                        </div>
-                        <div>
-                            <p class="text-xs text-slate-400">최고 기온</p>
-                            <p id="today-max-temp" class="text-sm font-bold text-rose-400">23°C</p>
-                        </div>
-                        <div>
-                            <p class="text-xs text-slate-400">습도</p>
-                            <p id="today-humidity" class="text-sm font-bold text-sky-400">48%</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- AIR QUALITY & ENVIRONMENT METRICS -->
-                <div class="lg:col-span-2 glass-card rounded-3xl p-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <!-- PM10 -->
-                    <div class="bg-slate-900/60 p-4 rounded-2xl border border-slate-800/80 flex flex-col justify-between">
-                        <div class="flex justify-between text-slate-400 text-xs">
-                            <span>미세먼지</span>
-                            <i class="fa-solid fa-dust"></i>
-                        </div>
-                        <div class="my-2">
-                            <p id="val-pm10" class="text-2xl font-bold text-emerald-400">32 <span class="text-xs font-normal text-slate-400">㎍/㎥</span></p>
-                            <span id="badge-pm10" class="inline-block text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded mt-1">좋음</span>
-                        </div>
-                        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                            <div id="bar-pm10" class="bg-emerald-400 h-full w-[30%] transition-all duration-500"></div>
-                        </div>
-                    </div>
-
-                    <!-- PM2.5 -->
-                    <div class="bg-slate-900/60 p-4 rounded-2xl border border-slate-800/80 flex flex-col justify-between">
-                        <div class="flex justify-between text-slate-400 text-xs">
-                            <span>초미세먼지</span>
-                            <i class="fa-solid fa-smog"></i>
-                        </div>
-                        <div class="my-2">
-                            <p id="val-pm25" class="text-2xl font-bold text-emerald-400">15 <span class="text-xs font-normal text-slate-400">㎍/㎥</span></p>
-                            <span id="badge-pm25" class="inline-block text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded mt-1">좋음</span>
-                        </div>
-                        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                            <div id="bar-pm25" class="bg-emerald-400 h-full w-[25%] transition-all duration-500"></div>
-                        </div>
-                    </div>
-
-                    <!-- UV Index -->
-                    <div class="bg-slate-900/60 p-4 rounded-2xl border border-slate-800/80 flex flex-col justify-between">
-                        <div class="flex justify-between text-slate-400 text-xs">
-                            <span>자외선 지수</span>
-                            <i class="fa-solid fa-sun"></i>
-                        </div>
-                        <div class="my-2">
-                            <p id="val-uv" class="text-2xl font-bold text-amber-400">6 <span class="text-xs font-normal text-slate-400">UV</span></p>
-                            <span class="inline-block text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded mt-1">높음</span>
-                        </div>
-                        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                            <div class="bg-amber-400 h-full w-[60%]"></div>
-                        </div>
-                    </div>
-
-                    <!-- Wind Speed -->
-                    <div class="bg-slate-900/60 p-4 rounded-2xl border border-slate-800/80 flex flex-col justify-between">
-                        <div class="flex justify-between text-slate-400 text-xs">
-                            <span>풍속 / 풍향</span>
-                            <i class="fa-solid fa-compass"></i>
-                        </div>
-                        <div class="my-2">
-                            <p id="val-wind" class="text-2xl font-bold text-sky-400">2.8 <span class="text-xs font-normal text-slate-400">m/s</span></p>
-                            <span class="inline-block text-[10px] bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded mt-1">남서풍</span>
-                        </div>
-                        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                            <div class="bg-sky-400 h-full w-[35%]"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- HOURLY FORECAST HORIZONTAL SCROLL -->
-            <div class="glass-card rounded-2xl p-6 border border-slate-800">
-                <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-clock font-normal text-sky-400"></i>
-                    시간별 예보 (24시간 라이브 변동)
-                </h3>
-                <div id="hourly-forecast-container" class="flex gap-4 overflow-x-auto pb-3 pt-1">
-                    <!-- Hourly item populated via JS -->
-                </div>
-            </div>
-        </div>
-
     </div>
 
-    <!-- CONFIG API KEY MODAL -->
-    <div id="modal-api" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
-        <div class="bg-slate-900 border border-slate-700 rounded-3xl p-6 sm:p-8 max-w-lg w-full mx-4 shadow-2xl relative">
-            <button id="btn-close-modal" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
-                <i class="fa-solid fa-xmark text-xl"></i>
+    <!-- 좌우 너비 조절 리사이저 바 -->
+    <div id="resizer"></div>
+
+    <!-- 우측 제어 사이드바 -->
+    <div id="right-sidebar">
+        <div id="sidebar-title">⚙️ 시스템 설정 및 관리</div>
+
+        <div class="btn-group-top">
+            <button class="btn-open-guest" onclick="openGuestWindow('h')">📺 1번 화면 손님용 오픈</button>
+            <button class="btn-open-guest" onclick="openGuestWindow('v')" style="background-color: #ffcc00;">📺 2번 화면 근무자용 오픈</button>
+            <button class="btn-open-guest btn-reset-all" onclick="confirmResetAll()">⚠️ 전체 데이터 초기화</button>
+        </div>
+
+        <!-- 시간표 프리셋 선택 영역 -->
+        <div class="preset-container">
+            <div class="box-title-sm" style="color: #61b3ff;">📅 운항 시간표 프리셋</div>
+            <div class="preset-btn-group">
+                <button id="preset-btn-weekday" class="btn-preset active" onclick="applySchedulePreset('weekday')">평일 모드</button>
+                <button id="preset-btn-weekend" class="btn-preset" onclick="applySchedulePreset('weekend')">주말/공휴일</button>
+                <button id="preset-btn-festival" class="btn-preset" onclick="applySchedulePreset('festival')">축제 기간</button>
+            </div>
+        </div>
+
+        <!-- 엑셀 데이터 자동 카운트 업로드 영역 -->
+        <div class="excel-upload-container">
+            <div class="box-title-sm" style="color: #61d800;">📊 사전예매 엑셀 자동 반영</div>
+            <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelUpload(event)">
+            <button class="btn-excel-upload" onclick="document.getElementById('excel-file-input').click()">
+                📁 사전예매자 엑셀 업로드
             </button>
-            <div class="flex items-center gap-3 mb-4">
-                <div class="p-3 bg-sky-500/10 text-sky-400 rounded-xl">
-                    <i class="fa-solid fa-key text-xl"></i>
+        </div>
+
+        <!-- 알람 사운드 설정 영역 -->
+        <div class="alarm-toggle-container">
+            <div class="alarm-radio-row">
+                <label><input type="radio" name="alarm_sound" value="on" checked onchange="handleAlarmToggle()"> 🔊 알람 ON</label>
+                <label><input type="radio" name="alarm_sound" value="off" onchange="handleAlarmToggle()"> 🔇 OFF</label>
+            </div>
+            <div class="alarm-time-setting">
+                <div class="setting-item-row">
+                    <span>출발 전 설정:</span>
+                    <div>
+                        <input type="number" id="alarm-trigger-minutes" value="10" min="1" max="60" onchange="saveAlarmConfig()"> 분 전 알람 🔔
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-xl font-bold text-white">공공데이터포털 API 키 설정</h3>
-                    <p class="text-xs text-slate-400">기상청 & 국립해양조사원 서비스 API</p>
+                <div class="setting-item-row">
+                    <span>알람 지속 시간:</span>
+                    <div>
+                        <input type="number" id="alarm-duration-seconds" value="30" min="1" max="300" onchange="saveAlarmConfig()"> 초 동안 울림
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TTS 음성 안내방송 설정 영역 -->
+        <div class="alarm-toggle-container" style="border-color: var(--tts-highlight);">
+            <div class="alarm-radio-row">
+                <label><input type="radio" name="tts_broadcast" class="tts-accent" value="on" checked onchange="handleTtsToggle()"> 📢 방송 ON</label>
+                <label><input type="radio" name="tts_broadcast" class="tts-accent" value="off" onchange="handleTtsToggle()"> 🔇 OFF</label>
+            </div>
+            <div class="alarm-time-setting">
+                <div class="setting-item-row">
+                    <span>방송 시작 조건:</span>
+                    <div>
+                        출발 <input type="number" id="tts-trigger-minutes" class="tts-input" value="5" min="1" max="60" onchange="saveAlarmConfig()"> 분 전
+                    </div>
+                </div>
+                <div class="setting-item-row" style="color: var(--tts-highlight);">
+                    <span>방송 반복 횟수:</span>
+                    <div>
+                        <input type="number" id="tts-repeat-count" class="tts-input" value="2" min="1" max="5" onchange="saveAlarmConfig()"> 번 반복 🗣️
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 자동 화면전환기 설정 영역 -->
+        <div class="alarm-toggle-container" style="border-color: var(--rotation-highlight);">
+            <div class="box-title-sm" style="color: var(--rotation-highlight);">📺 자동 화면전환기 설정</div>
+            <div class="alarm-radio-row">
+                <label><input type="radio" name="rotation_mode" class="rotation-accent" value="on" checked onchange="handleRotationToggle()"> ▶️ ON</label>
+                <label><input type="radio" name="rotation_mode" class="rotation-accent" value="off" onchange="handleRotationToggle()"> ⏸️ OFF</label>
+            </div>
+            <div class="alarm-time-setting" style="border-top: 1px solid #444; padding-top: 10px;">
+                <div class="setting-item-row" style="margin-bottom: 5px;">
+                    <span style="color: #fff;">대상 화면 선택:</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px; padding-left: 5px;">
+                    <label style="font-size: 14px; font-weight: normal; color: #ccc;">
+                        <input type="checkbox" id="rotation-target-guest" class="rotation-accent" checked onchange="saveAlarmConfig()"> 1번 화면 손님용 적용
+                    </label>
+                    <label style="font-size: 14px; font-weight: normal; color: #ccc;">
+                        <input type="checkbox" id="rotation-target-worker" class="rotation-accent" checked onchange="saveAlarmConfig()"> 2번 화면 근무자용 적용
+                    </label>
+                </div>
+                <div class="setting-item-row" style="border-top: 1px dashed #444; padding-top: 8px; margin-top: 5px;">
+                    <span>화면 전환 주기:</span>
+                    <div>
+                        <input type="number" id="page-interval-seconds" class="rotation-input" value="5" min="2" max="60" onchange="saveAlarmConfig()"> 초 간격
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 긴급 전체화면 공지 팝업 설정 영역 -->
+        <div class="alarm-toggle-container" style="border-color: var(--popup-highlight);">
+            <div class="box-title-sm" style="color: var(--popup-highlight);">🚨 [전체 중앙] 긴급 공지 팝업 설정</div>
+
+            <div style="background: #1a1e24; padding: 8px; border-radius: 6px; border: 1px dashed var(--popup-highlight); margin-bottom: 3px;">
+                <div class="box-title-sm" style="color: #fff; font-size: 13px; margin-bottom: 5px;">📺 표출 대상 화면 선택</div>
+                <div style="display: flex; justify-content: space-around; gap: 5px;">
+                    <label style="font-size: 14px; font-weight: normal; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="all" checked onchange="saveAlarmConfig()"> 전체</label>
+                    <label style="font-size: 14px; font-weight: normal; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="guest" onchange="saveAlarmConfig()"> 손님용</label>
+                    <label style="font-size: 14px; font-weight: normal; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="worker" onchange="saveAlarmConfig()"> 근무자용</label>
                 </div>
             </div>
 
-            <p class="text-sm text-slate-300 mb-4 leading-relaxed">
-                공공데이터포털(data.go.kr)에서 발급받으신 <span class="text-sky-400 font-semibold">기상청 / 국립해양조사원 API Key</span>를 입력하시면 실제 라이브 데이터와 자동 연동됩니다. (미입력 시 실시간 인터랙티브 시뮬레이션 데이터를 제공합니다)
-            </p>
-
-            <div class="space-y-4 mb-6">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">서비스 인증키 (Encoding/Decoding Key)</label>
-                    <input type="text" id="api-key-input" placeholder="인증키를 여기에 붙여넣으세요" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-sky-500 transition">
+            <div style="background: #1a1e24; padding: 8px; border-radius: 6px; border: 1px dashed var(--popup-highlight); margin-bottom: 3px;">
+                <div class="box-title-sm" style="color: #fff; font-size: 13px; margin-bottom: 5px;">🔴 전체 수동 즉시 발동 스위치</div>
+                <div class="alarm-radio-row">
+                    <label style="color: #ff4d4d;"><input type="radio" name="popup_manual_switch" class="popup-accent" value="forced_on" onchange="handleManualPopupToggle('global', this.value)"> ⚡ 강제ON</label>
+                    <label><input type="radio" name="popup_manual_switch" class="popup-accent" value="forced_off" checked onchange="handleManualPopupToggle('global', this.value)"> 💤 해제</label>
                 </div>
             </div>
 
-            <div class="flex justify-end gap-3">
-                <button id="btn-save-key" class="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm rounded-xl transition shadow-lg shadow-sky-600/30">
-                    저장 후 동기화
-                </button>
+            <div class="box-title-sm" style="color: #aaa; font-size: 12px; text-align: left; padding-left: 5px;">🕒 예약 자동 스케줄 설정</div>
+            <div class="alarm-radio-row">
+                <label><input type="radio" name="popup_mode" class="popup-accent" value="on" checked onchange="saveAlarmConfig()"> ▶️ ON</label>
+                <label><input type="radio" name="popup_mode" class="popup-accent" value="off" onchange="saveAlarmConfig()"> ⏸️ OFF</label>
+            </div>
+            <div class="alarm-time-setting">
+                <div class="setting-item-row">
+                    <span>표출 시작 시각:</span>
+                    <div class="popup-select-container">
+                        <select id="popup-hour" class="popup-select" onchange="saveAlarmConfig()"></select> 시
+                        <select id="popup-minute" class="popup-select" onchange="saveAlarmConfig()"></select> 분
+                    </div>
+                </div>
+                <div class="setting-item-row">
+                    <span>팝업 유지 시간:</span>
+                    <div>
+                        <input type="number" id="popup-duration-seconds" class="popup-input" value="20" min="0" max="600" onchange="saveAlarmConfig()"> 초 <span style="font-size:12px;color:#aaa;">(0은 무제한)</span>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                    <span style="color: #ff4d4d; font-weight: bold;">📢 [전체 공지] 내용 입력창:</span>
+                    <textarea id="popup-message-text" class="popup-textarea" style="height: 60px;" placeholder="전체화면으로 띄울 공지내용을 적으세요" onchange="saveAlarmConfig()">기상 악화 및 정비 관계로 인하여 잠시 후 다음 항차 운항이 지연될 예정이오니 양해 바랍니다.</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1호 전용 긴급 팝업 설정 영역 (수동 즉시발동만 유지) -->
+        <div class="alarm-toggle-container" style="border-color: var(--boat3-color);">
+            <div class="box-title-sm" style="color: var(--boat3-color);">🚨 [1호 영역] 긴급 팝업 설정</div>
+
+            <div style="background: #1a1e24; padding: 6px; border-radius: 6px; border: 1px dashed var(--boat3-color); margin-bottom: 3px;">
+                <div class="box-title-sm" style="color: #fff; font-size: 12px; margin-bottom: 4px;">🔴 1호 수동 즉시 발동</div>
+                <div class="alarm-radio-row">
+                    <label style="color: var(--boat3-color); font-size: 14px;"><input type="radio" name="popup_manual_1" value="forced_on" onchange="handleManualPopupToggle(1, this.value)"> ⚡ 강제ON</label>
+                    <label style="font-size: 14px;"><input type="radio" name="popup_manual_1" value="forced_off" checked onchange="handleManualPopupToggle(1, this.value)"> 💤 해제</label>
+                </div>
+            </div>
+
+            <div class="alarm-time-setting" style="border-top: none; padding-top: 0;">
+                <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                    <span style="font-size: 13px; color: var(--boat3-color);">📢 1호 전용 공지 내용:</span>
+                    <textarea id="popup-text-1" class="popup-textarea" placeholder="1호 긴급 공지내용 입력" onchange="saveAlarmConfig()">김시민 1호 기상 악화 및 정비 관계로 인하여 잠시 후 운항이 지연될 예정입니다.</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2호 전용 긴급 팝업 설정 영역 (수동 즉시발동만 유지) -->
+        <div class="alarm-toggle-container" style="border-color: var(--boat4-color);">
+            <div class="box-title-sm" style="color: var(--boat4-color);">🚨 [2호 영역] 긴급 팝업 설정</div>
+
+            <div style="background: #1a1e24; padding: 6px; border-radius: 6px; border: 1px dashed var(--boat4-color); margin-bottom: 3px;">
+                <div class="box-title-sm" style="color: #fff; font-size: 12px; margin-bottom: 4px;">🔴 2호 수동 즉시 발동</div>
+                <div class="alarm-radio-row">
+                    <label style="color: var(--boat4-color); font-size: 14px;"><input type="radio" name="popup_manual_2" value="forced_on" onchange="handleManualPopupToggle(2, this.value)"> ⚡ 강제ON</label>
+                    <label style="font-size: 14px;"><input type="radio" name="popup_manual_2" value="forced_off" checked onchange="handleManualPopupToggle(2, this.value)"> 💤 해제</label>
+                </div>
+            </div>
+
+            <div class="alarm-time-setting" style="border-top: none; padding-top: 0;">
+                <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                    <span style="font-size: 13px; color: var(--boat4-color);">📢 2호 전용 공지 내용:</span>
+                    <textarea id="popup-text-2" class="popup-textarea" placeholder="2호 긴급 공지내용 입력" onchange="saveAlarmConfig()">김시민 2호 기상 악화 및 정비 관계로 인하여 잠시 후 운항이 지연될 예정입니다.</textarea>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC WITH SUNRISE/SUNSET & TIDE INFORMATION -->
-    <script>
-        const CITIES = {
-            jinju: { name: "경상남도 진주시", nx: 59, ny: 69, sunrise: "06:48", sunset: "17:32", tideBase: 7, seaType: "남해" },
-            seoul: { name: "서울특별시", nx: 60, ny: 127, sunrise: "06:52", sunset: "17:30", tideBase: 6, seaType: "내륙" },
-            busan: { name: "부산광역시", nx: 98, ny: 76, sunrise: "06:44", sunset: "17:28", tideBase: 8, seaType: "남동해" },
-            daegu: { name: "대구광역시", nx: 89, ny: 90, sunrise: "06:46", sunset: "17:30", tideBase: 6, seaType: "내륙" },
-            incheon: { name: "인천광역시", nx: 55, ny: 124, sunrise: "06:53", sunset: "17:31", tideBase: 9, seaType: "서해" },
-            gwangju: { name: "광주광역시", nx: 58, ny: 74, sunrise: "06:50", sunset: "17:36", tideBase: 7, seaType: "서남해" },
-            daejeon: { name: "대전광역시", nx: 67, ny: 100, sunrise: "06:49", sunset: "17:32", tideBase: 6, seaType: "내륙" },
-            ulsan: { name: "울산광역시", nx: 102, ny: 84, sunrise: "06:43", sunset: "17:27", tideBase: 8, seaType: "동해" },
-            jeju: { name: "제주특별자치도", nx: 52, ny: 38, sunrise: "06:51", sunset: "17:40", tideBase: 10, seaType: "제주해역" },
-            changwon: { name: "경상남도 창원시", nx: 90, ny: 77, sunrise: "06:46", sunset: "17:30", tideBase: 7, seaType: "남해" }
-        };
+<!-- ==========================================================================
+   [JavaScript] Firebase 모듈 연동 및 실시간 데이터 처리 로직
+   ========================================================================== -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue, runTransaction, push, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        const TIDE_NAMES = ["1물 (조금)", "2물", "3물", "4물", "5물", "6물 (사리)", "7물 (사리)", "8물 (사리)", "9물", "10물", "11물", "12물", "13물 (조금)", "14물 (한조금)", "조금 (무물)"];
+    const firebaseConfig = {
+        apiKey: "AIzaSyASAWsxM_6x5iFFme8wqePiFzNytsNOF5E",
+        authDomain: "mulbitnaru930.firebaseapp.com",
+        databaseURL: "https://mulbitnaru930-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "mulbitnaru930",
+        storageBucket: "mulbitnaru930.firebasestorage.app",
+        messagingSenderId: "563863871857",
+        appId: "1:563863871857:web:61978cb0c534959e44d6d0",
+        measurementId: "G-1NDDNRLE7P"
+    };
 
-        let currentCityKey = "jinju";
-        let tempChartInstance = null;
-        let popChartInstance = null;
-        let apiKey = localStorage.getItem("kma_api_key") || "";
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-        window.addEventListener("DOMContentLoaded", () => {
-            initApp();
-            setupEventListeners();
-            
-            // 30초마다 수치 갱신 및 시뮬레이션
-            setInterval(() => {
-                updateLastUpdatedTime();
-            }, 30000);
+    // [사이드바 크기 조절 (Resizer) 드래그 로직]
+    const resizer = document.getElementById('resizer');
+    const rightSidebar = document.getElementById('right-sidebar');
+    let isResizing = false;
+
+    if (resizer && rightSidebar) {
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            resizer.classList.add('resizing');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
         });
 
-        function initApp() {
-            updateLastUpdatedTime();
-            loadWeatherData(currentCityKey);
-        }
-
-        function setupEventListeners() {
-            const locationSelect = document.getElementById("location-select");
-            locationSelect.addEventListener("change", (e) => {
-                currentCityKey = e.target.value;
-                loadWeatherData(currentCityKey);
-            });
-
-            document.getElementById("btn-refresh").addEventListener("click", () => {
-                updateLastUpdatedTime();
-                loadWeatherData(currentCityKey);
-            });
-
-            const modal = document.getElementById("modal-api");
-            const btnOpen = document.getElementById("btn-open-modal");
-            const btnClose = document.getElementById("btn-close-modal");
-            const btnSave = document.getElementById("btn-save-key");
-            const keyInput = document.getElementById("api-key-input");
-
-            if (apiKey) keyInput.value = apiKey;
-
-            btnOpen.addEventListener("click", () => {
-                modal.classList.remove("hidden");
-                setTimeout(() => modal.classList.remove("opacity-0"), 10);
-            });
-
-            const closeModalFunc = () => {
-                modal.classList.add("opacity-0");
-                setTimeout(() => modal.classList.add("hidden"), 300);
-            };
-
-            btnClose.addEventListener("click", closeModalFunc);
-
-            btnSave.addEventListener("click", () => {
-                apiKey = keyInput.value.trim();
-                localStorage.setItem("kma_api_key", apiKey);
-                closeModalFunc();
-                loadWeatherData(currentCityKey);
-            });
-        }
-
-        function updateLastUpdatedTime() {
-            const now = new Date();
-            const timeStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')} 기준`;
-            document.getElementById("last-updated").innerText = `${timeStr} (실시간 구동 중)`;
-        }
-
-        function switchTab(tabName) {
-            const weeklyTab = document.getElementById("tab-weekly");
-            const todayTab = document.getElementById("tab-today");
-            const weeklyBtn = document.getElementById("tab-btn-weekly");
-            const todayBtn = document.getElementById("tab-btn-today");
-
-            if (tabName === "weekly") {
-                weeklyTab.classList.remove("hidden");
-                todayTab.classList.add("hidden");
-                weeklyBtn.className = "px-6 py-3 font-semibold text-sm border-b-2 border-sky-400 text-sky-400 flex items-center gap-2 transition";
-                todayBtn.className = "px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition";
-            } else {
-                weeklyTab.classList.add("hidden");
-                todayTab.classList.remove("hidden");
-                todayBtn.className = "px-6 py-3 font-semibold text-sm border-b-2 border-sky-400 text-sky-400 flex items-center gap-2 transition";
-                weeklyBtn.className = "px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition";
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const newWidth = window.innerWidth - e.clientX - 15;
+            if (newWidth >= 200 && newWidth <= 600) {
+                rightSidebar.style.width = `${newWidth}px`;
             }
-        }
+        });
 
-        function generate7DayForecast(cityKey) {
-            const city = CITIES[cityKey];
-            const daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
-            const today = new Date();
-            const forecast = [];
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                resizer.classList.remove('resizing');
+                document.body.style.cursor = 'default';
+                document.body.style.userSelect = '';
+            }
+        });
+    }
 
-            const conditions = [
-                { status: "맑음", icon: "fa-sun", color: "text-amber-400", bg: "from-amber-500/10", pop: 10 },
-                { status: "구름조금", icon: "fa-cloud-sun", color: "text-sky-300", bg: "from-sky-500/10", pop: 20 },
-                { status: "구름많음", icon: "fa-cloud", color: "text-slate-300", bg: "from-slate-500/10", pop: 30 },
-                { status: "흐림", icon: "fa-smog", color: "text-slate-400", bg: "from-slate-700/10", pop: 40 },
-                { status: "비", icon: "fa-cloud-showers-heavy", color: "text-blue-400", bg: "from-blue-500/10", pop: 80 },
-                { status: "소나기", icon: "fa-cloud-sun-rain", color: "text-indigo-400", bg: "from-indigo-500/10", pop: 60 }
-            ];
-
-            let baseMin = cityKey === 'jinju' ? 12 : (cityKey === 'seoul' ? 10 : 14);
-            let baseMax = cityKey === 'jinju' ? 23 : (cityKey === 'seoul' ? 20 : 22);
-
-            const liveNoise = Math.sin(Date.now() / 10000) * 0.5;
-
-            for (let i = 0; i < 7; i++) {
-                const d = new Date();
-                d.setDate(today.getDate() + i);
-
-                const dayName = i === 0 ? "오늘" : (i === 1 ? "내일" : `${daysOfWeek[d.getDay()]}요일`);
-                const dateStr = `${d.getMonth() + 1}.${d.getDate()}`;
-
-                const variance = Math.sin(i * 1.5) * 3;
-                const minTemp = Math.round(baseMin + variance + liveNoise);
-                const maxTemp = Math.round(baseMax + variance + liveNoise);
-
-                let condIdx = Math.abs(Math.floor(Math.sin(i * 2 + (cityKey.length)) * conditions.length)) % conditions.length;
-                let cond = conditions[condIdx];
-
-                // 물때(조석) 계산 시뮬레이션 (15일 주기)
-                const tideVal = ((city.tideBase + i) % 15) + 1;
-                const tideName = TIDE_NAMES[(tideVal - 1) % TIDE_NAMES.length];
-
-                forecast.push({
-                    day: dayName,
-                    date: dateStr,
-                    minTemp: minTemp,
-                    maxTemp: maxTemp,
-                    status: cond.status,
-                    icon: cond.icon,
-                    iconColor: cond.color,
-                    bgGradient: cond.bg,
-                    pop: cond.pop,
-                    tide: tideName,
-                    tideVal: tideVal,
-                    humidity: Math.round(45 + Math.sin(i) * 20 + liveNoise * 2),
-                    wind: (2.0 + (i % 3) * 0.7 + Math.abs(liveNoise * 0.2)).toFixed(1)
+    // [Service Worker 등록]
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            const swCode = `
+                const CACHE_NAME = 'kimsimin-cache-v4';
+                self.addEventListener('install', e => self.skipWaiting());
+                self.addEventListener('activate', e => e.waitUntil(
+                    caches.keys().then(keys => Promise.all(
+                        keys.map(key => { if (key !== CACHE_NAME) return caches.delete(key); })
+                    )).then(() => self.clients.claim())
+                ));
+                self.addEventListener('fetch', e => {
+                    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
                 });
-            }
-            return forecast;
-        }
-
-        function loadWeatherData(cityKey) {
-            const city = CITIES[cityKey];
-            document.getElementById("weekly-location-name").innerText = `${city.name} 1주일 예보 & 조석 정보`;
-            document.getElementById("current-location-text").innerText = city.name;
-
-            // 일출/일몰 & 조석 헤더 정보 갱신
-            document.getElementById("sun-times").innerText = `${city.sunrise} / ${city.sunset}`;
-            
-            const weeklyData = generate7DayForecast(cityKey);
-
-            // 오늘의 물때 표시
-            const todayTide = weeklyData[0];
-            document.getElementById("tide-level-name").innerText = `${todayTide.tide} (${city.seaType})`;
-            
-            const isSari = todayTide.tideVal >= 6 && todayTide.tideVal <= 8;
-            const badge = document.getElementById("tide-type-badge");
-            badge.innerText = isSari ? "사리(대조기)" : (todayTide.tideVal >= 13 ? "조금(소조기)" : "일반물때");
-            badge.className = isSari ? "px-2 py-1 bg-rose-500/20 text-rose-300 text-xs rounded-md font-semibold" : "px-2 py-1 bg-cyan-500/20 text-cyan-300 text-xs rounded-md font-semibold";
-
-            renderWeeklyCards(weeklyData);
-            renderCharts(weeklyData);
-            updateSummaryStats(weeklyData);
-            renderHourlyData(weeklyData[0]);
-            updateRealtimeEnvironment();
-        }
-
-        function updateRealtimeEnvironment() {
-            const randomNoise = (Math.random() * 4 - 2).toFixed(0);
-            const pm10Val = Math.max(15, parseInt(32) + parseInt(randomNoise));
-            const pm25Val = Math.max(8, parseInt(15) + Math.floor(randomNoise / 2));
-            
-            document.getElementById("val-pm10").innerHTML = `${pm10Val} <span class="text-xs font-normal text-slate-400">㎍/㎥</span>`;
-            document.getElementById("bar-pm10").style.width = `${pm10Val}%`;
-
-            document.getElementById("val-pm25").innerHTML = `${pm25Val} <span class="text-xs font-normal text-slate-400">㎍/㎥</span>`;
-            document.getElementById("bar-pm25").style.width = `${pm25Val * 1.5}%`;
-        }
-
-        function renderWeeklyCards(weeklyData) {
-            const container = document.getElementById("weekly-cards-container");
-            container.innerHTML = "";
-
-            weeklyData.forEach((item, index) => {
-                const isToday = index === 0;
-
-                const cardHtml = `
-                    <div class="glass-card rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-sky-500/50 ${isToday ? 'ring-2 ring-sky-500/50 bg-gradient-to-b from-sky-900/30 to-slate-900' : ''}">
-                        ${isToday ? '<span class="absolute top-2 right-2 px-2 py-0.5 bg-sky-500 text-[10px] font-bold text-white rounded-full">TODAY</span>' : ''}
-                        
-                        <div>
-                            <div class="flex justify-between items-center">
-                                <p class="text-sm font-bold text-white">${item.day}</p>
-                                <span class="text-[10px] text-cyan-400 font-medium px-1.5 py-0.5 bg-cyan-950/80 rounded border border-cyan-800/50">${item.tide.split(' ')[0]}</span>
-                            </div>
-                            <p class="text-xs text-slate-400 mb-3">${item.date}</p>
-                            
-                            <div class="text-center my-3 py-2 bg-slate-900/40 rounded-xl border border-slate-800/60">
-                                <i class="fa-solid ${item.icon} ${item.iconColor} text-3xl mb-2"></i>
-                                <p class="text-xs font-medium text-slate-200">${item.status}</p>
-                            </div>
-                        </div>
-
-                        <div class="space-y-2 mt-2 pt-2 border-t border-slate-800/80 text-xs">
-                            <div class="flex justify-between items-center">
-                                <span class="text-slate-400">최고/최저</span>
-                                <span class="font-semibold text-slate-200"><span class="text-rose-400">${item.maxTemp}°</span> / <span class="text-blue-400">${item.minTemp}°</span></span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-slate-400">강수확률</span>
-                                <span class="font-semibold text-indigo-400"><i class="fa-solid fa-droplet text-[10px] mr-1"></i>${item.pop}%</span>
-                            </div>
-                            <div class="flex justify-between items-center text-[11px] text-slate-400">
-                                <span>바람 ${item.wind}m/s</span>
-                                <span>습도 ${item.humidity}%</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.innerHTML += cardHtml;
+            `;
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl).catch(err => {
+                console.log('ServiceWorker registration failed: ', err);
             });
+        });
+    }
+
+    // [네트워크 오프라인 로컬 대기열(Queue) 동기화 상태 관리]
+    let isOnlineStatus = navigator.onLine;
+    let pendingOfflineQueue = JSON.parse(localStorage.getItem('kimsimin_pending_queue') || "[]");
+
+    function saveOfflineQueue() {
+        localStorage.setItem('kimsimin_pending_queue', JSON.stringify(pendingOfflineQueue));
+    }
+
+    function processOfflineQueue() {
+        if (!isOnlineStatus || pendingOfflineQueue.length === 0) return;
+
+        const queueCopy = [...pendingOfflineQueue];
+        pendingOfflineQueue = [];
+        saveOfflineQueue();
+
+        queueCopy.forEach(item => {
+            if (item.type === 'seat_adjust') {
+                window.adjust(item.boatId, item.time, item.amt);
+            } else if (item.type === 'boat_data') {
+                saveBoatData();
+            } else if (item.type === 'config_data') {
+                saveConfigData();
+            }
+        });
+    }
+
+    window.addEventListener('online', () => {
+        isOnlineStatus = true;
+        document.getElementById('offline-banner').classList.remove('active');
+        processOfflineQueue();
+    });
+    window.addEventListener('offline', () => {
+        isOnlineStatus = false;
+        document.getElementById('offline-banner').classList.add('active');
+    });
+
+    const presetSchedules = {
+        weekday: {
+            1: ["13:15", "14:15", "15:15", "16:15", "17:15", "19:15", "20:15", "21:15"],
+            2: ["13:00", "14:00", "15:00", "16:00", "17:00", "19:00", "20:00", "21:00"]
+        },
+        weekend: {
+            1: ["10:15", "11:15", "13:15", "14:15", "15:15", "16:15", "17:15", "19:15", "20:15", "21:15"],
+            2: ["10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "19:00", "20:00", "21:00"]
+        },
+        festival: {
+            1: ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"],
+            2: ["10:30", "11:30", "12:30", "13:30", "14:30", "15:30", "16:30", "17:30", "18:30", "19:30", "20:30", "21:30", "22:30"]
         }
+    };
 
-        function renderCharts(weeklyData) {
-            const labels = weeklyData.map(d => `${d.day}(${d.date})`);
-            const maxTemps = weeklyData.map(d => d.maxTemp);
-            const minTemps = weeklyData.map(d => d.minTemp);
-            const pops = weeklyData.map(d => d.pop);
+    const defaultBoatData = {
+        1: { capacity: 25, duration: 20, course: "망진나루 ↔ 진주성(촉석루)", notice: "현재 정상 운항 중입니다.", times: presetSchedules.weekday[1], seats: {}, customStatus: {} },
+        2: { capacity: 30, duration: 20, course: "망진나루 ↔ 진주성(촉석루)", notice: "현재 정상 운항 중입니다.", times: presetSchedules.weekday[2], seats: {}, customStatus: {} }
+    };
 
-            const ctxTemp = document.getElementById('weeklyTempChart').getContext('2d');
-            if (tempChartInstance) tempChartInstance.destroy();
+    const defaultConfigData = {
+        lastDate: "",
+        selectedPreset: "weekday",
+        alarmMinutes: 10,
+        alarmSeconds: 30,
+        pageIntervalSeconds: 5,
+        ttsBroadcast: "on",
+        ttsMinutes: 5,
+        ttsRepeatCount: 2,
+        rotationMode: "on",
+        rotationTargetGuest: true,
+        rotationTargetWorker: true,
 
-            tempChartInstance = new Chart(ctxTemp, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: '최고 기온 (°C)',
-                            data: maxTemps,
-                            borderColor: '#f43f5e',
-                            backgroundColor: 'rgba(244, 63, 94, 0.1)',
-                            borderWidth: 3,
-                            tension: 0.3,
-                            fill: true,
-                            pointBackgroundColor: '#f43f5e',
-                            pointRadius: 4
-                        },
-                        {
-                            label: '최저 기온 (°C)',
-                            data: minTemps,
-                            borderColor: '#38bdf8',
-                            backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                            borderWidth: 3,
-                            tension: 0.3,
-                            fill: true,
-                            pointBackgroundColor: '#38bdf8',
-                            pointRadius: 4
+        popupMode: "on",
+        popupHour: "12",
+        popupMinute: "00",
+        popupDurationSeconds: 20,
+        popupMessageText: "기상 악화 및 정비 관계로 인하여 잠시 후 다음 항차 운항이 지연될 예정이오니 양해 바랍니다.",
+        popupActiveUntil: 0,
+        popupManualSwitch: "forced_off",
+        popupTargetScreen: "all",
+
+        popupText1: "김시민 1호 기상 악화 및 정비 관계로 인하여 잠시 후 운항이 지연될 예정입니다.",
+        popupManual1: "forced_off",
+
+        popupText2: "김시민 2호 기상 악화 및 정비 관계로 인하여 잠시 후 운항이 지연될 예정입니다.",
+        popupManual2: "forced_off"
+    };
+
+    let boatData = JSON.parse(JSON.stringify(defaultBoatData));
+    let configData = JSON.parse(JSON.stringify(defaultConfigData));
+
+    let playedAlarms = {};
+    let playedBroadcasts = {};
+    let playedEmergencyPopups = { global: {}, 1: {}, 2: {} };
+    let activeVisualAlarms = { 1: [], 2: [] };
+    let activeTtsBroadcasts = { 1: [], 2: [] };
+    let alarmSoundIntervals = {};
+
+    let guestPageStatus = {
+        1: { currentPage: 1, lastRotationTime: Date.now() },
+        2: { currentPage: 1, lastRotationTime: Date.now() }
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('mode'); 
+    if (mode === 'guest_h') document.body.classList.add('is-guest', 'mode-h'); 
+    if (mode === 'guest_v') document.body.classList.add('is-guest', 'mode-v'); 
+    const isGuest = mode && mode.startsWith('guest');
+    const isCustomerGuest = (mode === 'guest_h');
+    const isWorker = (mode === 'guest_v');
+
+    function buildPopupTimeSelectOptions() {
+        const globalH = document.getElementById('popup-hour');
+        const globalM = document.getElementById('popup-minute');
+        if (globalH && globalM) {
+            globalH.innerHTML = ""; globalM.innerHTML = "";
+            for(let h=0; h<24; h++) { let hStr = String(h).padStart(2, '0'); globalH.options.add(new Option(hStr, hStr)); }
+            for(let m=0; m<60; m+=5) { let mStr = String(m).padStart(2, '0'); globalM.options.add(new Option(mStr, mStr)); }
+        }
+    }
+    buildPopupTimeSelectOptions();
+
+    function saveBoatData() {
+        if (!isOnlineStatus) {
+            pendingOfflineQueue.push({ type: 'boat_data', timestamp: Date.now() });
+            saveOfflineQueue();
+            return;
+        }
+        set(ref(db, 'namgang/boatData'), boatData)
+            .catch((error) => {
+                console.error("선박 데이터 저장 실패:", error);
+                pendingOfflineQueue.push({ type: 'boat_data', timestamp: Date.now() });
+                saveOfflineQueue();
+            });
+    }
+
+    function saveConfigData() {
+        if (isGuest && !isWorker) return;
+        if (!isOnlineStatus) {
+            pendingOfflineQueue.push({ type: 'config_data', timestamp: Date.now() });
+            saveOfflineQueue();
+            return;
+        }
+        set(ref(db, 'namgang/configData'), configData)
+            .catch((error) => {
+                console.error("설정 데이터 저장 실패:", error);
+                pendingOfflineQueue.push({ type: 'config_data', timestamp: Date.now() });
+                saveOfflineQueue();
+            });
+    }
+
+    window.applySchedulePreset = function(presetKey) {
+        if (!presetSchedules[presetKey]) return;
+        if (confirm(`'${presetKey === 'weekday' ? '평일' : presetKey === 'weekend' ? '주말/공휴일' : '축제 기간'}' 시간표 프리셋을 적용하시겠습니까?`)) {
+            boatData[1].times = [...presetSchedules[presetKey][1]];
+            boatData[2].times = [...presetSchedules[presetKey][2]];
+            configData.selectedPreset = presetKey;
+
+            saveBoatData();
+            saveConfigData();
+            updateUI();
+            alert("운항 시간표 프리셋이 변경되었습니다.");
+        }
+    };
+
+    function updatePresetButtonsUI() {
+        const curPreset = configData.selectedPreset || 'weekday';
+        ['weekday', 'weekend', 'festival'].forEach(p => {
+            const btn = document.getElementById(`preset-btn-${p}`);
+            if (btn) {
+                if (p === curPreset) btn.classList.add('active');
+                else btn.classList.remove('active');
+            }
+        });
+    }
+
+    window.handleExcelUpload = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                if (!jsonRows || jsonRows.length === 0) {
+                    alert("⚠️ 엑셀 파일에 데이터가 없습니다.");
+                    return;
+                }
+
+                let timeColumnKey = null;
+                const sampleRow = jsonRows[0];
+                const targetKeywords = ['탑승시각', '탑승시간', '출발시간', '출발시각', '예약시간', '시간'];
+
+                for (const key of Object.keys(sampleRow)) {
+                    if (targetKeywords.some(kw => key.includes(kw))) {
+                        timeColumnKey = key;
+                        break;
+                    }
+                }
+
+                if (!timeColumnKey) {
+                    alert("❌ 엑셀 파일에서 '시간' 또는 '탑승시각' 관련 컬럼을 찾을 수 없습니다.");
+                    return;
+                }
+
+                const now = new Date();
+                const curYear = now.getFullYear();
+                const curMonth = String(now.getMonth() + 1).padStart(2, '0');
+                const curDay = String(now.getDate()).padStart(2, '0');
+                const todayStr = `${curYear}-${curMonth}-${curDay}`;
+
+                const timeCounts = {};
+                let hasValidDateData = false;
+                let foundDates = new Set();
+
+                jsonRows.forEach(row => {
+                    const rawTime = row[timeColumnKey];
+                    if (rawTime) {
+                        let fullStr = String(rawTime).trim();
+                        if (fullStr.includes(" ")) {
+                            let parts = fullStr.split(" ");
+                            let datePart = parts[0];
+                            let timePart = parts[1];
+
+                            foundDates.add(datePart);
+
+                            if (datePart === todayStr) {
+                                hasValidDateData = true;
+                                if (timePart.length >= 5) {
+                                    let timeStr = timePart.substring(0, 5);
+                                    timeCounts[timeStr] = (timeCounts[timeStr] || 0) + 1;
+                                }
+                            }
+                        } else if (fullStr.length >= 5 && fullStr.includes(":")) {
+                            hasValidDateData = true;
+                            let timeStr = fullStr.substring(0, 5);
+                            timeCounts[timeStr] = (timeCounts[timeStr] || 0) + 1;
                         }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { labels: { color: '#94a3b8', font: { family: 'Noto Sans KR' } } }
-                    },
-                    scales: {
-                        x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
-                        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
                     }
+                });
+
+                if (!hasValidDateData) {
+                    let foundDatesArr = Array.from(foundDates);
+                    let foundStr = foundDatesArr.length > 0 ? foundDatesArr.join(", ") : "날짜 정보 없음";
+                    alert(`❌ [업로드 실패]\n\n오늘 날짜(${todayStr})와 일치하는 탑승 예약 데이터가 없습니다.\n(감지된 컬럼: [${timeColumnKey}], 감지된 날짜: ${foundStr})`);
+                    return;
                 }
-            });
 
-            const ctxPop = document.getElementById('weeklyPopChart').getContext('2d');
-            if (popChartInstance) popChartInstance.destroy();
+                if (!boatData[1].seats) boatData[1].seats = {};
+                if (!boatData[2].seats) boatData[2].seats = {};
 
-            popChartInstance = new Chart(ctxPop, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '강수 확률 (%)',
-                        data: pops,
-                        backgroundColor: 'rgba(99, 102, 241, 0.7)',
-                        hoverBackgroundColor: 'rgba(99, 102, 241, 0.9)',
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { labels: { color: '#94a3b8', font: { family: 'Noto Sans KR' } } }
-                    },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
-                        y: { max: 100, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
+                let matchSummary = [];
+                let totalUpdated = 0;
+
+                Object.keys(timeCounts).forEach(time => {
+                    const count = timeCounts[time];
+                    let matchedBoat = null;
+
+                    if (boatData[1].times && boatData[1].times.includes(time)) {
+                        boatData[1].seats[time] = count;
+                        matchedBoat = "1호";
+                    } else if (boatData[2].times && boatData[2].times.includes(time)) {
+                        boatData[2].seats[time] = count;
+                        matchedBoat = "2호";
                     }
+
+                    if (matchedBoat) {
+                        matchSummary.push(`- 김시민 ${matchedBoat} [${time}] : ${count}명`);
+                        totalUpdated++;
+                    }
+                });
+
+                saveBoatData();
+                updateUI();
+
+                if (totalUpdated > 0) {
+                    alert(`✅ 사전예매자 엑셀 파일이 성공적으로 반영되었습니다!\n\n[반영 내역]\n` + matchSummary.join("\n"));
+                } else {
+                    alert(`⚠️ 데이터는 확인되었으나, 현재 1호/2호 시간표와 일치하는 출발 시간이 없습니다.`);
                 }
-            });
+
+            } catch (err) {
+                console.error("엑셀 파일 파싱 오류:", err);
+                alert("⚠️ 엑셀 파일을 읽는 도중 오류가 발생했습니다.");
+            } finally {
+                event.target.value = "";
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
+    window.handleManualPopupToggle = function(targetType, val) {
+        if (isGuest) return;
+        if (targetType === 'global') configData.popupManualSwitch = val;
+        if (targetType === 1) configData.popupManual1 = val;
+        if (targetType === 2) configData.popupManual2 = val;
+        saveConfigData();
+    };
+
+    window.saveAlarmConfig = function() {
+        if (isGuest) return; 
+
+        let trigVal = parseInt(document.getElementById('alarm-trigger-minutes').value) || 10;
+        if(trigVal < 1) trigVal = 1; if(trigVal > 60) trigVal = 60;
+        configData.alarmMinutes = trigVal;
+
+        let durVal = parseInt(document.getElementById('alarm-duration-seconds').value) || 30;
+        if(durVal < 1) durVal = 1; if(durVal > 300) durVal = 300;
+        configData.alarmSeconds = durVal;
+
+        let rotVal = parseInt(document.getElementById('page-interval-seconds').value) || 5;
+        if(rotVal < 2) rotVal = 2; if(rotVal > 60) rotVal = 60;
+        configData.pageIntervalSeconds = rotVal;
+
+        const ttsOption = document.querySelector('input[name="tts_broadcast"]:checked');
+        if (ttsOption) configData.ttsBroadcast = ttsOption.value;
+
+        let ttsMins = parseInt(document.getElementById('tts-trigger-minutes').value) || 5;
+        if (ttsMins < 1) ttsMins = 1; if (ttsMins > 60) ttsMins = 60;
+        configData.ttsMinutes = ttsMins;
+
+        let ttsRepeat = parseInt(document.getElementById('tts-repeat-count').value) || 1;
+        if (ttsRepeat < 1) ttsRepeat = 1; if (ttsRepeat > 5) ttsRepeat = 5;
+        configData.ttsRepeatCount = ttsRepeat;
+
+        const rotationOption = document.querySelector('input[name="rotation_mode"]:checked');
+        if (rotationOption) configData.rotationMode = rotationOption.value;
+
+        configData.rotationTargetGuest = document.getElementById('rotation-target-guest').checked;
+        configData.rotationTargetWorker = document.getElementById('rotation-target-worker').checked;
+
+        const popOption = document.querySelector('input[name="popup_mode"]:checked');
+        if (popOption) configData.popupMode = popOption.value;
+
+        const popupTargetOption = document.querySelector('input[name="popup_target_screen"]:checked');
+        if (popupTargetOption) configData.popupTargetScreen = popupTargetOption.value;
+
+        configData.popupHour = document.getElementById('popup-hour').value;
+        configData.popupMinute = document.getElementById('popup-minute').value;
+        let popDurGlobal = parseInt(document.getElementById('popup-duration-seconds').value);
+        configData.popupDurationSeconds = (isNaN(popDurGlobal) || popDurGlobal < 0) ? 0 : popDurGlobal;
+        configData.popupMessageText = document.getElementById('popup-message-text').value;
+
+        configData.popupText1 = document.getElementById('popup-text-1').value;
+        configData.popupText2 = document.getElementById('popup-text-2').value;
+
+        saveConfigData();
+    };
+
+    window.toggleDropdown = function(id) {
+        if(isGuest) return; 
+        const list = document.getElementById(`list-${id}`);
+        const isShow = list.classList.contains('show');
+        document.querySelectorAll('.checkbox-list').forEach(el => el.classList.remove('show'));
+        if(!isShow) list.classList.add('show');
+    };
+
+    window.updateSelectBtnText = function(id) {
+        const checked = Array.from(document.querySelectorAll(`.chk-${id}:checked`));
+        const btn = document.getElementById(`select-btn-${id}`);
+        if(!btn) return;
+        if(checked.length === 0) btn.innerText = "시간 선택";
+        else if(checked.length === 1) btn.innerText = checked[0].value;
+        else btn.innerText = checked.length + "개 선택됨";
+    };
+
+    window.confirmResetAll = function() {
+        if (confirm("🚨 전체 데이터를 초기화하시겠습니까?\n모든 선박의 정보가 복구됩니다.")) {
+            boatData = JSON.parse(JSON.stringify(defaultBoatData));
+            configData = JSON.parse(JSON.stringify(defaultConfigData));
+            saveBoatData();
+            saveConfigData();
+        }
+    };
+
+    window.applyExtraInfo = function(id) {
+        const cap = parseInt(document.getElementById(`cap-direct-${id}`).value);
+        const dur = parseInt(document.getElementById(`dur-direct-${id}`).value);
+        const cou = document.getElementById(`course-direct-${id}`).value;
+        if (!isNaN(cap)) boatData[id].capacity = cap;
+        if (!isNaN(dur)) boatData[id].duration = dur;
+        boatData[id].course = cou;
+        saveBoatData(); updateUI(); alert("정보가 변경되었습니다.");
+    };
+
+    window.applyNotice = function(id) {
+        const text = document.getElementById(`notice-direct-${id}`).value;
+        boatData[id].notice = text || "현재 정상 운항 중입니다.";
+        saveBoatData(); updateUI(); alert(`${id}호의 실시간 공지사항이 반영되었습니다.`);
+    };
+
+    window.deleteNotice = function(id) {
+        if(confirm(`${id}호의 실시간 공지사항을 삭제하시겠습니까?`)) {
+            boatData[id].notice = "현재 정상 운항 중입니다.";
+            const noticeIn = document.getElementById(`notice-direct-${id}`);
+            if(noticeIn) noticeIn.value = ""; 
+            saveBoatData(); updateUI(); alert(`${id}호의 공지사항이 삭제되었습니다.`);
+        }
+    };
+
+    window.updateSettings = function(id) {
+        const timeStr = document.getElementById(`time-input-${id}`).value;
+        if (timeStr) boatData[id].times = timeStr.split(',').map(s => s.trim());
+        saveBoatData(); updateUI(); alert("시간표가 적용되었습니다.");
+    };
+
+    window.wizard = function(id) {
+        const start = prompt("시작 시간 (예: 10:00)", "10:00"); if (!start) return;
+        const gap = prompt("간격(분)", "60"), count = prompt("총 횟수", "10");
+        let [hh, mm] = start.split(':').map(Number), newTimes = [];
+        for(let i=0; i<count; i++) {
+            newTimes.push(`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`);
+            mm += parseInt(gap); hh += Math.floor(mm/60); mm %= 60; hh %= 24;
+        }
+        boatData[id].times = newTimes; saveBoatData(); updateUI();
+    };
+
+    window.applyChanges = function(id) {
+        const checkedNodes = document.querySelectorAll(`.chk-${id}:checked`);
+        const input = document.getElementById('input-' + id).value;
+        const status = document.getElementById('status-' + id).value;
+        if (checkedNodes.length === 0) return alert("변경할 시간을 먼저 선택하세요.");
+
+        if (!boatData[id].seats) boatData[id].seats = {};
+        if (!boatData[id].customStatus) boatData[id].customStatus = {};
+
+        checkedNodes.forEach(node => {
+            const time = node.value;
+            if (input !== "") {
+                const val = parseInt(input);
+                if (val >= 0) boatData[id].seats[time] = val;
+            }
+            boatData[id].customStatus[time] = status;
+            node.checked = false;
+        });
+
+        document.getElementById('input-' + id).value = ""; 
+        document.getElementById('list-' + id).classList.remove('show');
+        window.updateSelectBtnText(id); 
+        saveBoatData(); updateUI();
+        alert("선택한 시간의 운항 상태가 성공적으로 변경되었습니다.");
+    };
+
+    window.adjust = function(id, time, amt) {
+        if (navigator.vibrate) navigator.vibrate(40);
+
+        if (!isOnlineStatus) {
+            if (!boatData[id].seats) boatData[id].seats = {};
+            let cur = boatData[id].seats[time] || 0;
+            boatData[id].seats[time] = Math.max(0, cur + amt);
+            pendingOfflineQueue.push({ type: 'seat_adjust', boatId: id, time: time, amt: amt, timestamp: Date.now() });
+            saveOfflineQueue();
+            updateUI();
+            return;
         }
 
-        function updateSummaryStats(weeklyData) {
-            const avgTemp = (weeklyData.reduce((acc, cur) => acc + (cur.maxTemp + cur.minTemp)/2, 0) / 7).toFixed(1);
-            const maxPop = Math.max(...weeklyData.map(d => d.pop));
-            const sunnyCount = weeklyData.filter(d => d.status.includes("맑음") || d.status.includes("구름조금")).length;
-            const rainyCount = weeklyData.filter(d => d.status.includes("비") || d.status.includes("소나기")).length;
+        const safeTimeKey = time.replace('.', '_');
+        const seatRef = ref(db, `namgang/boatData/${id}/seats/${safeTimeKey}`);
 
-            document.getElementById("avg-temp").innerText = `${avgTemp}°C`;
-            document.getElementById("max-pop").innerText = `${maxPop}%`;
-            document.getElementById("sunny-days-count").innerText = `${sunnyCount}일간 화창함`;
-            document.getElementById("rainy-days-count").innerText = `${rainyCount}일 비/소나기예상`;
+        runTransaction(seatRef, (currentSeats) => {
+            let count = currentSeats || 0;
+            if (amt === 1) {
+                return count + 1;
+            } else if (amt === -1) {
+                return Math.max(0, count - 1);
+            }
+            return count;
+        }).then((result) => {
+            if (result.committed) {
+                if (!boatData[id].seats) boatData[id].seats = {};
+                boatData[id].seats[time] = result.snapshot.val();
+                updateUI();
+            }
+        }).catch((error) => {
+            console.error("인원 수정 트랜잭션 오류:", error);
+            pendingOfflineQueue.push({ type: 'seat_adjust', boatId: id, time: time, amt: amt, timestamp: Date.now() });
+            saveOfflineQueue();
+        });
+    };
+
+    window.resetBoat = function(id) {
+        if(confirm('해당 선박의 현황을 초기화할까요?')) {
+            boatData[id].seats = {}; boatData[id].customStatus = {}; boatData[id].notice = "현재 정상 운항 중입니다."; 
+            saveBoatData(); updateUI();
+        }
+    };
+
+    window.openGuestWindow = function(type) {
+        window.open(window.location.pathname + `?mode=guest_${type}`, `GuestWin_${type}_` + Date.now(), 'width=1200,height=900');
+    };
+
+    window.handleAlarmToggle = function() {
+        const option = document.querySelector('input[name="alarm_sound"]:checked');
+        if (option && option.value === 'off') { stopAllAlarms(); updateUI(); }
+    };
+
+    window.handleTtsToggle = function() {
+        window.saveAlarmConfig(); 
+        const ttsOption = document.querySelector('input[name="tts_broadcast"]:checked');
+        if (ttsOption && ttsOption.value === 'off') { stopAllTtsBroadcasts(); updateUI(); }
+    };
+
+    window.handleRotationToggle = function() {
+        window.saveAlarmConfig(); updateUI();
+    };
+
+    window.dismissAlarm = function(id, time) {
+        const alarmKey = `${id}-${time}`;
+        if (alarmSoundIntervals[alarmKey]) { clearInterval(alarmSoundIntervals[alarmKey]); delete alarmSoundIntervals[alarmKey]; }
+        activeVisualAlarms[id] = activeVisualAlarms[id].filter(t => t !== time);
+        updateUI();
+    };
+
+    window.dismissTtsBroadcast = function(id, time) {
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        activeTtsBroadcasts[id] = activeTtsBroadcasts[id].filter(t => t !== time);
+        updateUI();
+    };
+
+    function playSingleBeepSignal(ctx, nowTime) {
+        const osc1 = ctx.createOscillator(); const gain1 = ctx.createGain();
+        osc1.type = 'sine'; osc1.frequency.setValueAtTime(587.33, nowTime);
+        gain1.gain.setValueAtTime(0.25, nowTime); gain1.gain.exponentialRampToValueAtTime(0.01, nowTime + 0.35);
+        osc1.connect(gain1); gain1.connect(ctx.destination); osc1.start(nowTime); osc1.stop(nowTime + 0.35);
+
+        const osc2 = ctx.createOscillator(); const gain2 = ctx.createGain();
+        osc2.type = 'sine'; osc2.frequency.setValueAtTime(440.00, nowTime + 0.15);
+        gain2.gain.setValueAtTime(0.25, nowTime + 0.15); gain2.gain.exponentialRampToValueAtTime(0.01, nowTime + 0.6);
+        osc2.connect(gain2); gain2.connect(ctx.destination); osc2.start(nowTime + 0.15); osc2.stop(nowTime + 0.6);
+    }
+
+    function startInfiniteAlarmLoop(id, time) {
+        if (!activeVisualAlarms[id].includes(time)) activeVisualAlarms[id].push(time);
+        updateUI(); 
+
+        const alarmKey = `${id}-${time}`;
+        if (alarmSoundIntervals[alarmKey]) return;
+
+        if (navigator.vibrate) {
+            navigator.vibrate([300, 200, 300, 200, 500]);
         }
 
-        function renderHourlyData(todayData) {
-            document.getElementById("current-temp").innerText = `${todayData.maxTemp}°`;
-            document.getElementById("current-weather-desc").innerText = `${todayData.status} (체감 ${(todayData.maxTemp + 0.8).toFixed(1)}°)`;
-            document.getElementById("today-min-temp").innerText = `${todayData.minTemp}°C`;
-            document.getElementById("today-max-temp").innerText = `${todayData.maxTemp}°C`;
-            document.getElementById("today-humidity").innerText = `${todayData.humidity}%`;
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext(); const alarmStartTime = Date.now();
 
-            const hourlyContainer = document.getElementById("hourly-forecast-container");
-            hourlyContainer.innerHTML = "";
+            alarmSoundIntervals[alarmKey] = setInterval(() => {
+                const option = document.querySelector('input[name="alarm_sound"]:checked');
+                if (!option || option.value === 'off') { window.dismissAlarm(id, time); return; }
 
-            const currentHour = new Date().getHours();
-            for (let i = 0; i < 24; i += 2) {
-                const hourTime = (currentHour + i) % 24;
-                const timeStr = `${String(hourTime).padStart(2, '0')}:00`;
-                const tempOffset = Math.sin((i / 24) * Math.PI * 2) * 4;
-                const hourlyTemp = Math.round(todayData.minTemp + (todayData.maxTemp - todayData.minTemp) * 0.7 + tempOffset);
+                const maxDurationSeconds = configData.alarmSeconds || 30;
+                const elapsedSeconds = (Date.now() - alarmStartTime) / 1000;
 
-                const itemHtml = `
-                    <div class="flex-shrink-0 w-20 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-3 text-center flex flex-col justify-between items-center transition-all hover:border-sky-500">
-                        <span class="text-xs text-slate-400 font-medium">${timeStr}</span>
-                        <i class="fa-solid ${todayData.icon} ${todayData.iconColor} text-xl my-3"></i>
-                        <span class="text-sm font-bold text-white">${hourlyTemp}°</span>
-                        <span class="text-[10px] text-indigo-400 mt-1"><i class="fa-solid fa-droplet text-[8px]"></i> ${todayData.pop}%</span>
-                    </div>
-                `;
-                hourlyContainer.innerHTML += itemHtml;
+                if (elapsedSeconds >= maxDurationSeconds) { window.dismissAlarm(id, time); return; }
+                playSingleBeepSignal(ctx, ctx.currentTime);
+            }, 1000);
+        } catch(e) { console.log("오디오 디바이스 에러"); }
+    }
+
+    function stopAllAlarms() {
+        for (let key in alarmSoundIntervals) clearInterval(alarmSoundIntervals[key]);
+        alarmSoundIntervals = {}; activeVisualAlarms = { 1: [], 2: [] };
+    }
+
+    function stopAllTtsBroadcasts() {
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        activeTtsBroadcasts = { 1: [], 2: [] };
+    }
+
+    function checkTenMinutesAlarm(id, times) {
+        if (isGuest) return; 
+        const option = document.querySelector('input[name="alarm_sound"]:checked');
+        if (!option || option.value === 'off') return;
+
+        const triggerMinutes = configData.alarmMinutes || 10;
+        const now = new Date();
+
+        times.forEach(t => {
+            const [tH, tM] = t.split(':').map(Number);
+            const targetTime = new Date(); targetTime.setHours(tH, tM, 0, 0);
+            const diffMs = targetTime.getTime() - now.getTime();
+            const diffMins = diffMs / 60000;
+
+            if (diffMins > (triggerMinutes - 0.05) && diffMins <= triggerMinutes) {
+                const booked = (boatData[id].seats && boatData[id].seats[t]) || 0;
+                if (booked <= 0) return;
+
+                const uniqueKey = `${id}-${t}-${now.getMinutes()}`;
+                if (!playedAlarms[uniqueKey]) {
+                    const cStat = (boatData[id].customStatus && boatData[id].customStatus[t]) || "auto";
+                    const isHalted = cStat.includes("중지") || cStat === "운항없음" || cStat === "점 검 중" || cStat === "점검중";
+
+                    if (!isHalted) { playedAlarms[uniqueKey] = true; startInfiniteAlarmLoop(id, t); }
+                }
+            }
+        });
+    }
+
+    function checkTtsSpeechBroadcast(id, times) {
+        if (isGuest) return; 
+        const ttsOption = document.querySelector('input[name="tts_broadcast"]:checked');
+        if (!ttsOption || ttsOption.value === 'off') return;
+
+        const ttsTriggerMinutes = configData.ttsMinutes || 5;
+        const maxLoops = configData.ttsRepeatCount || 1;
+        const now = new Date();
+
+        times.forEach(t => {
+            const [tH, tM] = t.split(':').map(Number);
+            const targetTime = new Date(); targetTime.setHours(tH, tM, 0, 0);
+            const diffMs = targetTime.getTime() - now.getTime();
+            const diffMins = diffMs / 60000;
+
+            if (diffMins > (ttsTriggerMinutes - 0.05) && diffMins <= ttsTriggerMinutes) {
+                const broadcastKey = `${id}-${t}-${now.getMinutes()}`;
+                if (!playedBroadcasts[broadcastKey]) {
+                    const data = boatData[id]; 
+                    const booked = (data.seats && data.seats[t]) || 0;
+                    const cStat = (data.customStatus && data.customStatus[t]) || "auto";
+
+                    if (booked <= 0) return;
+
+                    const isHalted = cStat.includes("중지") || cStat === "운항없음" || cStat === "점 검 중" || cStat === "점검중";
+
+                    if (!isHalted) {
+                        playedBroadcasts[broadcastKey] = true;
+                        if (!activeTtsBroadcasts[id].includes(t)) activeTtsBroadcasts[id].push(t);
+                        updateUI();
+
+                        const boatName = (id === 1) ? "김시민 1호" : "김시민 2호"; 
+                        const speechText = `김시민호 매표소에서 안내 드립니다. 잠시 후 ${tH}시 ${tM}분에 출발하는 ${boatName}에 탑승하시는 탑승객분들은, 탑승장소인 망진나루로 이동하여 주시기 바랍니다. ${boatName}는 망진나루를 출발하여 진주성 촉석루 앞까지, 약 20분 정도 소요되는 코스로 운항하고 있습니다. 감사합니다.`;
+
+                        executeNativeTTS(speechText, maxLoops, id, t);
+                    }
+                }
+            }
+        });
+    }
+
+    function executeNativeTTS(phrase, remainingLoops, id, time) {
+        if (!('speechSynthesis' in window)) return;
+
+        window.speechSynthesis.cancel();
+
+        if (remainingLoops <= 0 || !activeTtsBroadcasts[id].includes(time)) { window.dismissTtsBroadcast(id, time); return; }
+        const ttsOption = document.querySelector('input[name="tts_broadcast"]:checked');
+        if (!ttsOption || ttsOption.value === 'off') { window.dismissTtsBroadcast(id, time); return; }
+
+        if (navigator.vibrate) {
+            navigator.vibrate([200, 100, 200]);
+        }
+
+        const utterance = new SpeechSynthesisUtterance(phrase); 
+        const voices = window.speechSynthesis.getVoices();
+
+        let selectedVoice = voices.find(voice => voice.name.includes('Google') && voice.name.includes('Female') && voice.lang.includes('ko'));
+        if (!selectedVoice) selectedVoice = voices.find(voice => voice.name.includes('Google') && voice.lang.includes('ko'));
+        if (!selectedVoice) selectedVoice = voices.find(voice => voice.name.includes('Natural') && voice.lang.includes('ko'));
+        if (!selectedVoice) selectedVoice = voices.find(voice => voice.lang === 'ko-KR' || voice.lang.startsWith('ko'));
+
+        if (selectedVoice) utterance.voice = selectedVoice;
+        utterance.lang = 'ko-KR'; utterance.rate = 0.94; utterance.pitch = 0.98;
+
+        utterance.onend = function() {
+            const nextLoops = remainingLoops - 1;
+            if (nextLoops > 0 && activeTtsBroadcasts[id].includes(time)) { 
+                setTimeout(() => { executeNativeTTS(phrase, nextLoops, id, time); }, 3000);
+            } else { window.dismissTtsBroadcast(id, time); }
+        };
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function checkEmergencyPopupSchedule() {
+        const overlayGlobal = document.getElementById('emergency-overlay');
+        const timeDisplayGlobal = document.getElementById('emergency-popup-dynamic-time');
+        const msgBoxGlobal = document.getElementById('emergency-popup-msg');
+
+        const overlay1 = document.getElementById('boat-popup-overlay-1');
+        const timeDisplay1 = document.getElementById('boat-popup-time-1');
+        const msgBox1 = document.getElementById('boat-popup-msg-1');
+
+        const overlay2 = document.getElementById('boat-popup-overlay-2');
+        const timeDisplay2 = document.getElementById('boat-popup-time-2');
+        const msgBox2 = document.getElementById('boat-popup-msg-2');
+
+        if (!isGuest) {
+            if (overlayGlobal) overlayGlobal.classList.remove('active');
+            if (overlay1) overlay1.classList.remove('active');
+            if (overlay2) overlay2.classList.remove('active');
+            return;
+        }
+
+        const targetScreenSetting = configData.popupTargetScreen || 'all';
+        if (targetScreenSetting === 'guest' && mode !== 'guest_h') {
+            if (overlayGlobal) overlayGlobal.classList.remove('active');
+            if (overlay1) overlay1.classList.remove('active');
+            if (overlay2) overlay2.classList.remove('active');
+            return;
+        }
+        if (targetScreenSetting === 'worker' && mode !== 'guest_v') {
+            if (overlayGlobal) overlayGlobal.classList.remove('active');
+            if (overlay1) overlay1.classList.remove('active');
+            if (overlay2) overlay2.classList.remove('active');
+            return;
+        }
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const date = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const dateTimeStr = `${year}년 ${month}월 ${date}일 ${hours}시 ${minutes}분`;
+
+        let globalActive = false;
+        const globalManual = configData.popupManualSwitch || 'forced_off';
+        const globalMode = configData.popupMode || 'on';
+
+        if (globalManual === 'forced_on') {
+            globalActive = true;
+        } else if (globalMode === 'on') {
+            const pH = configData.popupHour || "12";
+            const pM = configData.popupMinute || "00";
+            const dur = configData.popupDurationSeconds !== undefined ? configData.popupDurationSeconds : 20;
+
+            const targetDate = new Date();
+            targetDate.setHours(parseInt(pH), parseInt(pM), 0, 0);
+
+            if (Math.abs(now.getTime() - targetDate.getTime()) < 1000) {
+                const pKey = `${now.toLocaleDateString()}-${pH}:${pM}-global`;
+                if (!playedEmergencyPopups.global[pKey]) {
+                    playedEmergencyPopups.global[pKey] = true;
+                    configData.popupActiveUntil = (dur === 0) ? 9999999999999 : (now.getTime() + (dur * 1000));
+                    saveConfigData();
+                }
+            }
+            if (configData.popupActiveUntil > 0 && now.getTime() < configData.popupActiveUntil) {
+                globalActive = true;
             }
         }
-    </script>
+
+        if (globalActive) {
+            if (msgBoxGlobal) msgBoxGlobal.innerText = configData.popupMessageText || "";
+            if (timeDisplayGlobal) timeDisplayGlobal.innerText = dateTimeStr;
+            if (overlayGlobal) overlayGlobal.classList.add('active');
+        } else {
+            if (overlayGlobal) overlayGlobal.classList.remove('active');
+        }
+
+        let boat1Active = (configData.popupManual1 === 'forced_on');
+        if (boat1Active) {
+            if (msgBox1) msgBox1.innerText = configData.popupText1 || "";
+            if (timeDisplay1) timeDisplay1.innerText = dateTimeStr;
+            if (overlay1) overlay1.classList.add('active');
+        } else {
+            if (overlay1) overlay1.classList.remove('active');
+        }
+
+        let boat2Active = (configData.popupManual2 === 'forced_on');
+        if (boat2Active) {
+            if (msgBox2) msgBox2.innerText = configData.popupText2 || "";
+            if (timeDisplay2) timeDisplay2.innerText = dateTimeStr;
+            if (overlay2) overlay2.classList.add('active');
+        } else {
+            if (overlay2) overlay2.classList.remove('active');
+        }
+    }
+
+    function checkMidnightReset() {
+        const today = new Date().toLocaleDateString();
+        const lastDate = configData.lastDate;
+        if (lastDate && lastDate !== today) {
+            boatData = JSON.parse(JSON.stringify(defaultBoatData)); 
+            configData.lastDate = today;
+            configData.popupActiveUntil = 0;
+            configData.popupManualSwitch = "forced_off";
+            configData.popupManual1 = "forced_off";
+            configData.popupManual2 = "forced_off";
+            saveBoatData();
+            saveConfigData();
+            playedAlarms = {}; playedBroadcasts = {}; playedEmergencyPopups = { global: {}, 1: {}, 2: {} };
+            stopAllAlarms(); stopAllTtsBroadcasts(); 
+        } else if (!lastDate) {
+            configData.lastDate = today;
+            saveConfigData();
+        }
+    }
+
+    function updateUI() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const date = String(now.getDate()).padStart(2, '0');
+
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        const dayStr = dayNames[now.getDay()];
+
+        const dateFormatted = `${year}년 ${month}월 ${date}일 (${dayStr})`;
+
+        const hoursStr = String(now.getHours()).padStart(2, '0');
+        const minutesStr = String(now.getMinutes()).padStart(2, '0');
+        const secondsStr = String(now.getSeconds()).padStart(2, '0');
+        const timeFormatted = `${hoursStr}시 ${minutesStr}분 ${secondsStr}초`;
+
+        updatePresetButtonsUI();
+
+        [1, 2].forEach(id => {
+            const dEl = document.getElementById(`date-${id}`);
+            const cEl = document.getElementById(`clock-${id}`);
+            if (dEl) dEl.innerText = dateFormatted;
+            if (cEl) cEl.innerText = timeFormatted;
+
+            const noticeTextEl = document.getElementById(`notice-text-${id}`);
+            if (noticeTextEl) noticeTextEl.innerText = boatData[id].notice || "현재 정상 운항 중입니다. ";
+
+            const gDur = document.getElementById(`g-dur-${id}`);
+            const gCourse = document.getElementById(`g-course-${id}`);
+            if (gDur) gDur.innerText = boatData[id].duration || "-";
+            if (gCourse) gCourse.innerText = boatData[id].course || "-";
+
+            if (!isGuest) {
+                const capIn = document.getElementById(`cap-direct-${id}`);
+                const durIn = document.getElementById(`dur-direct-${id}`);
+                const couIn = document.getElementById(`course-direct-${id}`);
+                const notIn = document.getElementById(`notice-direct-${id}`);
+
+                if (capIn && document.activeElement !== capIn) capIn.value = boatData[id].capacity || 0;
+                if (durIn && document.activeElement !== durIn) durIn.value = boatData[id].duration || 0;
+                if (couIn && document.activeElement !== couIn) couIn.value = boatData[id].course || "";
+                if (notIn && document.activeElement !== notIn) notIn.value = boatData[id].notice === "현재 정상 운항 중입니다." ? "" : boatData[id].notice;
+            }
+        });
+
+        [1, 2].forEach(id => {
+            const times = boatData[id].times || [];
+            const tbody = document.getElementById(`table-${id}`);
+            const listContainer = document.getElementById(`list-${id}`);
+
+            if (!tbody) return;
+
+            if (!isGuest && listContainer) {
+                let currentChecked = Array.from(document.querySelectorAll(`.chk-${id}:checked`)).map(c => c.value);
+                let listHtml = "";
+                times.forEach(t => {
+                    const isChecked = currentChecked.includes(t) ? "checked" : "";
+                    listHtml += `
+                        <label class="time-item">
+                            <span>${t}</span>
+                            <input type="checkbox" class="chk-${id}" value="${t}" ${isChecked} onchange="updateSelectBtnText(${id})">
+                        </label>
+                    `;
+                });
+                listContainer.innerHTML = listHtml;
+            }
+
+            checkTenMinutesAlarm(id, times);
+            checkTtsSpeechBroadcast(id, times);
+
+            let pageTimes = times;
+            const rotationMode = configData.rotationMode || "on";
+            const targetGuest = configData.rotationTargetGuest !== false;
+            const targetWorker = configData.rotationTargetWorker !== false;
+            const pageInterval = (configData.pageIntervalSeconds || 5) * 1000;
+
+            let isRotationActiveForThisMode = false;
+            if (rotationMode === "on") {
+                if (mode === 'guest_h' && targetGuest) isRotationActiveForThisMode = true;
+                if (mode === 'guest_v' && targetWorker) isRotationActiveForThisMode = true;
+            }
+
+            const totalCount = times.length;
+            const pageIndicator = document.getElementById(`page-indicator-${id}`);
+
+            if (isGuest && totalCount > 10 && isRotationActiveForThisMode) {
+                const totalPages = Math.ceil(totalCount / 10);
+                let pStat = guestPageStatus[id];
+
+                if (now.getTime() - pStat.lastRotationTime >= pageInterval) {
+                    pStat.currentPage = (pStat.currentPage % totalPages) + 1;
+                    pStat.lastRotationTime = now.getTime();
+                }
+
+                const startIdx = (pStat.currentPage - 1) * 10;
+                pageTimes = times.slice(startIdx, startIdx + 10);
+
+                if (pageIndicator) {
+                    pageIndicator.innerText = `[${pStat.currentPage}/${totalPages} 페이지]`;
+                    pageIndicator.style.display = "inline-block";
+                }
+            } else {
+                if (pageIndicator) pageIndicator.style.display = "none";
+            }
+
+            let tbodyHtml = "";
+            pageTimes.forEach(t => {
+                const capacity = boatData[id].capacity || 0;
+                let booked = (boatData[id].seats && boatData[id].seats[t]) || 0;
+
+                if (isCustomerGuest && booked > capacity) {
+                    booked = capacity;
+                }
+
+                const remain = capacity - booked;
+                const customStat = (boatData[id].customStatus && boatData[id].customStatus[t]) || "auto";
+
+                const [tH, tM] = t.split(':').map(Number);
+                const flightTime = new Date(); flightTime.setHours(tH, tM, 0, 0);
+                const diffMins = (flightTime.getTime() - now.getTime()) / 60000;
+
+                const duration = parseInt(boatData[id].duration) || 20;
+
+                let rowClass = "";
+                let statusText = "";
+                let statusClass = "";
+                let remainText = remain;
+                let remainClass = "remain-count";
+
+                if (customStat !== "auto") {
+                    statusText = customStat;
+                    if (customStat === "운항없음") {
+                        rowClass = "row-halted-gray-bg";
+                        statusClass = "text-ended-box";
+                    } else if (customStat.includes("중지")) {
+                        rowClass = "row-halted-gray-bg";
+                        statusClass = "text-ended-box";
+                    } else if (customStat === "점 검 중") {
+                        rowClass = "row-halted-gray-bg";
+                        statusClass = "text-maintenance-gray";
+                    } else if (customStat === "탑승시작") {
+                        rowClass = "row-boarding-start-bg";
+                        statusClass = "text-boarding-start";
+                    } else if (customStat === "티켓발권마감") {
+                        rowClass = "row-ticketing-ended-bg";
+                        statusClass = "bg-dark-green-yellow";
+                    } else if (customStat === "탑승(승선)마감") {
+                        rowClass = "row-boarding-close-solid";
+                        statusClass = "text-boarding-close";
+                    }
+                } else {
+                    if (diffMins < -duration) {
+                        if (booked > 0) {
+                            statusText = "운항종료(End)";
+                            rowClass = "row-ended";
+                            statusClass = "text-ended-box";
+                        } else {
+                            statusText = "종료(End)";
+                            rowClass = "row-ended";
+                            statusClass = "text-ended-box";
+                        }
+                    } else if (diffMins <= 0) {
+                        if (booked <= 0) {
+                            statusText = "종료(End)";
+                            rowClass = "row-ended";
+                            statusClass = "text-ended-box";
+                        } else {
+                            statusText = "운 항 중";
+                            rowClass = "row-sailing-bg";
+                            statusClass = "text-blue";
+                        }
+                    } else if (diffMins <= 5) {
+                        if (booked <= 0) {
+                            statusText = "티켓발권가능";
+                            rowClass = "row-available-bg";
+                            statusClass = "text-available";
+                        } else {
+                            statusText = "탑승마감";
+                            rowClass = "row-boarding-close-solid";
+                            statusClass = "text-boarding-close";
+                        }
+                    } else if (diffMins <= 10) {
+                        if (booked <= 0) {
+                            statusText = "티켓발권가능";
+                            rowClass = "row-available-bg";
+                            statusClass = "text-available";
+                        } else {
+                            statusText = "탑승시작";
+                            rowClass = "row-boarding-start-bg";
+                            statusClass = "text-boarding-start";
+                        }
+                    } else if (diffMins <= 15) {
+                        if (booked <= 0) {
+                            statusText = "티켓발권가능";
+                            rowClass = "row-available-bg";
+                            statusClass = "text-available";
+                        } else {
+                            statusText = "티켓발권종료";
+                            rowClass = "row-ticketing-ended-bg";
+                            statusClass = "bg-dark-green-yellow";
+                        }
+                    } else {
+                        if (remain <= 0) {
+                            statusText = "매진(Sold out)";
+                            rowClass = "row-soldout-blink";
+                            statusClass = "text-soldout";
+                            remainClass += " text-soldout-zero";
+                        } else {
+                            statusText = "티켓발권가능";
+                            rowClass = "row-available-bg";
+                            statusClass = "text-available";
+                        }
+                    }
+                }
+
+                if (remain <= 0 && customStat === "auto" && !statusText.includes("종료") && statusText !== "운 항 중") {
+                    rowClass = "row-soldout-blink";
+                    remainClass += " text-soldout-zero";
+                }
+
+                if (remain < 0) {
+                    if (!isGuest || isWorker) {
+                        const excessCount = Math.abs(remain);
+                        remainText = `<span class="over-capacity-text">⚠️ 초과 +${excessCount}명</span>`;
+                    }
+                }
+
+                const isAlarmActive = activeVisualAlarms[id].includes(t);
+                const isTtsActive = activeTtsBroadcasts[id].includes(t);
+
+                if (isAlarmActive) rowClass += " row-alarm-blink";
+                if (isTtsActive) rowClass += " row-tts-blink";
+
+                let controlBtns = "";
+                if (!isGuest) {
+                    let alarmStopBtn = "";
+                    if (isAlarmActive) {
+                        alarmStopBtn = `<button class="btn-alarm-stop" onclick="dismissAlarm(${id}, '${t}')">🔔 알람확인</button>`;
+                    }
+                    let ttsStopBtn = "";
+                    if (isTtsActive) {
+                        ttsStopBtn = `<button class="btn-tts-stop" onclick="dismissTtsBroadcast(${id}, '${t}')">🗣️ 방송확인</button>`;
+                    }
+
+                    controlBtns = `
+                        <div class="btn-group">
+                            <button class="btn-adj" onclick="adjust(${id}, '${t}', 1)">+</button>
+                            <button class="btn-adj" onclick="adjust(${id}, '${t}', -1)">-</button>
+                        </div>
+                        ${alarmStopBtn}
+                        ${ttsStopBtn}
+                    `;
+                }
+
+                const isHaltedCell = rowClass.includes("row-halted-gray-bg") || rowClass.includes("row-ended");
+                const lineThroughClass = isHaltedCell ? "line-through-cell" : "";
+
+                tbodyHtml += `
+                    <tr class="${rowClass}">
+                        <td class="${lineThroughClass}"><span>${t}</span></td>
+                        <td class="${lineThroughClass}">
+                            <div class="total-booked-flex">
+                                <div>${capacity}명<span class="slash-divider">/</span>${booked}명</div>
+                                ${controlBtns}
+                            </div>
+                        </td>
+                        <td class="${lineThroughClass}">
+                            <span class="${remainClass}">${remainText}</span>${remain < 0 && (!isGuest || isWorker) ? '' : '명'}
+                        </td>
+                        <td>
+                            <div class="status-cell-flex">
+                                <span class="status-text ${statusClass}">${statusText}</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = tbodyHtml;
+        });
+
+        checkEmergencyPopupSchedule();
+    }
+
+    const boatDataRef = ref(db, 'namgang/boatData');
+    onValue(boatDataRef, (snapshot) => {
+        const val = snapshot.val();
+        if (val) {
+            boatData = val;
+            if (!boatData[1].seats) boatData[1].seats = {};
+            if (!boatData[1].customStatus) boatData[1].customStatus = {};
+            if (!boatData[2].seats) boatData[2].seats = {};
+            if (!boatData[2].customStatus) boatData[2].customStatus = {};
+            updateUI();
+        } else {
+            saveBoatData();
+        }
+    });
+
+    const configDataRef = ref(db, 'namgang/configData');
+    onValue(configDataRef, (snapshot) => {
+        const val = snapshot.val();
+        if (val) {
+            configData = val;
+
+            if (!isGuest) {
+                if (document.getElementById('alarm-trigger-minutes')) document.getElementById('alarm-trigger-minutes').value = configData.alarmMinutes || 10;
+                if (document.getElementById('alarm-duration-seconds')) document.getElementById('alarm-duration-seconds').value = configData.alarmSeconds || 30;
+                if (document.getElementById('page-interval-seconds')) document.getElementById('page-interval-seconds').value = configData.pageIntervalSeconds || 5;
+
+                const ttsRadio = document.querySelector(`input[name="tts_broadcast"][value="${configData.ttsBroadcast || 'on'}"]`);
+                if (ttsRadio) ttsRadio.checked = true;
+
+                if (document.getElementById('tts-trigger-minutes')) document.getElementById('tts-trigger-minutes').value = configData.ttsMinutes || 5;
+                if (document.getElementById('tts-repeat-count')) document.getElementById('tts-repeat-count').value = configData.ttsRepeatCount || 2;
+
+                const rotRadio = document.querySelector(`input[name="rotation_mode"][value="${configData.rotationMode || 'on'}"]`);
+                if (rotRadio) rotRadio.checked = true;
+
+                if (document.getElementById('rotation-target-guest')) document.getElementById('rotation-target-guest').checked = configData.rotationTargetGuest !== false;
+                if (document.getElementById('rotation-target-worker')) document.getElementById('rotation-target-worker').checked = configData.rotationTargetWorker !== false;
+
+                const popTargetScreenRadio = document.querySelector(`input[name="popup_target_screen"][value="${configData.popupTargetScreen || 'all'}"]`);
+                if (popTargetScreenRadio) popTargetScreenRadio.checked = true;
+
+                const popRadio = document.querySelector(`input[name="popup_mode"][value="${configData.popupMode || 'on'}"]`);
+                if (popRadio) popRadio.checked = true;
+
+                const manualRadio = document.querySelector(`input[name="popup_manual_switch"][value="${configData.popupManualSwitch || 'forced_off'}"]`);
+                if (manualRadio) manualRadio.checked = true;
+
+                if (document.getElementById('popup-hour')) document.getElementById('popup-hour').value = configData.popupHour || "12";
+                if (document.getElementById('popup-minute')) document.getElementById('popup-minute').value = configData.popupMinute || "00";
+                if (document.getElementById('popup-duration-seconds')) document.getElementById('popup-duration-seconds').value = configData.popupDurationSeconds !== undefined ? configData.popupDurationSeconds : 20;
+                if (document.getElementById('popup-message-text')) document.getElementById('popup-message-text').value = configData.popupMessageText || "";
+
+                const manual1 = document.querySelector(`input[name="popup_manual_1"][value="${configData.popupManual1 || 'forced_off'}"]`);
+                if (manual1) manual1.checked = true;
+                if (document.getElementById('popup-text-1')) document.getElementById('popup-text-1').value = configData.popupText1 || "";
+
+                const manual2 = document.querySelector(`input[name="popup_manual_2"][value="${configData.popupManual2 || 'forced_off'}"]`);
+                if (manual2) manual2.checked = true;
+                if (document.getElementById('popup-text-2')) document.getElementById('popup-text-2').value = configData.popupText2 || "";
+            }
+
+            checkMidnightReset();
+            updateUI();
+        } else {
+            saveConfigData();
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.custom-multiselect')) {
+            document.querySelectorAll('.checkbox-list').forEach(el => el.classList.remove('show'));
+        }
+    });
+
+    setInterval(() => {
+        updateUI();
+    }, 1000);
+
+</script>
 </body>
 </html>
