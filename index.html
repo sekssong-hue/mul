@@ -137,6 +137,28 @@
         }
         .btn-excel-upload:hover { filter: brightness(1.15); }
 
+        /* [CSS] 근무자용 상단 간편 제어 패널 (1호, 2호 모두 적용) */
+        .worker-quick-control {
+            display: none; background: #1e2631; padding: 10px 14px; border-bottom: 3px solid var(--highlight);
+            align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+        }
+        .is-worker .worker-quick-control { display: flex; }
+        .worker-control-item { display: flex; align-items: center; gap: 5px; color: #fff; font-weight: bold; font-size: 15px; }
+        .worker-control-item input[type="number"] {
+            width: 46px; height: 32px; text-align: center; font-size: 15px; font-weight: 900;
+            border: 1px solid var(--highlight); background: #000; color: var(--highlight); border-radius: 6px;
+        }
+        .worker-control-item select {
+            height: 34px; padding: 0 8px; font-size: 15px; font-weight: 900;
+            border-radius: 6px; border: 1px solid #ffcc00; background: #000; color: #ffcc00; cursor: pointer;
+        }
+        .worker-control-item button {
+            padding: 6px 12px; font-size: 15px; font-weight: 900; border-radius: 6px; border: 1px solid #555; color: #fff; cursor: pointer;
+            touch-action: manipulation;
+        }
+        .worker-control-item button.active-on { background: #28a745; border-color: #1e7e34; }
+        .worker-control-item button.active-off { background: #dc3545; border-color: #bd2130; }
+
         /* [CSS] 알람 및 사운드 설정 토글 컨테이너 스타일 */
         .alarm-toggle-container {
             display: flex; flex-direction: column; gap: 10px; background: #282e38; 
@@ -363,6 +385,17 @@
         td { padding: 8px 4px; text-align: center; border-bottom: 1px solid #eee; font-weight: 900; font-size: clamp(20px, 3vw, 37px); letter-spacing: -1.5px; position: relative; line-height: 1.2; white-space: nowrap; }
         td:first-child { font-size: clamp(22px, 3.2vw, 40px); font-weight: 900; letter-spacing: -1px; }
 
+        /* 근무자 화면 현재 시간에 맞는 출발시간 하이라이트 강조 스타일 */
+        tr.row-current-highlight td {
+            border-top: 4px solid #ff9800 !important;
+            border-bottom: 4px solid #ff9800 !important;
+            box-shadow: inset 0 0 14px rgba(255, 152, 0, 0.45);
+        }
+        tr.row-current-highlight td:first-child::before {
+            content: "▶ ";
+            color: #d63031;
+        }
+
         .total-booked-flex { display: flex; align-items: center; justify-content: center; gap: 8px; }
 
         .remain-count { font-size: clamp(24px, 3.5vw, 45px); font-weight: 900; color: #0040ff; }
@@ -385,7 +418,6 @@
         .row-boarding-start-bg td { background-color: #ffe0b2 !important; color: #e65100 !important; }
         .row-boarding-close-solid td { background-color: #fff9c4 !important; color: #f57f17 !important; }
 
-        /* 매진 행 스타일: 진한 다홍/주황 배경에 글자를 흰색으로 확실하게 대비 */
         tr.row-soldout-blink td { background-color: var(--soldout-blink-bg) !important; }
         tr.row-soldout-blink td,
         tr.row-soldout-blink td span,
@@ -436,7 +468,6 @@
         .text-dark-green { background-color: #2e7d32 !important; color: #ffffff !important; border: 2px solid #1b5e20 !important; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .text-maintenance-gray { background-color: #616161 !important; color: #ffffff !important; border: 2px solid #212121 !important; font-weight: 900; } 
         
-        /* 매진 뱃지 강조 디자인 */
         .text-soldout { 
             background-color: #000000 !important; 
             color: #ff3b30 !important; 
@@ -579,6 +610,26 @@
                 </div>
             </div>
 
+            <!-- 1호 근무자 화면 상단 간편 제어 패널 -->
+            <div class="worker-quick-control">
+                <div class="worker-control-item">
+                    <span>🔔 알람:</span>
+                    <input type="number" id="worker-alarm-min-1" value="10" min="1" max="60" onchange="updateWorkerTimeConfig(1)">분전
+                    <button id="worker-alarm-btn-1" onclick="toggleWorkerAlarm(1)" class="active-on">ON</button>
+                </div>
+                <div class="worker-control-item">
+                    <span>📢 방송:</span>
+                    <input type="number" id="worker-tts-min-1" value="5" min="1" max="60" onchange="updateWorkerTimeConfig(1)">분전
+                    <button id="worker-tts-btn-1" onclick="toggleWorkerTts(1)" class="active-on">ON</button>
+                </div>
+                <div class="worker-control-item">
+                    <span>🕒 출발기준:</span>
+                    <select id="worker-focus-time-1" onchange="setWorkerFocusTime(1, this.value)">
+                        <option value="auto">자동(현재시간)</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="notice-view-container" id="notice-view-container-1">
                 <div class="notice-title">📢 김시민 1호 안내사항</div>
                 <div class="notice-content" id="notice-text-1">현재 정상 운항 중입니다.</div>
@@ -682,6 +733,26 @@
                 <div class="boat-info-right">
                     <div class="boat-date" id="date-2"></div>
                     <div class="boat-clock" id="clock-2">00시 00분 00초</div>
+                </div>
+            </div>
+
+            <!-- 2호 근무자 화면 상단 간편 제어 패널 -->
+            <div class="worker-quick-control">
+                <div class="worker-control-item">
+                    <span>🔔 알람:</span>
+                    <input type="number" id="worker-alarm-min-2" value="10" min="1" max="60" onchange="updateWorkerTimeConfig(2)">분전
+                    <button id="worker-alarm-btn-2" onclick="toggleWorkerAlarm(2)" class="active-on">ON</button>
+                </div>
+                <div class="worker-control-item">
+                    <span>📢 방송:</span>
+                    <input type="number" id="worker-tts-min-2" value="5" min="1" max="60" onchange="updateWorkerTimeConfig(2)">분전
+                    <button id="worker-tts-btn-2" onclick="toggleWorkerTts(2)" class="active-on">ON</button>
+                </div>
+                <div class="worker-control-item">
+                    <span>🕒 출발기준:</span>
+                    <select id="worker-focus-time-2" onchange="setWorkerFocusTime(2, this.value)">
+                        <option value="auto">자동(현재시간)</option>
+                    </select>
                 </div>
             </div>
 
@@ -919,7 +990,7 @@
             </div>
         </div>
 
-        <!-- 1호 전용 긴급 팝업 설정 영역 (수동 즉시발동만 유지) -->
+        <!-- 1호 전용 긴급 팝업 설정 영역 -->
         <div class="alarm-toggle-container" style="border-color: var(--boat3-color);">
             <div class="box-title-sm" style="color: var(--boat3-color);">🚨 [1호 영역] 긴급 팝업 설정</div>
 
@@ -939,7 +1010,7 @@
             </div>
         </div>
 
-        <!-- 2호 전용 긴급 팝업 설정 영역 (수동 즉시발동만 유지) -->
+        <!-- 2호 전용 긴급 팝업 설정 영역 -->
         <div class="alarm-toggle-container" style="border-color: var(--boat4-color);">
             <div class="box-title-sm" style="color: var(--boat4-color);">🚨 [2호 영역] 긴급 팝업 설정</div>
 
@@ -1094,6 +1165,7 @@
     const defaultConfigData = {
         lastDate: "",
         selectedPreset: "weekday",
+        alarmSound: "on",
         alarmMinutes: 10,
         alarmSeconds: 30,
         pageIntervalSeconds: 5,
@@ -1103,6 +1175,19 @@
         rotationMode: "on",
         rotationTargetGuest: true,
         rotationTargetWorker: true,
+
+        // 1호, 2호 개별 근무자 제어 설정 지원
+        boat1Alarm: "on",
+        boat1AlarmMin: 10,
+        boat1Tts: "on",
+        boat1TtsMin: 5,
+        boat1FocusTime: "auto",
+
+        boat2Alarm: "on",
+        boat2AlarmMin: 10,
+        boat2Tts: "on",
+        boat2TtsMin: 5,
+        boat2FocusTime: "auto",
 
         popupMode: "on",
         popupHour: "12",
@@ -1138,7 +1223,7 @@
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('mode'); 
     if (mode === 'guest_h') document.body.classList.add('is-guest', 'mode-h'); 
-    if (mode === 'guest_v') document.body.classList.add('is-guest', 'mode-v'); 
+    if (mode === 'guest_v') document.body.classList.add('is-guest', 'mode-v', 'is-worker'); 
     const isGuest = mode && mode.startsWith('guest');
     const isCustomerGuest = (mode === 'guest_h');
     const isWorker = (mode === 'guest_v');
@@ -1153,6 +1238,66 @@
         }
     }
     buildPopupTimeSelectOptions();
+
+    // [근무자 화면 전용] 1호/2호 개별 알람 ON/OFF 토글
+    window.toggleWorkerAlarm = function(id) {
+        const key = id === 1 ? 'boat1Alarm' : 'boat2Alarm';
+        const cur = configData[key] || 'on';
+        const next = cur === 'on' ? 'off' : 'on';
+        configData[key] = next;
+
+        if (next === 'off') {
+            stopBoatAlarms(id);
+        }
+        saveConfigData();
+        updateUI();
+    };
+
+    // [근무자 화면 전용] 1호/2호 개별 TTS 방송 ON/OFF 토글
+    window.toggleWorkerTts = function(id) {
+        const key = id === 1 ? 'boat1Tts' : 'boat2Tts';
+        const cur = configData[key] || 'on';
+        const next = cur === 'on' ? 'off' : 'on';
+        configData[key] = next;
+
+        if (next === 'off') {
+            stopBoatTts(id);
+        }
+        saveConfigData();
+        updateUI();
+    };
+
+    // [근무자 화면 전용] 1호/2호 개별 알람/방송 분 전 시간 설정
+    window.updateWorkerTimeConfig = function(id) {
+        const alarmIn = document.getElementById(`worker-alarm-min-${id}`);
+        const ttsIn = document.getElementById(`worker-tts-min-${id}`);
+
+        let aMin = parseInt(alarmIn.value) || 10;
+        if (aMin < 1) aMin = 1; if (aMin > 60) aMin = 60;
+        alarmIn.value = aMin;
+
+        let tMin = parseInt(ttsIn.value) || 5;
+        if (tMin < 1) tMin = 1; if (tMin > 60) tMin = 60;
+        ttsIn.value = tMin;
+
+        if (id === 1) {
+            configData.boat1AlarmMin = aMin;
+            configData.boat1TtsMin = tMin;
+        } else {
+            configData.boat2AlarmMin = aMin;
+            configData.boat2TtsMin = tMin;
+        }
+        saveConfigData();
+        updateUI();
+    };
+
+    // [근무자 화면 전용] 1호/2호 기준 출발 시간대 선택
+    window.setWorkerFocusTime = function(id, val) {
+        if (id === 1) configData.boat1FocusTime = val;
+        else configData.boat2FocusTime = val;
+        saveConfigData();
+        updateUI();
+    };
 
     function saveBoatData() {
         if (!isOnlineStatus) {
@@ -1189,6 +1334,8 @@
             boatData[1].times = [...presetSchedules[presetKey][1]];
             boatData[2].times = [...presetSchedules[presetKey][2]];
             configData.selectedPreset = presetKey;
+            configData.boat1FocusTime = "auto";
+            configData.boat2FocusTime = "auto";
 
             saveBoatData();
             saveConfigData();
@@ -1329,7 +1476,7 @@
     };
 
     window.handleManualPopupToggle = function(targetType, val) {
-        if (isGuest) return;
+        if (isGuest && !isWorker) return;
         if (targetType === 'global') configData.popupManualSwitch = val;
         if (targetType === 1) configData.popupManual1 = val;
         if (targetType === 2) configData.popupManual2 = val;
@@ -1337,11 +1484,16 @@
     };
 
     window.saveAlarmConfig = function() {
-        if (isGuest) return; 
+        if (isGuest && !isWorker) return; 
+
+        const alarmOpt = document.querySelector('input[name="alarm_sound"]:checked');
+        if (alarmOpt) configData.alarmSound = alarmOpt.value;
 
         let trigVal = parseInt(document.getElementById('alarm-trigger-minutes').value) || 10;
         if(trigVal < 1) trigVal = 1; if(trigVal > 60) trigVal = 60;
         configData.alarmMinutes = trigVal;
+        configData.boat1AlarmMin = trigVal;
+        configData.boat2AlarmMin = trigVal;
 
         let durVal = parseInt(document.getElementById('alarm-duration-seconds').value) || 30;
         if(durVal < 1) durVal = 1; if(durVal > 300) durVal = 300;
@@ -1357,6 +1509,8 @@
         let ttsMins = parseInt(document.getElementById('tts-trigger-minutes').value) || 5;
         if (ttsMins < 1) ttsMins = 1; if (ttsMins > 60) ttsMins = 60;
         configData.ttsMinutes = ttsMins;
+        configData.boat1TtsMin = ttsMins;
+        configData.boat2TtsMin = ttsMins;
 
         let ttsRepeat = parseInt(document.getElementById('tts-repeat-count').value) || 1;
         if (ttsRepeat < 1) ttsRepeat = 1; if (ttsRepeat > 5) ttsRepeat = 5;
@@ -1387,7 +1541,7 @@
     };
 
     window.toggleDropdown = function(id) {
-        if(isGuest) return; 
+        if(isGuest && !isWorker) return; 
         const list = document.getElementById(`list-${id}`);
         const isShow = list.classList.contains('show');
         document.querySelectorAll('.checkbox-list').forEach(el => el.classList.remove('show'));
@@ -1529,6 +1683,7 @@
     };
 
     window.handleAlarmToggle = function() {
+        window.saveAlarmConfig();
         const option = document.querySelector('input[name="alarm_sound"]:checked');
         if (option && option.value === 'off') { stopAllAlarms(); updateUI(); }
     };
@@ -1569,6 +1724,10 @@
     }
 
     function startInfiniteAlarmLoop(id, time) {
+        const isMasterOn = (configData.alarmSound || 'on') === 'on';
+        const isBoatOn = (id === 1 ? (configData.boat1Alarm || 'on') : (configData.boat2Alarm || 'on')) === 'on';
+        if (!isMasterOn || !isBoatOn) return;
+
         if (!activeVisualAlarms[id].includes(time)) activeVisualAlarms[id].push(time);
         updateUI(); 
 
@@ -1585,8 +1744,9 @@
             const ctx = new AudioContext(); const alarmStartTime = Date.now();
 
             alarmSoundIntervals[alarmKey] = setInterval(() => {
-                const option = document.querySelector('input[name="alarm_sound"]:checked');
-                if (!option || option.value === 'off') { window.dismissAlarm(id, time); return; }
+                const masterCheck = (configData.alarmSound || 'on') === 'on';
+                const boatCheck = (id === 1 ? (configData.boat1Alarm || 'on') : (configData.boat2Alarm || 'on')) === 'on';
+                if (!masterCheck || !boatCheck) { window.dismissAlarm(id, time); return; }
 
                 const maxDurationSeconds = configData.alarmSeconds || 30;
                 const elapsedSeconds = (Date.now() - alarmStartTime) / 1000;
@@ -1595,6 +1755,21 @@
                 playSingleBeepSignal(ctx, ctx.currentTime);
             }, 1000);
         } catch(e) { console.log("오디오 디바이스 에러"); }
+    }
+
+    function stopBoatAlarms(id) {
+        for (let key in alarmSoundIntervals) {
+            if (key.startsWith(`${id}-`)) {
+                clearInterval(alarmSoundIntervals[key]);
+                delete alarmSoundIntervals[key];
+            }
+        }
+        activeVisualAlarms[id] = [];
+    }
+
+    function stopBoatTts(id) {
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        activeTtsBroadcasts[id] = [];
     }
 
     function stopAllAlarms() {
@@ -1608,11 +1783,12 @@
     }
 
     function checkTenMinutesAlarm(id, times) {
-        if (isGuest) return; 
-        const option = document.querySelector('input[name="alarm_sound"]:checked');
-        if (!option || option.value === 'off') return;
+        if (isCustomerGuest) return;
+        const isMasterOn = (configData.alarmSound || 'on') === 'on';
+        const isBoatOn = (id === 1 ? (configData.boat1Alarm || 'on') : (configData.boat2Alarm || 'on')) === 'on';
+        if (!isMasterOn || !isBoatOn) return;
 
-        const triggerMinutes = configData.alarmMinutes || 10;
+        const triggerMinutes = (id === 1 ? configData.boat1AlarmMin : configData.boat2AlarmMin) || configData.alarmMinutes || 10;
         const now = new Date();
 
         times.forEach(t => {
@@ -1625,7 +1801,7 @@
                 const booked = (boatData[id].seats && boatData[id].seats[t]) || 0;
                 if (booked <= 0) return;
 
-                const uniqueKey = `${id}-${t}-${now.getMinutes()}`;
+                const uniqueKey = `${id}-${t}-${triggerMinutes}-${now.getMinutes()}`;
                 if (!playedAlarms[uniqueKey]) {
                     const cStat = (boatData[id].customStatus && boatData[id].customStatus[t]) || "auto";
                     const isHalted = cStat.includes("중지") || cStat === "운항없음" || cStat === "점 검 중" || cStat === "점검중";
@@ -1637,11 +1813,12 @@
     }
 
     function checkTtsSpeechBroadcast(id, times) {
-        if (isGuest) return; 
-        const ttsOption = document.querySelector('input[name="tts_broadcast"]:checked');
-        if (!ttsOption || ttsOption.value === 'off') return;
+        if (isCustomerGuest) return;
+        const isMasterOn = (configData.ttsBroadcast || 'on') === 'on';
+        const isBoatOn = (id === 1 ? (configData.boat1Tts || 'on') : (configData.boat2Tts || 'on')) === 'on';
+        if (!isMasterOn || !isBoatOn) return;
 
-        const ttsTriggerMinutes = configData.ttsMinutes || 5;
+        const ttsTriggerMinutes = (id === 1 ? configData.boat1TtsMin : configData.boat2TtsMin) || configData.ttsMinutes || 5;
         const maxLoops = configData.ttsRepeatCount || 1;
         const now = new Date();
 
@@ -1652,7 +1829,7 @@
             const diffMins = diffMs / 60000;
 
             if (diffMins > (ttsTriggerMinutes - 0.05) && diffMins <= ttsTriggerMinutes) {
-                const broadcastKey = `${id}-${t}-${now.getMinutes()}`;
+                const broadcastKey = `${id}-${t}-${ttsTriggerMinutes}-${now.getMinutes()}`;
                 if (!playedBroadcasts[broadcastKey]) {
                     const data = boatData[id]; 
                     const booked = (data.seats && data.seats[t]) || 0;
@@ -1667,8 +1844,8 @@
                         if (!activeTtsBroadcasts[id].includes(t)) activeTtsBroadcasts[id].push(t);
                         updateUI();
 
-                        const boatName = (id === 1) ? "김시민 1호" : "김시민 2호"; 
-                        const speechText = `김시민호 매표소에서 안내 드립니다. 잠시 후 ${tH}시 ${tM}분에 출발하는 ${boatName}에 탑승하시는 탑승객분들은, 탑승장소인 망진나루로 이동하여 주시기 바랍니다. ${boatName}는 망진나루를 출발하여 진주성 촉석루 앞까지, 약 20분 정도 소요되는 코스로 운항하고 있습니다. 감사합니다.`;
+                        const boatNumStr = (id === 1) ? "1호" : "2호"; 
+                        const speechText = `출발 김시민 ${boatNumStr} 발권 인원 ${booked}명 입니다.`;
 
                         executeNativeTTS(speechText, maxLoops, id, t);
                     }
@@ -1680,11 +1857,13 @@
     function executeNativeTTS(phrase, remainingLoops, id, time) {
         if (!('speechSynthesis' in window)) return;
 
+        const isMasterOn = (configData.ttsBroadcast || 'on') === 'on';
+        const isBoatOn = (id === 1 ? (configData.boat1Tts || 'on') : (configData.boat2Tts || 'on')) === 'on';
+        if (!isMasterOn || !isBoatOn) { window.dismissTtsBroadcast(id, time); return; }
+
         window.speechSynthesis.cancel();
 
         if (remainingLoops <= 0 || !activeTtsBroadcasts[id].includes(time)) { window.dismissTtsBroadcast(id, time); return; }
-        const ttsOption = document.querySelector('input[name="tts_broadcast"]:checked');
-        if (!ttsOption || ttsOption.value === 'off') { window.dismissTtsBroadcast(id, time); return; }
 
         if (navigator.vibrate) {
             navigator.vibrate([200, 100, 200]);
@@ -1816,6 +1995,8 @@
             configData.popupManualSwitch = "forced_off";
             configData.popupManual1 = "forced_off";
             configData.popupManual2 = "forced_off";
+            configData.boat1FocusTime = "auto";
+            configData.boat2FocusTime = "auto";
             saveBoatData();
             saveConfigData();
             playedAlarms = {}; playedBroadcasts = {}; playedEmergencyPopups = { global: {}, 1: {}, 2: {} };
@@ -1858,6 +2039,46 @@
             if (gDur) gDur.innerText = boatData[id].duration || "-";
             if (gCourse) gCourse.innerText = boatData[id].course || "-";
 
+            // 근무자 화면 상단 패널 UI 갱신 (1호, 2호 모두 적용)
+            const bAlarmState = (id === 1 ? configData.boat1Alarm : configData.boat2Alarm) || 'on';
+            const bTtsState = (id === 1 ? configData.boat1Tts : configData.boat2Tts) || 'on';
+            const bAlarmMin = (id === 1 ? configData.boat1AlarmMin : configData.boat2AlarmMin) || configData.alarmMinutes || 10;
+            const bTtsMin = (id === 1 ? configData.boat1TtsMin : configData.boat2TtsMin) || configData.ttsMinutes || 5;
+            const bFocusTime = (id === 1 ? configData.boat1FocusTime : configData.boat2FocusTime) || "auto";
+
+            const alarmBtn = document.getElementById(`worker-alarm-btn-${id}`);
+            if (alarmBtn) {
+                alarmBtn.innerText = bAlarmState === 'on' ? "ON" : "OFF";
+                alarmBtn.className = bAlarmState === 'on' ? "active-on" : "active-off";
+            }
+
+            const ttsBtn = document.getElementById(`worker-tts-btn-${id}`);
+            if (ttsBtn) {
+                ttsBtn.innerText = bTtsState === 'on' ? "ON" : "OFF";
+                ttsBtn.className = bTtsState === 'on' ? "active-on" : "active-off";
+            }
+
+            const alarmMinIn = document.getElementById(`worker-alarm-min-${id}`);
+            if (alarmMinIn && document.activeElement !== alarmMinIn) {
+                alarmMinIn.value = bAlarmMin;
+            }
+
+            const ttsMinIn = document.getElementById(`worker-tts-min-${id}`);
+            if (ttsMinIn && document.activeElement !== ttsMinIn) {
+                ttsMinIn.value = bTtsMin;
+            }
+
+            const focusSelect = document.getElementById(`worker-focus-time-${id}`);
+            if (focusSelect && document.activeElement !== focusSelect) {
+                const timesList = boatData[id].times || [];
+                let optsHtml = `<option value="auto">자동(현재시간)</option>`;
+                timesList.forEach(t => {
+                    optsHtml += `<option value="${t}">${t} 출발</option>`;
+                });
+                focusSelect.innerHTML = optsHtml;
+                focusSelect.value = bFocusTime;
+            }
+
             if (!isGuest) {
                 const capIn = document.getElementById(`cap-direct-${id}`);
                 const durIn = document.getElementById(`dur-direct-${id}`);
@@ -1895,6 +2116,22 @@
 
             checkTenMinutesAlarm(id, times);
             checkTtsSpeechBroadcast(id, times);
+
+            // 현재 시간에 가장 임박한(다음 출발) 시간 자동 계산
+            const duration = parseInt(boatData[id].duration) || 20;
+            let autoTargetTime = null;
+            for (let i = 0; i < times.length; i++) {
+                const [tH, tM] = times[i].split(':').map(Number);
+                const fTime = new Date(); fTime.setHours(tH, tM, 0, 0);
+                const dMins = (fTime.getTime() - now.getTime()) / 60000;
+                if (dMins >= -duration) {
+                    autoTargetTime = times[i];
+                    break;
+                }
+            }
+
+            const bFocusSetting = (id === 1 ? configData.boat1FocusTime : configData.boat2FocusTime) || "auto";
+            const activeHighlightTime = (bFocusSetting === "auto") ? autoTargetTime : bFocusSetting;
 
             let pageTimes = times;
             const rotationMode = configData.rotationMode || "on";
@@ -1946,8 +2183,6 @@
                 const [tH, tM] = t.split(':').map(Number);
                 const flightTime = new Date(); flightTime.setHours(tH, tM, 0, 0);
                 const diffMins = (flightTime.getTime() - now.getTime()) / 60000;
-
-                const duration = parseInt(boatData[id].duration) || 20;
 
                 let rowClass = "";
                 let statusText = "";
@@ -2053,6 +2288,11 @@
                     }
                 }
 
+                // 근무자 화면에서 현재 시간에 맞는 출발시간(또는 근무자 지정 시간) 행 강조 표시
+                if (isWorker && t === activeHighlightTime) {
+                    rowClass += " row-current-highlight";
+                }
+
                 const isAlarmActive = activeVisualAlarms[id].includes(t);
                 const isTtsActive = activeTtsBroadcasts[id].includes(t);
 
@@ -2060,7 +2300,7 @@
                 if (isTtsActive) rowClass += " row-tts-blink";
 
                 let controlBtns = "";
-                if (!isGuest) {
+                if (!isGuest || isWorker) {
                     let alarmStopBtn = "";
                     if (isAlarmActive) {
                         alarmStopBtn = `<button class="btn-alarm-stop" onclick="dismissAlarm(${id}, '${t}')">🔔 알람확인</button>`;
@@ -2070,14 +2310,18 @@
                         ttsStopBtn = `<button class="btn-tts-stop" onclick="dismissTtsBroadcast(${id}, '${t}')">🗣️ 방송확인</button>`;
                     }
 
-                    controlBtns = `
-                        <div class="btn-group">
-                            <button class="btn-adj" onclick="adjust(${id}, '${t}', 1)">+</button>
-                            <button class="btn-adj" onclick="adjust(${id}, '${t}', -1)">-</button>
-                        </div>
-                        ${alarmStopBtn}
-                        ${ttsStopBtn}
-                    `;
+                    if (!isGuest) {
+                        controlBtns = `
+                            <div class="btn-group">
+                                <button class="btn-adj" onclick="adjust(${id}, '${t}', 1)">+</button>
+                                <button class="btn-adj" onclick="adjust(${id}, '${t}', -1)">-</button>
+                            </div>
+                            ${alarmStopBtn}
+                            ${ttsStopBtn}
+                        `;
+                    } else if (isWorker) {
+                        controlBtns = `${alarmStopBtn} ${ttsStopBtn}`;
+                    }
                 }
 
                 const isHaltedCell = rowClass.includes("row-halted-gray-bg") || rowClass.includes("row-ended");
@@ -2132,6 +2376,9 @@
             configData = val;
 
             if (!isGuest) {
+                const alarmRadio = document.querySelector(`input[name="alarm_sound"][value="${configData.alarmSound || 'on'}"]`);
+                if (alarmRadio) alarmRadio.checked = true;
+
                 if (document.getElementById('alarm-trigger-minutes')) document.getElementById('alarm-trigger-minutes').value = configData.alarmMinutes || 10;
                 if (document.getElementById('alarm-duration-seconds')) document.getElementById('alarm-duration-seconds').value = configData.alarmSeconds || 30;
                 if (document.getElementById('page-interval-seconds')) document.getElementById('page-interval-seconds').value = configData.pageIntervalSeconds || 5;
