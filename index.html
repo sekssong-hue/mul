@@ -130,7 +130,7 @@
         }
         .btn-excel-upload:hover { filter: brightness(1.15); }
 
-        /* [CSS] 근무자용 상단 간편 제어 패널 (알람/방송 설정 대폭 통합 확장) */
+        /* [CSS] 근무자용 상단 간편 제어 패널 (알람/방송 설정 및 반복횟수 포함 통합, 버튼 우측 배치) */
         .worker-quick-control {
             display: none; background: #1e2631; padding: 10px 14px; border-bottom: 3px solid var(--highlight);
             align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
@@ -493,19 +493,15 @@
                 </div>
             </div>
 
-            <!-- 1호 근무자 화면 상단 간편 제어 패널 (알람/방송 비트 및 반복 횟수 포함 통합) -->
+            <!-- 1호 근무자 화면 상단 간편 제어 패널 (알람 및 방송 버튼이 왼쪽에 있고 설정 옵션이 우측에 위치) -->
             <div class="worker-quick-control">
                 <div class="worker-control-item">
-                    <span>🔔 알람:</span>
-                    <input type="number" id="worker-alarm-min-1" value="10" min="1" max="60" onchange="updateWorkerTimeConfig(1)">분전
-                    <input type="number" id="worker-alarm-rep-1" value="5" min="1" max="20" title="알람 반복횟수(회)" onchange="updateWorkerTimeConfig(1)">회
-                    <button id="worker-alarm-btn-1" onclick="toggleWorkerAlarm(1)" class="active-on">ON</button>
+                    <button id="worker-alarm-btn-1" onclick="toggleWorkerAlarm(1)" class="active-on">🔔 알람 ON</button>
+                    <span>출발</span><input type="number" id="worker-alarm-min-1" value="10" min="1" max="60" onchange="updateWorkerTimeConfig(1)">분 전 / 반복 <input type="number" id="worker-alarm-rep-1" value="5" min="1" max="20" title="알람 반복횟수(회)" onchange="updateWorkerTimeConfig(1)">회
                 </div>
                 <div class="worker-control-item">
-                    <span>📢 방송:</span>
-                    <input type="number" id="worker-tts-min-1" class="tts-worker-input" value="5" min="1" max="60" onchange="updateWorkerTimeConfig(1)">분전
-                    <input type="number" id="worker-tts-rep-1" class="tts-worker-input" value="2" min="1" max="5" title="방송 반복횟수(번)" onchange="updateWorkerTimeConfig(1)">번
-                    <button id="worker-tts-btn-1" onclick="toggleWorkerTts(1)" class="active-on">ON</button>
+                    <button id="worker-tts-btn-1" onclick="toggleWorkerTts(1)" class="active-on">📢 방송 ON</button>
+                    <span>출발</span><input type="number" id="worker-tts-min-1" class="tts-worker-input" value="5" min="1" max="60" onchange="updateWorkerTimeConfig(1)">분 전 / 반복 <input type="number" id="worker-tts-rep-1" class="tts-worker-input" value="2" min="1" max="5" title="방송 반복횟수(번)" onchange="updateWorkerTimeConfig(1)">번
                 </div>
                 <div class="worker-control-item">
                     <span>🕒 기준:</span>
@@ -617,19 +613,15 @@
                 </div>
             </div>
 
-            <!-- 2호 근무자 화면 상단 간편 제어 패널 (알람/방송 비트 및 반복 횟수 포함 통합) -->
+            <!-- 2호 근무자 화면 상단 간편 제어 패널 (알람 및 방송 버튼이 왼쪽에 있고 설정 옵션이 우측에 위치) -->
             <div class="worker-quick-control">
                 <div class="worker-control-item">
-                    <span>🔔 알람:</span>
-                    <input type="number" id="worker-alarm-min-2" value="10" min="1" max="60" onchange="updateWorkerTimeConfig(2)">분전
-                    <input type="number" id="worker-alarm-rep-2" value="5" min="1" max="20" title="알람 반복횟수(회)" onchange="updateWorkerTimeConfig(2)">회
-                    <button id="worker-alarm-btn-2" onclick="toggleWorkerAlarm(2)" class="active-on">ON</button>
+                    <button id="worker-alarm-btn-2" onclick="toggleWorkerAlarm(2)" class="active-on">🔔 알람 ON</button>
+                    <span>출발</span><input type="number" id="worker-alarm-min-2" value="10" min="1" max="60" onchange="updateWorkerTimeConfig(2)">분 전 / 반복 <input type="number" id="worker-alarm-rep-2" value="5" min="1" max="20" title="알람 반복횟수(회)" onchange="updateWorkerTimeConfig(2)">회
                 </div>
                 <div class="worker-control-item">
-                    <span>📢 방송:</span>
-                    <input type="number" id="worker-tts-min-2" class="tts-worker-input" value="5" min="1" max="60" onchange="updateWorkerTimeConfig(2)">분전
-                    <input type="number" id="worker-tts-rep-2" class="tts-worker-input" value="2" min="1" max="5" title="방송 반복횟수(번)" onchange="updateWorkerTimeConfig(2)">번
-                    <button id="worker-tts-btn-2" onclick="toggleWorkerTts(2)" class="active-on">ON</button>
+                    <button id="worker-tts-btn-2" onclick="toggleWorkerTts(2)" class="active-on">📢 방송 ON</button>
+                    <span>출발</span><input type="number" id="worker-tts-min-2" class="tts-worker-input" value="5" min="1" max="60" onchange="updateWorkerTimeConfig(2)">분 전 / 반복 <input type="number" id="worker-tts-rep-2" class="tts-worker-input" value="2" min="1" max="5" title="방송 반복횟수(번)" onchange="updateWorkerTimeConfig(2)">번
                 </div>
                 <div class="worker-control-item">
                     <span>🕒 기준:</span>
@@ -1744,8 +1736,8 @@
                         if (!activeTtsBroadcasts[id].includes(t)) activeTtsBroadcasts[id].push(t);
                         updateUI();
 
-                        const boatNumStr = (id === 1) ? "1호" : "2호"; 
-                        const speechText = `잠시 후 ${tH}시 ${tM}분 출발하는 김시민 ${boatNumStr} 에 티켓 발권한 인원은 ${booked}명 입니다.`;
+                        const boatNumStr = (id === 1) ? "김시민 1호" : "김시민 2호"; 
+                        const speechText = `잠시 후 ${tH}시 ${tM}분 출발하는 ${boatNumStr}에 티켓 발권한 인원은 총 ${booked}명 입니다.`;
 
                         executeNativeTTS(speechText, maxLoops, id, t);
                     }
@@ -1946,13 +1938,13 @@
 
             const alarmBtn = document.getElementById(`worker-alarm-btn-${id}`);
             if (alarmBtn) {
-                alarmBtn.innerText = bAlarmState === 'on' ? "ON" : "OFF";
+                alarmBtn.innerText = bAlarmState === 'on' ? "🔔 알람 ON" : "🔕 알람 OFF";
                 alarmBtn.className = bAlarmState === 'on' ? "active-on" : "active-off";
             }
 
             const ttsBtn = document.getElementById(`worker-tts-btn-${id}`);
             if (ttsBtn) {
-                ttsBtn.innerText = bTtsState === 'on' ? "ON" : "OFF";
+                ttsBtn.innerText = bTtsState === 'on' ? "📢 방송 ON" : "🔇 방송 OFF";
                 ttsBtn.className = bTtsState === 'on' ? "active-on" : "active-off";
             }
 
