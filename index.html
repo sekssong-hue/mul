@@ -1737,7 +1737,7 @@
                         updateUI();
 
                         const boatNumStr = (id === 1) ? "김시민 1호" : "김시민 2호"; 
-                        const speechText = `잠시 후 ${tH}시 ${tM}분 출발하는 ${boatNumStr}에 티켓 발권한 인원은 총 ${booked}명 입니다.`;
+                        const speechText = `김시민호 매표소에서 안내 드립니다. 잠시 후 ${tH}시 ${tM}분에 출발하는 ${boatName}에 탑승하시는 탑승객분들은, 탑승장소인 망진나루로 이동하여 주시기 바랍니다. ${boatName}는 망진나루를 출발하여 진주성 촉석루 앞까지, 약 20분 정도 소요되는 코스로 운항하고 있습니다. 감사합니다.`;
 
                         executeNativeTTS(speechText, maxLoops, id, t);
                     }
