@@ -16,38 +16,37 @@
 
     <style>
         /* ==========================================================================
-           [CSS] 전역 색상 변수 설정 (:root) - 테마 색상 및 UI 디자인 변수 정의
+           [CSS] 전역 색상 변수 설정 (:root)
            ========================================================================== */
         :root {
-            --primary-dark: #002d5a;        /* 일괄 변경 버튼 등 주요 어두운 파란색 */
-            --boat3-color: #28a745;         /* 1호 타이틀 배경 (초록) */
-            --boat4-color: #2c7be5;         /* 2호 타이틀 배경 (파란) */
-            --bg-color: #121418;            /* 전체 화면 바탕색 (어두운 회색) */
-            --card-bg: #ffffff;             /* 각 선박 섹션의 배경색 (흰색) */
-            --success: #0040ff;             /* 티켓발권 가능 인원 글자색 (파란) */
-            --danger: #e60000;              /* 매진 및 경고 색상 (빨간) */
+            --primary-dark: #002d5a;
+            --boat3-color: #28a745;
+            --boat4-color: #2c7be5;
+            --bg-color: #121418;
+            --card-bg: #ffffff;
+            --success: #0040ff;
+            --danger: #e60000;
 
-            --ended-gray: #f0f0f0;          /* 운항 종료 및 중지 행의 배경색 (연회색) */
-            --ended-text-color: #999999;    /* 운항 종료 및 중지 행의 글자색 (흐린 회색) */
-            --dark-green: #006400;          /* 티켓발권종료 박스 배경색 (진녹색) */
-            --yellow-btn: #fbc02d;          /* 설정 변경 버튼 배경색 (노란) */
-            --yellow-btn-border: #f9a825;   /* 설정 변경 버튼 테두리색 */
+            --ended-gray: #f0f0f0;
+            --ended-text-color: #999999;
+            --dark-green: #006400;
+            --yellow-btn: #fbc02d;
+            --yellow-btn-border: #f9a825;
 
-            --available-bg: #b3e5fc;        /* 예약 가능 행: 선명한 시안/하늘색 (햇빛 가독성 강화) */
-            --sailing-bg: #fff59d;          /* 운항 중 행: 선명한 노란색 */
-            --ticketing-ended-bg: #c8e6c9;  /* 발권 종료 행: 진한 연두/초록색 */
-            --boarding-start-bg: #ffe0b2;   /* 탑승시작 행: 뚜렷한 주황색 */
-            --boarding-close-bg: #fff9c4;   /* 탑승마감 행: 선명한 개나리색 */
-            --soldout-blink-bg: #ff3b30;    /* 매진 행: 눈에 확 띄는 강렬한 다홍/주황 경고 배경 */
+            --available-bg: #b3e5fc;
+            --sailing-bg: #fff59d;
+            --ticketing-ended-bg: #c8e6c9;
+            --boarding-start-bg: #ffe0b2;
+            --boarding-close-bg: #fff9c4;
+            --soldout-blink-bg: #ff3b30;
 
-            --highlight: #00ffcc;           /* 최상단 바 버튼 강조색 (민트) */
-            --tts-highlight: #ff9f43;       /* 안내방송 설정 강조색 (오렌지) */
-            --rotation-highlight: #00ecff;  /* 화면전환기 설정 강조색 (하늘색) */
-            --popup-highlight: #ff4d4d;     /* 긴급 팝업 설정 강조색 (밝은 빨간색) */
-            --excel-btn-bg: #107c41;        /* 엑셀 업로드 버튼 배경색 (엑셀 대표 초록색) */
+            --highlight: #00ffcc;
+            --tts-highlight: #ff9f43;
+            --rotation-highlight: #00ecff;
+            --popup-highlight: #ff4d4d;
+            --excel-btn-bg: #107c41;
         }
 
-        /* [CSS] 기본 레이아웃 및 본문 설정 */
         body {
             font-family: 'Pretendard', -apple-system, sans-serif;
             background-color: var(--bg-color);
@@ -59,7 +58,6 @@
 
         .main-container { display: flex; gap: 10px; flex: 1; min-height: 0; min-width: 0; }
 
-        /* [CSS] 선박별 카드 영역 스타일 */
         .boat-section {
             flex: 1; background: var(--card-bg); border-radius: 15px;
             display: flex; flex-direction: column; overflow: hidden;
@@ -68,7 +66,6 @@
             min-width: 0;
         }
 
-        /* [CSS] 좌우 크기 조절 리사이저 바 */
         #resizer {
             width: 8px;
             background-color: #343a40;
@@ -80,11 +77,8 @@
             flex-shrink: 0;
             margin: 0 2px;
         }
-        #resizer:hover, #resizer.resizing {
-            background-color: var(--highlight);
-        }
+        #resizer:hover, #resizer.resizing { background-color: var(--highlight); }
 
-        /* [CSS] 우측 설정 및 관리 사이드바 영역 */
         #right-sidebar {
             width: 320px;
             min-width: 240px;
@@ -111,7 +105,6 @@
         .btn-open-guest:hover { filter: brightness(1.1); }
         .btn-reset-all { background-color: #ff4d4d !important; color: white !important; }
 
-        /* [CSS] 프리셋 및 엑셀 업로드 영역 스타일 */
         .excel-upload-container {
             display: flex; flex-direction: column; gap: 8px; background: #1b382b; 
             padding: 12px; border-radius: 8px; border: 1px solid var(--excel-btn-bg); width: 100%;
@@ -137,29 +130,28 @@
         }
         .btn-excel-upload:hover { filter: brightness(1.15); }
 
-        /* [CSS] 근무자용 상단 간편 제어 패널 (1호, 2호 모두 적용) */
         .worker-quick-control {
             display: none; background: #1e2631; padding: 10px 14px; border-bottom: 3px solid var(--highlight);
-            align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+            align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
         }
         .is-worker .worker-quick-control { display: flex; }
-        .worker-control-item { display: flex; align-items: center; gap: 5px; color: #fff; font-weight: bold; font-size: 15px; }
+        .worker-control-item { display: flex; align-items: center; gap: 4px; color: #fff; font-weight: bold; font-size: 14px; }
         .worker-control-item input[type="number"] {
-            width: 46px; height: 32px; text-align: center; font-size: 15px; font-weight: 900;
+            width: 42px; height: 30px; text-align: center; font-size: 14px; font-weight: 900;
             border: 1px solid var(--highlight); background: #000; color: var(--highlight); border-radius: 6px;
         }
+        .worker-control-item input[type="number"].tts-worker-input { border-color: var(--tts-highlight); color: var(--tts-highlight); }
         .worker-control-item select {
-            height: 34px; padding: 0 8px; font-size: 15px; font-weight: 900;
+            height: 32px; padding: 0 6px; font-size: 14px; font-weight: 900;
             border-radius: 6px; border: 1px solid #ffcc00; background: #000; color: #ffcc00; cursor: pointer;
         }
         .worker-control-item button {
-            padding: 6px 12px; font-size: 15px; font-weight: 900; border-radius: 6px; border: 1px solid #555; color: #fff; cursor: pointer;
+            padding: 5px 10px; font-size: 14px; font-weight: 900; border-radius: 6px; border: 1px solid #555; color: #fff; cursor: pointer;
             touch-action: manipulation;
         }
         .worker-control-item button.active-on { background: #28a745; border-color: #1e7e34; }
         .worker-control-item button.active-off { background: #dc3545; border-color: #bd2130; }
 
-        /* [CSS] 알람 및 사운드 설정 토글 컨테이너 스타일 */
         .alarm-toggle-container {
             display: flex; flex-direction: column; gap: 10px; background: #282e38; 
             padding: 12px; border-radius: 8px; border: 1px solid #444; width: 100%;
@@ -209,7 +201,6 @@
 
         .box-title-sm { color: #fff; font-size: 15px; font-weight: bold; text-align: center; margin-bottom: 2px; }
 
-        /* [CSS] 선박 상단 헤더 (타이틀 및 시계) 디자인 */
         .boat-header { 
             padding: 10px 15px; color: white; 
             display: flex; align-items: center; justify-content: space-between; 
@@ -233,7 +224,6 @@
         .boat-date { font-size: clamp(18px, 2.5vw, 35px); font-weight: 700; color: rgba(255,255,255,1); line-height: 1.1; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
         .boat-clock { font-size: clamp(22px, 3.5vw, 42px); font-weight: 900; line-height: 1.1; color: #ffffff !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.6); }
 
-        /* [CSS] 선박 제어 및 설정 영역 */
         .setting-area { background: #f8f9fa; padding: 12px; border-bottom: 1px solid #ddd; display: flex; flex-direction: column; gap: 8px; }
         .setting-area .setting-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .setting-row input[type="text"], .setting-row input[type="number"] { padding: 0 10px; font-size: 20px; border: 1px solid #ccc; border-radius: 6px; height: 50px; box-sizing: border-box; }
@@ -273,58 +263,31 @@
         .notice-title { font-size: 22px; font-weight: 800; color: #d63031; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
         .notice-content { font-size: clamp(20px, 3.5vw, 30px); font-weight: 900; color: #2d3436; line-height: 1.3; white-space: normal; word-break: break-all; }
 
-        /* [CSS] 긴급 전체화면 및 개별 팝업 오버레이 스타일 */
         .emergency-fullscreen-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: rgba(0, 0, 0, 0.88);
-            z-index: 999999;
-            justify-content: center;
-            align-items: center;
-            padding: 2vw;
-            box-sizing: border-box;
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.88); z-index: 999999;
+            justify-content: center; align-items: center; padding: 2vw; box-sizing: border-box;
         }
         .emergency-fullscreen-overlay.active { display: flex; }
 
         .emergency-popup-box {
-            width: 100%; 
-            max-width: min(94vw, 1200px);
-            max-height: min(92vh, 900px);
-            background: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            border: 6px solid #ff4d4d;
+            width: 100%; max-width: min(94vw, 1200px); max-height: min(92vh, 900px);
+            background: #ffffff; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            display: flex; flex-direction: column; overflow: hidden; border: 6px solid #ff4d4d;
             animation: popupScaleIn 0.3s ease-in-out;
         }
 
         .boat-popup-overlay {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.85);
-            z-index: 99999;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.85); z-index: 99999;
+            justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;
         }
         .boat-popup-overlay.active { display: flex; }
 
         .boat-popup-box {
-            width: 100%;
-            height: 100%;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            border: 6px solid #ff4d4d;
-            animation: popupScaleIn 0.3s ease-in-out;
+            width: 100%; height: 100%; background: #ffffff; border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column;
+            overflow: hidden; border: 6px solid #ff4d4d; animation: popupScaleIn 0.3s ease-in-out;
         }
 
         @keyframes popupScaleIn {
@@ -337,47 +300,24 @@
         .popup-global-theme { border-color: #ff4d4d !important; }
 
         .emergency-popup-header {
-            background-color: #ff4d4d;
-            color: #ffffff;
-            padding: 20px 25px;
-            font-size: clamp(24px, 3.5vw, 40px);
-            font-weight: 900;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
+            background-color: #ff4d4d; color: #ffffff; padding: 20px 25px;
+            font-size: clamp(24px, 3.5vw, 40px); font-weight: 900;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
         }
         .popup-customer-theme .emergency-popup-header { background-color: var(--boat3-color); color: #fff; }
         .popup-staff-theme .emergency-popup-header { background-color: var(--boat4-color); color: #fff; }
         .popup-global-theme .emergency-popup-header { background-color: #ff4d4d; color: #fff; }
 
         .emergency-popup-body {
-            padding: 40px 30px;
-            font-size: clamp(26px, 4.5vw, 55px);
-            font-weight: 900;
-            color: #111111;
-            line-height: 1.5;
-            text-align: center;
-            word-break: break-all;
-            background: #fff;
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 40px 30px; font-size: clamp(26px, 4.5vw, 55px); font-weight: 900;
+            color: #111111; line-height: 1.5; text-align: center; word-break: break-all;
+            background: #fff; flex: 1; overflow-y: auto; display: flex; align-items: center; justify-content: center;
         }
         .emergency-popup-footer {
-            background-color: #f8f9fa;
-            border-top: 2px solid #eee;
-            padding: 15px 25px;
-            font-size: clamp(16px, 2.2vw, 24px);
-            font-weight: bold;
-            color: #555;
-            text-align: center;
+            background-color: #f8f9fa; border-top: 2px solid #eee; padding: 15px 25px;
+            font-size: clamp(16px, 2.2vw, 24px); font-weight: bold; color: #555; text-align: center;
         }
 
-        /* [CSS] 시간표 테이블 및 행 상태 디자인 */
         .table-wrapper { flex: 1; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; table-layout: auto; } 
         th { background: #eee; padding: 12px 4px; border-bottom: 3px solid #ddd; position: sticky; top: 0; z-index: 10; font-size: clamp(18px, 2.5vw, 30px); font-weight: 900; white-space: nowrap; }
@@ -385,15 +325,13 @@
         td { padding: 8px 4px; text-align: center; border-bottom: 1px solid #eee; font-weight: 900; font-size: clamp(20px, 3vw, 37px); letter-spacing: -1.5px; position: relative; line-height: 1.2; white-space: nowrap; }
         td:first-child { font-size: clamp(22px, 3.2vw, 40px); font-weight: 900; letter-spacing: -1px; }
 
-        /* 근무자 화면 현재 시간에 맞는 출발시간 하이라이트 강조 스타일 */
         tr.row-current-highlight td {
             border-top: 4px solid #ff9800 !important;
             border-bottom: 4px solid #ff9800 !important;
             box-shadow: inset 0 0 14px rgba(255, 152, 0, 0.45);
         }
         tr.row-current-highlight td:first-child::before {
-            content: "▶ ";
-            color: #d63031;
+            content: "▶ "; color: #d63031;
         }
 
         .total-booked-flex { display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -403,13 +341,8 @@
         .slash-divider { margin: 0 8px; font-weight: 700; color: #ffffff; font-size: clamp(20px, 3vw, 38px); }
 
         .over-capacity-text {
-            color: #ff0000 !important;
-            background-color: #ffe6e6;
-            padding: 2px 8px;
-            border-radius: 6px;
-            border: 2px dashed #ff0000;
-            display: inline-block;
-            font-size: clamp(18px, 2.5vw, 32px);
+            color: #ff0000 !important; background-color: #ffe6e6; padding: 2px 8px;
+            border-radius: 6px; border: 2px dashed #ff0000; display: inline-block; font-size: clamp(18px, 2.5vw, 32px);
         }
 
         .row-available-bg td { background-color: #b3e5fc !important; color: #0d47a1 !important; }
@@ -419,17 +352,12 @@
         .row-boarding-close-solid td { background-color: #fff9c4 !important; color: #f57f17 !important; }
 
         tr.row-soldout-blink td { background-color: var(--soldout-blink-bg) !important; }
-        tr.row-soldout-blink td,
-        tr.row-soldout-blink td span,
-        tr.row-soldout-blink td div,
-        tr.row-soldout-blink td .remain-count,
-        tr.row-soldout-blink td .slash-divider { color: #ffffff !important; }
+        tr.row-soldout-blink td, tr.row-soldout-blink td span, tr.row-soldout-blink td div, tr.row-soldout-blink td .remain-count, tr.row-soldout-blink td .slash-divider { color: #ffffff !important; }
 
         .is-guest .row-soldout-blink td { animation: textBlinker 1.5s linear infinite; }
 
         .row-halted-gray-bg td { background-color: var(--ended-gray) !important; color: var(--ended-text-color) !important; }
-        .row-halted-gray-bg .remain-count,
-        .row-halted-gray-bg .slash-divider { color: var(--ended-text-color) !important; }
+        .row-halted-gray-bg .remain-count, .row-halted-gray-bg .slash-divider { color: var(--ended-text-color) !important; }
 
         .is-guest .row-halted-gray-bg td.line-through-cell {
             text-decoration: line-through; text-decoration-color: #000000 !important; text-decoration-thickness: 4px; 
@@ -445,14 +373,10 @@
             border: 2px solid #bbb; background: #ffffff; 
             font-size: 30px; font-weight: bold; cursor: pointer; border-radius: 12px; 
             display: flex; align-items: center; justify-content: center; color: #333 !important;
-            touch-action: manipulation;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            touch-action: manipulation; box-shadow: 0 3px 6px rgba(0,0,0,0.15);
             transition: transform 0.1s, background-color 0.1s;
         }
-        .btn-adj:active {
-            transform: scale(0.92);
-            background-color: #e2e8f0;
-        }
+        .btn-adj:active { transform: scale(0.92); background-color: #e2e8f0; }
 
         .status-text { 
             font-size: clamp(20px, 3vw, 37px); font-weight: 900; position: relative; z-index: 10; 
@@ -467,15 +391,7 @@
         .text-available { background-color: #0288d1 !important; color: #ffffff !important; border: 2px solid #01579b !important; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); } 
         .text-dark-green { background-color: #2e7d32 !important; color: #ffffff !important; border: 2px solid #1b5e20 !important; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .text-maintenance-gray { background-color: #616161 !important; color: #ffffff !important; border: 2px solid #212121 !important; font-weight: 900; } 
-        
-        .text-soldout { 
-            background-color: #000000 !important; 
-            color: #ff3b30 !important; 
-            border: 2px solid #ffffff !important; 
-            font-weight: 900; 
-            box-shadow: 0 2px 6px rgba(0,0,0,0.5); 
-        }    
-
+        .text-soldout { background-color: #000000 !important; color: #ff3b30 !important; border: 2px solid #ffffff !important; font-weight: 900; box-shadow: 0 2px 6px rgba(0,0,0,0.5); }    
         .text-boarding-start { background-color: #ff9800 !important; color: #000000 !important; border: 2px solid #e65100 !important; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); } 
         .text-boarding-close { background-color: #fbc02d !important; color: #000000 !important; border: 2px solid #f57f17 !important; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); } 
 
@@ -514,49 +430,18 @@
         .is-guest .btn-group { display: none !important; }
 
         @media (max-width: 1024px) or (orientation: portrait) {
-            body {
-                flex-direction: column;
-                height: auto;
-                overflow-y: auto;
-            }
-            .main-container {
-                flex-direction: column !important;
-            }
-            #resizer {
-                display: none;
-            }
-            #right-sidebar {
-                width: 100% !important;
-                max-width: none;
-                margin-top: 10px;
-            }
-            .boat-section {
-                min-height: 500px;
-            }
-            .checkbox-list {
-                position: fixed;
-                bottom: 20px;
-                left: 5vw;
-                right: 5vw;
-                width: 90vw;
-                max-height: 50vh;
-                z-index: 1000000;
-            }
+            body { flex-direction: column; height: auto; overflow-y: auto; }
+            .main-container { flex-direction: column !important; }
+            #resizer { display: none; }
+            #right-sidebar { width: 100% !important; max-width: none; margin-top: 10px; }
+            .boat-section { min-height: 500px; }
+            .checkbox-list { position: fixed; bottom: 20px; left: 5vw; right: 5vw; width: 90vw; max-height: 50vh; z-index: 1000000; }
         }
 
         #offline-banner {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: #d63031;
-            color: #ffffff;
-            text-align: center;
-            font-size: 18px;
-            font-weight: 900;
-            padding: 12px;
-            z-index: 9999999;
+            display: none; position: fixed; top: 0; left: 0; width: 100%;
+            background-color: #d63031; color: #ffffff; text-align: center;
+            font-size: 18px; font-weight: 900; padding: 12px; z-index: 9999999;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
         #offline-banner.active { display: block; }
@@ -570,10 +455,8 @@
 </head>
 <body id="main-body">
 
-    <!-- 네트워크 연결 끊김 경고 배너 -->
     <div id="offline-banner">⚠️ 네트워크 연결 끊김 - 로컬 대기열 모드로 전환되었습니다.</div>
 
-    <!-- [전체 긴급 공지 팝업] 화면 정중앙 오버레이 -->
     <div id="emergency-overlay" class="emergency-fullscreen-overlay">
         <div id="emergency-popup-inner-box" class="emergency-popup-box popup-global-theme">
             <div class="emergency-popup-header">
@@ -588,7 +471,6 @@
     <div class="main-container">
         <!-- [HTML] 김시민 1호 메인 섹션 -->
         <div class="boat-section" id="section-1">
-            <!-- 1호 전용 팝업 오버레이 -->
             <div id="boat-popup-overlay-1" class="boat-popup-overlay">
                 <div class="boat-popup-box popup-customer-theme">
                     <div class="emergency-popup-header">
@@ -613,19 +495,17 @@
             <!-- 1호 근무자 화면 상단 간편 제어 패널 -->
             <div class="worker-quick-control">
                 <div class="worker-control-item">
-                    <span>🔔 알람:</span>
-                    <input type="number" id="worker-alarm-min-1" value="10" min="1" max="60" onchange="updateWorkerTimeConfig(1)">분전
-                    <button id="worker-alarm-btn-1" onclick="toggleWorkerAlarm(1)" class="active-on">ON</button>
+                    <button id="worker-alarm-btn-1" onclick="toggleWorkerAlarm(1)" class="active-on">🔔 알람 ON</button>
+                    <span>출발</span><input type="number" id="worker-alarm-min-1" value="10" min="1" max="60" onchange="updateWorkerTimeConfig(1)">분 전 / 반복 <input type="number" id="worker-alarm-rep-1" value="5" min="1" max="20" title="알람 반복횟수(회)" onchange="updateWorkerTimeConfig(1)">회
                 </div>
                 <div class="worker-control-item">
-                    <span>📢 방송:</span>
-                    <input type="number" id="worker-tts-min-1" value="5" min="1" max="60" onchange="updateWorkerTimeConfig(1)">분전
-                    <button id="worker-tts-btn-1" onclick="toggleWorkerTts(1)" class="active-on">ON</button>
+                    <button id="worker-tts-btn-1" onclick="toggleWorkerTts(1)" class="active-on">📢 방송 ON</button>
+                    <span>출발</span><input type="number" id="worker-tts-min-1" class="tts-worker-input" value="5" min="1" max="60" onchange="updateWorkerTimeConfig(1)">분 전 / 반복 <input type="number" id="worker-tts-rep-1" class="tts-worker-input" value="2" min="1" max="5" title="방송 반복횟수(번)" onchange="updateWorkerTimeConfig(1)">번
                 </div>
                 <div class="worker-control-item">
-                    <span>🕒 출발기준:</span>
+                    <span>🕒 기준:</span>
                     <select id="worker-focus-time-1" onchange="setWorkerFocusTime(1, this.value)">
-                        <option value="auto">자동(현재시간)</option>
+                        <option value="auto">자동</option>
                     </select>
                 </div>
             </div>
@@ -640,7 +520,6 @@
                 <div class="info-item">●운항코스 : <span class="info-val" id="g-course-1">-</span></div>
             </div>
 
-            <!-- 1호 설정 입력 영역 -->
             <div class="setting-area">
                 <div class="setting-row">
                     <input type="text" id="time-input-1" placeholder="시간표 (쉼표 구분)" style="flex: 1;">
@@ -673,7 +552,6 @@
                 </div>
             </div>
 
-            <!-- 1호 시간표 현황 테이블 -->
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -688,7 +566,6 @@
                 </table>
             </div>
 
-            <!-- 1호 관리자 제어 패널 -->
             <div class="admin-panel">
                 <div class="control-row-single">
                     <div class="custom-multiselect">
@@ -714,7 +591,6 @@
 
         <!-- [HTML] 김시민 2호 메인 섹션 -->
         <div class="boat-section" id="section-2">
-            <!-- 2호 전용 팝업 오버레이 -->
             <div id="boat-popup-overlay-2" class="boat-popup-overlay">
                 <div class="boat-popup-box popup-staff-theme">
                     <div class="emergency-popup-header">
@@ -739,19 +615,17 @@
             <!-- 2호 근무자 화면 상단 간편 제어 패널 -->
             <div class="worker-quick-control">
                 <div class="worker-control-item">
-                    <span>🔔 알람:</span>
-                    <input type="number" id="worker-alarm-min-2" value="10" min="1" max="60" onchange="updateWorkerTimeConfig(2)">분전
-                    <button id="worker-alarm-btn-2" onclick="toggleWorkerAlarm(2)" class="active-on">ON</button>
+                    <button id="worker-alarm-btn-2" onclick="toggleWorkerAlarm(2)" class="active-on">🔔 알람 ON</button>
+                    <span>출발</span><input type="number" id="worker-alarm-min-2" value="10" min="1" max="60" onchange="updateWorkerTimeConfig(2)">분 전 / 반복 <input type="number" id="worker-alarm-rep-2" value="5" min="1" max="20" title="알람 반복횟수(회)" onchange="updateWorkerTimeConfig(2)">회
                 </div>
                 <div class="worker-control-item">
-                    <span>📢 방송:</span>
-                    <input type="number" id="worker-tts-min-2" value="5" min="1" max="60" onchange="updateWorkerTimeConfig(2)">분전
-                    <button id="worker-tts-btn-2" onclick="toggleWorkerTts(2)" class="active-on">ON</button>
+                    <button id="worker-tts-btn-2" onclick="toggleWorkerTts(2)" class="active-on">📢 방송 ON</button>
+                    <span>출발</span><input type="number" id="worker-tts-min-2" class="tts-worker-input" value="5" min="1" max="60" onchange="updateWorkerTimeConfig(2)">분 전 / 반복 <input type="number" id="worker-tts-rep-2" class="tts-worker-input" value="2" min="1" max="5" title="방송 반복횟수(번)" onchange="updateWorkerTimeConfig(2)">번
                 </div>
                 <div class="worker-control-item">
-                    <span>🕒 출발기준:</span>
+                    <span>🕒 기준:</span>
                     <select id="worker-focus-time-2" onchange="setWorkerFocusTime(2, this.value)">
-                        <option value="auto">자동(현재시간)</option>
+                        <option value="auto">자동</option>
                     </select>
                 </div>
             </div>
@@ -766,7 +640,6 @@
                 <div class="info-item">●운항코스 : <span class="info-val" id="g-course-2">-</span></div>
             </div>
 
-            <!-- 2호 설정 입력 영역 -->
             <div class="setting-area">
                 <div class="setting-row">
                     <input type="text" id="time-input-2" placeholder="시간표 (쉼표 구분)" style="flex: 1;">
@@ -799,7 +672,6 @@
                 </div>
             </div>
 
-            <!-- 2호 시간표 현황 테이블 -->
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -814,7 +686,6 @@
                 </table>
             </div>
 
-            <!-- 2호 관리자 제어 패널 -->
             <div class="admin-panel">
                 <div class="control-row-single">
                     <div class="custom-multiselect">
@@ -839,10 +710,8 @@
         </div>
     </div>
 
-    <!-- 좌우 너비 조절 리사이저 바 -->
     <div id="resizer"></div>
 
-    <!-- 우측 제어 사이드바 -->
     <div id="right-sidebar">
         <div id="sidebar-title">⚙️ 시스템 설정 및 관리</div>
 
@@ -852,7 +721,6 @@
             <button class="btn-open-guest btn-reset-all" onclick="confirmResetAll()">⚠️ 전체 데이터 초기화</button>
         </div>
 
-        <!-- 시간표 프리셋 선택 영역 -->
         <div class="preset-container">
             <div class="box-title-sm" style="color: #61b3ff;">📅 운항 시간표 프리셋</div>
             <div class="preset-btn-group">
@@ -862,7 +730,6 @@
             </div>
         </div>
 
-        <!-- 엑셀 데이터 자동 카운트 업로드 영역 -->
         <div class="excel-upload-container">
             <div class="box-title-sm" style="color: #61d800;">📊 사전예매 엑셀 자동 반영</div>
             <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelUpload(event)">
@@ -887,7 +754,13 @@
                 <div class="setting-item-row">
                     <span>알람 지속 시간:</span>
                     <div>
-                        <input type="number" id="alarm-duration-seconds" value="30" min="1" max="300" onchange="saveAlarmConfig()"> 초 동안 울림
+                        <input type="number" id="alarm-duration-seconds" value="30" min="1" max="300" onchange="saveAlarmConfig()"> 초 동안
+                    </div>
+                </div>
+                <div class="setting-item-row" style="color: #00ffcc;">
+                    <span>알람 반복 횟수:</span>
+                    <div>
+                        <input type="number" id="alarm-repeat-count" value="5" min="1" max="20" onchange="saveAlarmConfig()"> 회 울림 🔔
                     </div>
                 </div>
             </div>
@@ -915,7 +788,6 @@
             </div>
         </div>
 
-        <!-- 자동 화면전환기 설정 영역 -->
         <div class="alarm-toggle-container" style="border-color: var(--rotation-highlight);">
             <div class="box-title-sm" style="color: var(--rotation-highlight);">📺 자동 화면전환기 설정</div>
             <div class="alarm-radio-row">
@@ -943,7 +815,6 @@
             </div>
         </div>
 
-        <!-- 긴급 전체화면 공지 팝업 설정 영역 -->
         <div class="alarm-toggle-container" style="border-color: var(--popup-highlight);">
             <div class="box-title-sm" style="color: var(--popup-highlight);">🚨 [전체 중앙] 긴급 공지 팝업 설정</div>
 
@@ -990,7 +861,6 @@
             </div>
         </div>
 
-        <!-- 1호 전용 긴급 팝업 설정 영역 -->
         <div class="alarm-toggle-container" style="border-color: var(--boat3-color);">
             <div class="box-title-sm" style="color: var(--boat3-color);">🚨 [1호 영역] 긴급 팝업 설정</div>
 
@@ -1010,7 +880,6 @@
             </div>
         </div>
 
-        <!-- 2호 전용 긴급 팝업 설정 영역 -->
         <div class="alarm-toggle-container" style="border-color: var(--boat4-color);">
             <div class="box-title-sm" style="color: var(--boat4-color);">🚨 [2호 영역] 긴급 팝업 설정</div>
 
@@ -1031,9 +900,6 @@
         </div>
     </div>
 
-<!-- ==========================================================================
-   [JavaScript] Firebase 모듈 연동 및 실시간 데이터 처리 로직
-   ========================================================================== -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue, runTransaction, push, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -1052,7 +918,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // [사이드바 크기 조절 (Resizer) 드래그 로직]
     const resizer = document.getElementById('resizer');
     const rightSidebar = document.getElementById('right-sidebar');
     let isResizing = false;
@@ -1083,11 +948,10 @@
         });
     }
 
-    // [Service Worker 등록]
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             const swCode = `
-                const CACHE_NAME = 'kimsimin-cache-v4';
+                const CACHE_NAME = 'kimsimin-cache-v7';
                 self.addEventListener('install', e => self.skipWaiting());
                 self.addEventListener('activate', e => e.waitUntil(
                     caches.keys().then(keys => Promise.all(
@@ -1106,7 +970,6 @@
         });
     }
 
-    // [네트워크 오프라인 로컬 대기열(Queue) 동기화 상태 관리]
     let isOnlineStatus = navigator.onLine;
     let pendingOfflineQueue = JSON.parse(localStorage.getItem('kimsimin_pending_queue') || "[]");
 
@@ -1116,7 +979,6 @@
 
     function processOfflineQueue() {
         if (!isOnlineStatus || pendingOfflineQueue.length === 0) return;
-
         const queueCopy = [...pendingOfflineQueue];
         pendingOfflineQueue = [];
         saveOfflineQueue();
@@ -1168,6 +1030,7 @@
         alarmSound: "on",
         alarmMinutes: 10,
         alarmSeconds: 30,
+        alarmRepeatCount: 5,
         pageIntervalSeconds: 5,
         ttsBroadcast: "on",
         ttsMinutes: 5,
@@ -1176,17 +1039,20 @@
         rotationTargetGuest: true,
         rotationTargetWorker: true,
 
-        // 1호, 2호 개별 근무자 제어 설정 지원
         boat1Alarm: "on",
         boat1AlarmMin: 10,
+        boat1AlarmRep: 5,
         boat1Tts: "on",
         boat1TtsMin: 5,
+        boat1TtsRep: 2,
         boat1FocusTime: "auto",
 
         boat2Alarm: "on",
         boat2AlarmMin: 10,
+        boat2AlarmRep: 5,
         boat2Tts: "on",
         boat2TtsMin: 5,
+        boat2TtsRep: 2,
         boat2FocusTime: "auto",
 
         popupMode: "on",
@@ -1239,59 +1105,73 @@
     }
     buildPopupTimeSelectOptions();
 
-    // [근무자 화면 전용] 1호/2호 개별 알람 ON/OFF 토글
     window.toggleWorkerAlarm = function(id) {
         const key = id === 1 ? 'boat1Alarm' : 'boat2Alarm';
         const cur = configData[key] || 'on';
         const next = cur === 'on' ? 'off' : 'on';
         configData[key] = next;
 
-        if (next === 'off') {
-            stopBoatAlarms(id);
-        }
+        if (next === 'off') stopBoatAlarms(id);
         saveConfigData();
         updateUI();
     };
 
-    // [근무자 화면 전용] 1호/2호 개별 TTS 방송 ON/OFF 토글
     window.toggleWorkerTts = function(id) {
         const key = id === 1 ? 'boat1Tts' : 'boat2Tts';
         const cur = configData[key] || 'on';
         const next = cur === 'on' ? 'off' : 'on';
         configData[key] = next;
 
-        if (next === 'off') {
-            stopBoatTts(id);
-        }
+        if (next === 'off') stopBoatTts(id);
         saveConfigData();
         updateUI();
     };
 
-    // [근무자 화면 전용] 1호/2호 개별 알람/방송 분 전 시간 설정
     window.updateWorkerTimeConfig = function(id) {
-        const alarmIn = document.getElementById(`worker-alarm-min-${id}`);
-        const ttsIn = document.getElementById(`worker-tts-min-${id}`);
+        const alarmMinIn = document.getElementById(`worker-alarm-min-${id}`);
+        const alarmRepIn = document.getElementById(`worker-alarm-rep-${id}`);
+        const ttsMinIn = document.getElementById(`worker-tts-min-${id}`);
+        const ttsRepIn = document.getElementById(`worker-tts-rep-${id}`);
 
-        let aMin = parseInt(alarmIn.value) || 10;
+        let aMin = parseInt(alarmMinIn.value) || 10;
         if (aMin < 1) aMin = 1; if (aMin > 60) aMin = 60;
-        alarmIn.value = aMin;
+        alarmMinIn.value = aMin;
 
-        let tMin = parseInt(ttsIn.value) || 5;
+        let aRep = parseInt(alarmRepIn.value) || 5;
+        if (aRep < 1) aRep = 1; if (aRep > 20) aRep = 20;
+        alarmRepIn.value = aRep;
+
+        let tMin = parseInt(ttsMinIn.value) || 5;
         if (tMin < 1) tMin = 1; if (tMin > 60) tMin = 60;
-        ttsIn.value = tMin;
+        ttsMinIn.value = tMin;
+
+        let tRep = parseInt(ttsRepIn.value) || 2;
+        if (tRep < 1) tRep = 1; if (tRep > 5) tRep = 5;
+        ttsRepIn.value = tRep;
 
         if (id === 1) {
             configData.boat1AlarmMin = aMin;
+            configData.boat1AlarmRep = aRep;
             configData.boat1TtsMin = tMin;
+            configData.boat1TtsRep = tRep;
+            configData.alarmMinutes = aMin;
+            configData.alarmRepeatCount = aRep;
+            configData.ttsMinutes = tMin;
+            configData.ttsRepeatCount = tRep;
         } else {
             configData.boat2AlarmMin = aMin;
+            configData.boat2AlarmRep = aRep;
             configData.boat2TtsMin = tMin;
+            configData.boat2TtsRep = tRep;
+            configData.alarmMinutes = aMin;
+            configData.alarmRepeatCount = aRep;
+            configData.ttsMinutes = tMin;
+            configData.ttsRepeatCount = tRep;
         }
         saveConfigData();
         updateUI();
     };
 
-    // [근무자 화면 전용] 1호/2호 기준 출발 시간대 선택
     window.setWorkerFocusTime = function(id, val) {
         if (id === 1) configData.boat1FocusTime = val;
         else configData.boat2FocusTime = val;
@@ -1305,12 +1185,11 @@
             saveOfflineQueue();
             return;
         }
-        set(ref(db, 'namgang/boatData'), boatData)
-            .catch((error) => {
-                console.error("선박 데이터 저장 실패:", error);
-                pendingOfflineQueue.push({ type: 'boat_data', timestamp: Date.now() });
-                saveOfflineQueue();
-            });
+        set(ref(db, 'namgang/boatData'), boatData).catch((error) => {
+            console.error("선박 데이터 저장 실패:", error);
+            pendingOfflineQueue.push({ type: 'boat_data', timestamp: Date.now() });
+            saveOfflineQueue();
+        });
     }
 
     function saveConfigData() {
@@ -1320,12 +1199,11 @@
             saveOfflineQueue();
             return;
         }
-        set(ref(db, 'namgang/configData'), configData)
-            .catch((error) => {
-                console.error("설정 데이터 저장 실패:", error);
-                pendingOfflineQueue.push({ type: 'config_data', timestamp: Date.now() });
-                saveOfflineQueue();
-            });
+        set(ref(db, 'namgang/configData'), configData).catch((error) => {
+            console.error("설정 데이터 저장 실패:", error);
+            pendingOfflineQueue.push({ type: 'config_data', timestamp: Date.now() });
+            saveOfflineQueue();
+        });
     }
 
     window.applySchedulePreset = function(presetKey) {
@@ -1499,6 +1377,12 @@
         if(durVal < 1) durVal = 1; if(durVal > 300) durVal = 300;
         configData.alarmSeconds = durVal;
 
+        let repVal = parseInt(document.getElementById('alarm-repeat-count').value) || 5;
+        if(repVal < 1) repVal = 1; if(repVal > 20) repVal = 20;
+        configData.alarmRepeatCount = repVal;
+        configData.boat1AlarmRep = repVal;
+        configData.boat2AlarmRep = repVal;
+
         let rotVal = parseInt(document.getElementById('page-interval-seconds').value) || 5;
         if(rotVal < 2) rotVal = 2; if(rotVal > 60) rotVal = 60;
         configData.pageIntervalSeconds = rotVal;
@@ -1512,9 +1396,11 @@
         configData.boat1TtsMin = ttsMins;
         configData.boat2TtsMin = ttsMins;
 
-        let ttsRepeat = parseInt(document.getElementById('tts-repeat-count').value) || 1;
+        let ttsRepeat = parseInt(document.getElementById('tts-repeat-count').value) || 2;
         if (ttsRepeat < 1) ttsRepeat = 1; if (ttsRepeat > 5) ttsRepeat = 5;
         configData.ttsRepeatCount = ttsRepeat;
+        configData.boat1TtsRep = ttsRepeat;
+        configData.boat2TtsRep = ttsRepeat;
 
         const rotationOption = document.querySelector('input[name="rotation_mode"]:checked');
         if (rotationOption) configData.rotationMode = rotationOption.value;
@@ -1652,11 +1538,8 @@
 
         runTransaction(seatRef, (currentSeats) => {
             let count = currentSeats || 0;
-            if (amt === 1) {
-                return count + 1;
-            } else if (amt === -1) {
-                return Math.max(0, count - 1);
-            }
+            if (amt === 1) return count + 1;
+            else if (amt === -1) return Math.max(0, count - 1);
             return count;
         }).then((result) => {
             if (result.committed) {
@@ -1734,25 +1617,33 @@
         const alarmKey = `${id}-${time}`;
         if (alarmSoundIntervals[alarmKey]) return;
 
-        if (navigator.vibrate) {
-            navigator.vibrate([300, 200, 300, 200, 500]);
-        }
+        if (navigator.vibrate) navigator.vibrate([300, 200, 300, 200, 500]);
 
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return;
-            const ctx = new AudioContext(); const alarmStartTime = Date.now();
+            const ctx = new AudioContext(); 
+            const alarmStartTime = Date.now();
+            const maxDurationSeconds = configData.alarmSeconds || 30;
+            const maxRepeats = (id === 1 ? configData.boat1AlarmRep : configData.boat2AlarmRep) || configData.alarmRepeatCount || 5;
+            let currentRepeatCount = 0;
+
+            playSingleBeepSignal(ctx, ctx.currentTime);
+            currentRepeatCount++;
 
             alarmSoundIntervals[alarmKey] = setInterval(() => {
                 const masterCheck = (configData.alarmSound || 'on') === 'on';
                 const boatCheck = (id === 1 ? (configData.boat1Alarm || 'on') : (configData.boat2Alarm || 'on')) === 'on';
                 if (!masterCheck || !boatCheck) { window.dismissAlarm(id, time); return; }
 
-                const maxDurationSeconds = configData.alarmSeconds || 30;
                 const elapsedSeconds = (Date.now() - alarmStartTime) / 1000;
+                if (elapsedSeconds >= maxDurationSeconds || currentRepeatCount >= maxRepeats) { 
+                    window.dismissAlarm(id, time); 
+                    return; 
+                }
 
-                if (elapsedSeconds >= maxDurationSeconds) { window.dismissAlarm(id, time); return; }
                 playSingleBeepSignal(ctx, ctx.currentTime);
+                currentRepeatCount++;
             }, 1000);
         } catch(e) { console.log("오디오 디바이스 에러"); }
     }
@@ -1819,7 +1710,7 @@
         if (!isMasterOn || !isBoatOn) return;
 
         const ttsTriggerMinutes = (id === 1 ? configData.boat1TtsMin : configData.boat2TtsMin) || configData.ttsMinutes || 5;
-        const maxLoops = configData.ttsRepeatCount || 1;
+        const maxLoops = (id === 1 ? configData.boat1TtsRep : configData.boat2TtsRep) || configData.ttsRepeatCount || 2;
         const now = new Date();
 
         times.forEach(t => {
@@ -1844,8 +1735,13 @@
                         if (!activeTtsBroadcasts[id].includes(t)) activeTtsBroadcasts[id].push(t);
                         updateUI();
 
-                        const boatNumStr = (id === 1) ? "1호" : "2호"; 
-                        const speechText = `출발 김시민 ${boatNumStr} 발권 인원 ${booked}명 입니다.`;
+                        const boatNumStr = (id === 1) ? "김시민 1호" : "김시민 2호"; 
+                        
+                        // [요청 반영] 근무자용 화면과 관리자/손님용 화면의 안내방송 멘트 분기 처리
+                             speechText = `탑승객이 대기 중입니다. ${tH}시 ${tM}분 출발하는 ${boatNumStr}에 티켓 발권한 인원은 총 ${booked}명 입니다. 사전 준비하고 승객 맞이를 진행해 주세요.`;
+                        } else {
+                            speechText = ``김시민호 매표소에서 안내 드립니다. 잠시 후 ${tH}시 ${tM}분에 출발하는 ${boatName}에 탑승하시는 탑승객분들은, 탑승장소인 망진나루로 이동하여 주시기 바랍니다. ${boatName}는 망진나루를 출발하여 진주성 촉석루 앞까지, 약 20분 정도 소요되는 코스로 운항하고 있습니다. 감사합니다.`;
+                        }
 
                         executeNativeTTS(speechText, maxLoops, id, t);
                     }
@@ -1865,9 +1761,7 @@
 
         if (remainingLoops <= 0 || !activeTtsBroadcasts[id].includes(time)) { window.dismissTtsBroadcast(id, time); return; }
 
-        if (navigator.vibrate) {
-            navigator.vibrate([200, 100, 200]);
-        }
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
 
         const utterance = new SpeechSynthesisUtterance(phrase); 
         const voices = window.speechSynthesis.getVoices();
@@ -2015,7 +1909,6 @@
 
         const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
         const dayStr = dayNames[now.getDay()];
-
         const dateFormatted = `${year}년 ${month}월 ${date}일 (${dayStr})`;
 
         const hoursStr = String(now.getHours()).padStart(2, '0');
@@ -2039,42 +1932,43 @@
             if (gDur) gDur.innerText = boatData[id].duration || "-";
             if (gCourse) gCourse.innerText = boatData[id].course || "-";
 
-            // 근무자 화면 상단 패널 UI 갱신 (1호, 2호 모두 적용)
             const bAlarmState = (id === 1 ? configData.boat1Alarm : configData.boat2Alarm) || 'on';
             const bTtsState = (id === 1 ? configData.boat1Tts : configData.boat2Tts) || 'on';
             const bAlarmMin = (id === 1 ? configData.boat1AlarmMin : configData.boat2AlarmMin) || configData.alarmMinutes || 10;
+            const bAlarmRep = (id === 1 ? configData.boat1AlarmRep : configData.boat2AlarmRep) || configData.alarmRepeatCount || 5;
             const bTtsMin = (id === 1 ? configData.boat1TtsMin : configData.boat2TtsMin) || configData.ttsMinutes || 5;
+            const bTtsRep = (id === 1 ? configData.boat1TtsRep : configData.boat2TtsRep) || configData.ttsRepeatCount || 2;
             const bFocusTime = (id === 1 ? configData.boat1FocusTime : configData.boat2FocusTime) || "auto";
 
             const alarmBtn = document.getElementById(`worker-alarm-btn-${id}`);
             if (alarmBtn) {
-                alarmBtn.innerText = bAlarmState === 'on' ? "ON" : "OFF";
+                alarmBtn.innerText = bAlarmState === 'on' ? "🔔 알람 ON" : "🔕 알람 OFF";
                 alarmBtn.className = bAlarmState === 'on' ? "active-on" : "active-off";
             }
 
             const ttsBtn = document.getElementById(`worker-tts-btn-${id}`);
             if (ttsBtn) {
-                ttsBtn.innerText = bTtsState === 'on' ? "ON" : "OFF";
+                ttsBtn.innerText = bTtsState === 'on' ? "📢 방송 ON" : "🔇 방송 OFF";
                 ttsBtn.className = bTtsState === 'on' ? "active-on" : "active-off";
             }
 
             const alarmMinIn = document.getElementById(`worker-alarm-min-${id}`);
-            if (alarmMinIn && document.activeElement !== alarmMinIn) {
-                alarmMinIn.value = bAlarmMin;
-            }
+            if (alarmMinIn && document.activeElement !== alarmMinIn) alarmMinIn.value = bAlarmMin;
+
+            const alarmRepIn = document.getElementById(`worker-alarm-rep-${id}`);
+            if (alarmRepIn && document.activeElement !== alarmRepIn) alarmRepIn.value = bAlarmRep;
 
             const ttsMinIn = document.getElementById(`worker-tts-min-${id}`);
-            if (ttsMinIn && document.activeElement !== ttsMinIn) {
-                ttsMinIn.value = bTtsMin;
-            }
+            if (ttsMinIn && document.activeElement !== ttsMinIn) ttsMinIn.value = bTtsMin;
+
+            const ttsRepIn = document.getElementById(`worker-tts-rep-${id}`);
+            if (ttsRepIn && document.activeElement !== ttsRepIn) ttsRepIn.value = bTtsRep;
 
             const focusSelect = document.getElementById(`worker-focus-time-${id}`);
             if (focusSelect && document.activeElement !== focusSelect) {
                 const timesList = boatData[id].times || [];
-                let optsHtml = `<option value="auto">자동(현재시간)</option>`;
-                timesList.forEach(t => {
-                    optsHtml += `<option value="${t}">${t} 출발</option>`;
-                });
+                let optsHtml = `<option value="auto">자동</option>`;
+                timesList.forEach(t => { optsHtml += `<option value="${t}">${t}</option>`; });
                 focusSelect.innerHTML = optsHtml;
                 focusSelect.value = bFocusTime;
             }
@@ -2117,7 +2011,6 @@
             checkTenMinutesAlarm(id, times);
             checkTtsSpeechBroadcast(id, times);
 
-            // 현재 시간에 가장 임박한(다음 출발) 시간 자동 계산
             const duration = parseInt(boatData[id].duration) || 20;
             let autoTargetTime = null;
             for (let i = 0; i < times.length; i++) {
@@ -2173,9 +2066,7 @@
                 const capacity = boatData[id].capacity || 0;
                 let booked = (boatData[id].seats && boatData[id].seats[t]) || 0;
 
-                if (isCustomerGuest && booked > capacity) {
-                    booked = capacity;
-                }
+                if (isCustomerGuest && booked > capacity) booked = capacity;
 
                 const remain = capacity - booked;
                 const customStat = (boatData[id].customStatus && boatData[id].customStatus[t]) || "auto";
@@ -2192,86 +2083,45 @@
 
                 if (customStat !== "auto") {
                     statusText = customStat;
-                    if (customStat === "운항없음") {
-                        rowClass = "row-halted-gray-bg";
-                        statusClass = "text-ended-box";
-                    } else if (customStat.includes("중지")) {
-                        rowClass = "row-halted-gray-bg";
-                        statusClass = "text-ended-box";
+                    if (customStat === "운항없음" || customStat.includes("중지")) {
+                        rowClass = "row-halted-gray-bg"; statusClass = "text-ended-box";
                     } else if (customStat === "점 검 중") {
-                        rowClass = "row-halted-gray-bg";
-                        statusClass = "text-maintenance-gray";
+                        rowClass = "row-halted-gray-bg"; statusClass = "text-maintenance-gray";
                     } else if (customStat === "탑승시작") {
-                        rowClass = "row-boarding-start-bg";
-                        statusClass = "text-boarding-start";
+                        rowClass = "row-boarding-start-bg"; statusClass = "text-boarding-start";
                     } else if (customStat === "티켓발권마감") {
-                        rowClass = "row-ticketing-ended-bg";
-                        statusClass = "bg-dark-green-yellow";
+                        rowClass = "row-ticketing-ended-bg"; statusClass = "bg-dark-green-yellow";
                     } else if (customStat === "탑승(승선)마감") {
-                        rowClass = "row-boarding-close-solid";
-                        statusClass = "text-boarding-close";
+                        rowClass = "row-boarding-close-solid"; statusClass = "text-boarding-close";
                     }
                 } else {
                     if (diffMins < -duration) {
-                        if (booked > 0) {
-                            statusText = "운항종료(End)";
-                            rowClass = "row-ended";
-                            statusClass = "text-ended-box";
-                        } else {
-                            statusText = "종료(End)";
-                            rowClass = "row-ended";
-                            statusClass = "text-ended-box";
-                        }
+                        statusText = booked > 0 ? "운항종료(End)" : "종료(End)";
+                        rowClass = "row-ended"; statusClass = "text-ended-box";
                     } else if (diffMins <= 0) {
                         if (booked <= 0) {
-                            statusText = "종료(End)";
-                            rowClass = "row-ended";
-                            statusClass = "text-ended-box";
+                            statusText = "종료(End)"; rowClass = "row-ended"; statusClass = "text-ended-box";
                         } else {
-                            statusText = "운 항 중";
-                            rowClass = "row-sailing-bg";
-                            statusClass = "text-blue";
+                            statusText = "운 항 중"; rowClass = "row-sailing-bg"; statusClass = "text-blue";
                         }
                     } else if (diffMins <= 5) {
-                        if (booked <= 0) {
-                            statusText = "티켓발권가능";
-                            rowClass = "row-available-bg";
-                            statusClass = "text-available";
-                        } else {
-                            statusText = "탑승마감";
-                            rowClass = "row-boarding-close-solid";
-                            statusClass = "text-boarding-close";
-                        }
+                        // [요청 반영] 출발 5분 전일 때 '티켓발권마감'으로 표시되도록 수정
+                        statusText = booked <= 0 ? "티켓발권가능" : "티켓발권마감";
+                        rowClass = booked <= 0 ? "row-available-bg" : "row-ticketing-ended-bg";
+                        statusClass = booked <= 0 ? "text-available" : "bg-dark-green-yellow";
                     } else if (diffMins <= 10) {
-                        if (booked <= 0) {
-                            statusText = "티켓발권가능";
-                            rowClass = "row-available-bg";
-                            statusClass = "text-available";
-                        } else {
-                            statusText = "탑승시작";
-                            rowClass = "row-boarding-start-bg";
-                            statusClass = "text-boarding-start";
-                        }
+                        statusText = booked <= 0 ? "티켓발권가능" : "탑승시작";
+                        rowClass = booked <= 0 ? "row-available-bg" : "row-boarding-start-bg";
+                        statusClass = booked <= 0 ? "text-available" : "text-boarding-start";
                     } else if (diffMins <= 15) {
-                        if (booked <= 0) {
-                            statusText = "티켓발권가능";
-                            rowClass = "row-available-bg";
-                            statusClass = "text-available";
-                        } else {
-                            statusText = "티켓발권종료";
-                            rowClass = "row-ticketing-ended-bg";
-                            statusClass = "bg-dark-green-yellow";
-                        }
+                        statusText = booked <= 0 ? "티켓발권가능" : "티켓발권종료";
+                        rowClass = booked <= 0 ? "row-available-bg" : "row-ticketing-ended-bg";
+                        statusClass = booked <= 0 ? "text-available" : "bg-dark-green-yellow";
                     } else {
                         if (remain <= 0) {
-                            statusText = "매진(Sold out)";
-                            rowClass = "row-soldout-blink";
-                            statusClass = "text-soldout";
-                            remainClass += " text-soldout-zero";
+                            statusText = "매진(Sold out)"; rowClass = "row-soldout-blink"; statusClass = "text-soldout"; remainClass += " text-soldout-zero";
                         } else {
-                            statusText = "티켓발권가능";
-                            rowClass = "row-available-bg";
-                            statusClass = "text-available";
+                            statusText = "티켓발권가능"; rowClass = "row-available-bg"; statusClass = "text-available";
                         }
                     }
                 }
@@ -2281,34 +2131,19 @@
                     remainClass += " text-soldout-zero";
                 }
 
-                if (remain < 0) {
-                    if (!isGuest || isWorker) {
-                        const excessCount = Math.abs(remain);
-                        remainText = `<span class="over-capacity-text">⚠️ 초과 +${excessCount}명</span>`;
-                    }
+                if (remain < 0 && (!isGuest || isWorker)) {
+                    remainText = `<span class="over-capacity-text">⚠️ 초과 +${Math.abs(remain)}명</span>`;
                 }
 
-                // 근무자 화면에서 현재 시간에 맞는 출발시간(또는 근무자 지정 시간) 행 강조 표시
-                if (isWorker && t === activeHighlightTime) {
-                    rowClass += " row-current-highlight";
-                }
+                if (isWorker && t === activeHighlightTime) rowClass += " row-current-highlight";
 
                 const isAlarmActive = activeVisualAlarms[id].includes(t);
                 const isTtsActive = activeTtsBroadcasts[id].includes(t);
 
-                if (isAlarmActive) rowClass += " row-alarm-blink";
-                if (isTtsActive) rowClass += " row-tts-blink";
-
                 let controlBtns = "";
                 if (!isGuest || isWorker) {
-                    let alarmStopBtn = "";
-                    if (isAlarmActive) {
-                        alarmStopBtn = `<button class="btn-alarm-stop" onclick="dismissAlarm(${id}, '${t}')">🔔 알람확인</button>`;
-                    }
-                    let ttsStopBtn = "";
-                    if (isTtsActive) {
-                        ttsStopBtn = `<button class="btn-tts-stop" onclick="dismissTtsBroadcast(${id}, '${t}')">🗣️ 방송확인</button>`;
-                    }
+                    let alarmStopBtn = isAlarmActive ? `<button class="btn-alarm-stop" onclick="dismissAlarm(${id}, '${t}')">🔔 알람확인</button>` : "";
+                    let ttsStopBtn = isTtsActive ? `<button class="btn-tts-stop" onclick="dismissTtsBroadcast(${id}, '${t}')">🗣️ 방송확인</button>` : "";
 
                     if (!isGuest) {
                         controlBtns = `
@@ -2316,8 +2151,7 @@
                                 <button class="btn-adj" onclick="adjust(${id}, '${t}', 1)">+</button>
                                 <button class="btn-adj" onclick="adjust(${id}, '${t}', -1)">-</button>
                             </div>
-                            ${alarmStopBtn}
-                            ${ttsStopBtn}
+                            ${alarmStopBtn} ${ttsStopBtn}
                         `;
                     } else if (isWorker) {
                         controlBtns = `${alarmStopBtn} ${ttsStopBtn}`;
@@ -2381,6 +2215,7 @@
 
                 if (document.getElementById('alarm-trigger-minutes')) document.getElementById('alarm-trigger-minutes').value = configData.alarmMinutes || 10;
                 if (document.getElementById('alarm-duration-seconds')) document.getElementById('alarm-duration-seconds').value = configData.alarmSeconds || 30;
+                if (document.getElementById('alarm-repeat-count')) document.getElementById('alarm-repeat-count').value = configData.alarmRepeatCount || 5;
                 if (document.getElementById('page-interval-seconds')) document.getElementById('page-interval-seconds').value = configData.pageIntervalSeconds || 5;
 
                 const ttsRadio = document.querySelector(`input[name="tts_broadcast"][value="${configData.ttsBroadcast || 'on'}"]`);
@@ -2431,10 +2266,7 @@
         }
     });
 
-    setInterval(() => {
-        updateUI();
-    }, 1000);
-
+    setInterval(() => { updateUI(); }, 1000);
 </script>
 </body>
 </html>
