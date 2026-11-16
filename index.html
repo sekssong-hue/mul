@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>김시민호 실시간 잔여석 관리 프로그램 (Firebase 실시간 연동)</title>
+    <title>김시민호 실시간 잔여석 관리 프로그램 (화면별 독립 제어)</title>
 
     <!-- PWA 적용: 웹 앱 Manifest 및 메타 태그 연결 -->
     <link rel="manifest" href="manifest.json">
@@ -84,7 +84,7 @@
             min-width: 240px;
             max-width: 600px;
             background-color: #1e222b; padding: 15px;
-            display: flex; flex-direction: column; gap: 15px; border-radius: 15px;
+            display: flex; flex-direction: column; gap: 12px; border-radius: 15px;
             box-sizing: border-box; border: 1px solid #343a40;
             overflow-y: auto; z-index: 10;
             flex-shrink: 0;
@@ -92,7 +92,7 @@
 
         #sidebar-title {
             color: #fff; font-size: 20px; font-weight: 900; text-align: center;
-            padding-bottom: 12px; border-bottom: 2px dashed #444; margin-bottom: 5px;
+            padding-bottom: 12px; border-bottom: 2px dashed #444; margin-bottom: 3px;
             line-height: 1.3;
         }
 
@@ -130,7 +130,6 @@
         }
         .btn-excel-upload:hover { filter: brightness(1.15); }
 
-        /* [CSS] 근무자용 상단 간편 제어 패널 (알람/방송 설정 및 반복횟수 포함 통합, 버튼 우측 배치) */
         .worker-quick-control {
             display: none; background: #1e2631; padding: 10px 14px; border-bottom: 3px solid var(--highlight);
             align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
@@ -157,6 +156,26 @@
             display: flex; flex-direction: column; gap: 10px; background: #282e38; 
             padding: 12px; border-radius: 8px; border: 1px solid #444; width: 100%;
             box-sizing: border-box;
+        }
+        
+        .accordion-header {
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; user-select: none; padding: 2px 0;
+        }
+        .accordion-header:hover { filter: brightness(1.15); }
+        .accordion-arrow {
+            font-size: 14px; color: #aaa; transition: transform 0.2s ease;
+        }
+        .alarm-toggle-container.open .accordion-arrow {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            display: none; flex-direction: column; gap: 10px;
+            border-top: 1px solid #444; padding-top: 10px; margin-top: 2px;
+        }
+        .alarm-toggle-container.open .accordion-content {
+            display: flex;
         }
 
         .alarm-radio-row { display: flex; gap: 15px; align-items: center; justify-content: center; flex-wrap: wrap; }
@@ -200,7 +219,7 @@
             border: 1px solid #555; border-radius: 4px; padding: 5px; box-sizing: border-box; resize: none;
         }
 
-        .box-title-sm { color: #fff; font-size: 15px; font-weight: bold; text-align: center; margin-bottom: 2px; }
+        .box-title-sm { color: #fff; font-size: 15px; font-weight: bold; text-align: center; margin: 0; }
 
         .boat-header { 
             padding: 10px 15px; color: white; 
@@ -751,7 +770,7 @@
 
         <div class="preset-container">
             <div class="box-title-sm" style="color: #61b3ff;">📅 운항 시간표 프리셋</div>
-            <div class="preset-btn-group">
+            <div class="preset-btn-group" style="margin-top: 6px;">
                 <button id="preset-btn-weekday" class="btn-preset active" onclick="applySchedulePreset('weekday')">평일 모드</button>
                 <button id="preset-btn-weekend" class="btn-preset" onclick="applySchedulePreset('weekend')">주말/공휴일</button>
                 <button id="preset-btn-festival" class="btn-preset" onclick="applySchedulePreset('festival')">축제 기간</button>
@@ -761,204 +780,232 @@
         <div class="excel-upload-container">
             <div class="box-title-sm" style="color: #61d800;">📊 사전예매 엑셀 자동 반영</div>
             <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelUpload(event)">
-            <button class="btn-excel-upload" onclick="document.getElementById('excel-file-input').click()">
+            <button class="btn-excel-upload" style="margin-top: 4px;" onclick="document.getElementById('excel-file-input').click()">
                 📁 사전예매자 엑셀 업로드
             </button>
         </div>
 
-        <!-- 알람 사운드 설정 영역 -->
-        <div class="alarm-toggle-container">
-            <div class="alarm-radio-row">
-                <label><input type="radio" name="alarm_sound" value="on" checked onchange="handleAlarmToggle()"> 🔊 알람 ON</label>
-                <label><input type="radio" name="alarm_sound" value="off" onchange="handleAlarmToggle()"> 🔇 OFF</label>
+        <!-- 관리자용 알람 사운드 설정 영역 (아코디언 적용) -->
+        <div class="alarm-toggle-container" id="accordion-alarm">
+            <div class="accordion-header" onclick="toggleAccordion('accordion-alarm')">
+                <div class="box-title-sm" style="color: #00ffcc;">🔔 [관리자 전용] 알람 사운드 설정</div>
+                <span class="accordion-arrow">▼</span>
             </div>
-            <div class="alarm-time-setting">
-                <div class="setting-item-row">
-                    <span>출발 전 설정:</span>
-                    <div>
-                        <input type="number" id="alarm-trigger-minutes" value="10" min="1" max="60" onchange="saveAlarmConfig()"> 분 전 알람 🔔
-                    </div>
-                </div>
-                <div class="setting-item-row">
-                    <span>알람 지속 시간:</span>
-                    <div>
-                        <input type="number" id="alarm-duration-seconds" value="30" min="1" max="300" onchange="saveAlarmConfig()"> 초 동안
-                    </div>
-                </div>
-                <div class="setting-item-row" style="color: #00ffcc;">
-                    <span>알람 반복 횟수:</span>
-                    <div>
-                        <input type="number" id="alarm-repeat-count" value="5" min="1" max="20" onchange="saveAlarmConfig()"> 회 울림 🔔
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- TTS 음성 안내방송 설정 영역 -->
-        <div class="alarm-toggle-container" style="border-color: var(--tts-highlight);">
-            <div class="alarm-radio-row">
-                <label><input type="radio" name="tts_broadcast" class="tts-accent" value="on" checked onchange="handleTtsToggle()"> 📢 방송 ON</label>
-                <label><input type="radio" name="tts_broadcast" class="tts-accent" value="off" onchange="handleTtsToggle()"> 🔇 OFF</label>
-            </div>
-            <div class="alarm-time-setting">
-                <div class="setting-item-row">
-                    <span>방송 시작 조건:</span>
-                    <div>
-                        출발 <input type="number" id="tts-trigger-minutes" class="tts-input" value="5" min="1" max="60" onchange="saveAlarmConfig()"> 분 전
-                    </div>
-                </div>
-                <div class="setting-item-row" style="color: var(--tts-highlight);">
-                    <span>방송 반복 횟수:</span>
-                    <div>
-                        <input type="number" id="tts-repeat-count" class="tts-input" value="2" min="1" max="5" onchange="saveAlarmConfig()"> 번 반복 🗣️
-                    </div>
-                </div>
-
-                <!-- 화면별 개별 방송 멘트 설정 -->
-                <div style="border-top: 1px dashed #555; padding-top: 8px; margin-top: 4px; display: flex; flex-direction: column; gap: 6px;">
-                    <div style="font-size: 12px; color: #aaa; line-height: 1.3;">
-                        ※ 치환변수: <code style="color:#00ffcc;">{시}</code>, <code style="color:#00ffcc;">{분}</code>, <code style="color:#00ffcc;">{선박}</code>, <code style="color:#00ffcc;">{인원}</code>, <code style="color:#00ffcc;">{잔여}</code>
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 3px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 13px; color: #00ffcc;">🖥️ 관리자 화면 멘트:</span>
-                            <label style="font-size: 12px; color: #ccc;"><input type="checkbox" id="tts-enable-admin" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
-                        </div>
-                        <textarea id="tts-msg-admin" class="popup-textarea" style="height: 48px;" onchange="saveAlarmConfig()">관리자 알림. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명, 잔여석은 {잔여}석입니다.</textarea>
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 3px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 13px; color: #61d800;">📺 손님용(1번) 화면 멘트:</span>
-                            <label style="font-size: 12px; color: #ccc;"><input type="checkbox" id="tts-enable-guest" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
-                        </div>
-                        <textarea id="tts-msg-guest" class="popup-textarea" style="height: 48px;" onchange="saveAlarmConfig()">승객 여러분께 안내 말씀 드립니다. 잠시 후 {시}시 {분}분에 출발하는 {선박} 탑승이 곧 시작됩니다. 탑승권을 소지하신 승객께서는 승선장으로 이동해 주시기 바랍니다.</textarea>
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 3px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 13px; color: #ffcc00;">👷 근무자용(2번) 화면 멘트:</span>
-                            <label style="font-size: 12px; color: #ccc;"><input type="checkbox" id="tts-enable-worker" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
-                        </div>
-                        <textarea id="tts-msg-worker" class="popup-textarea" style="height: 48px;" onchange="saveAlarmConfig()">근무자 안내. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명입니다. 승선 인원 확인 및 안전 점검을 준비해 주세요.</textarea>
-                    </div>
-
-                    <div style="display: flex; gap: 6px; margin-top: 6px;">
-                        <button type="button" class="btn-test-sound" onclick="testAlarmSound()">🔔 알람 소리 테스트</button>
-                        <button type="button" class="btn-test-sound btn-test-tts" onclick="testTtsBroadcast()">🗣️ 방송 소리 테스트</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="alarm-toggle-container" style="border-color: var(--rotation-highlight);">
-            <div class="box-title-sm" style="color: var(--rotation-highlight);">📺 자동 화면전환기 설정</div>
-            <div class="alarm-radio-row">
-                <label><input type="radio" name="rotation_mode" class="rotation-accent" value="on" checked onchange="handleRotationToggle()"> ▶️ ON</label>
-                <label><input type="radio" name="rotation_mode" class="rotation-accent" value="off" onchange="handleRotationToggle()"> ⏸️ OFF</label>
-            </div>
-            <div class="alarm-time-setting" style="border-top: 1px solid #444; padding-top: 10px;">
-                <div class="setting-item-row" style="margin-bottom: 5px;">
-                    <span style="color: #fff;">대상 화면 선택:</span>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 6px; padding-left: 5px;">
-                    <label style="font-size: 14px; font-weight: normal; color: #ccc;">
-                        <input type="checkbox" id="rotation-target-guest" class="rotation-accent" checked onchange="saveAlarmConfig()"> 1번 화면 손님용 적용
-                    </label>
-                    <label style="font-size: 14px; font-weight: normal; color: #ccc;">
-                        <input type="checkbox" id="rotation-target-worker" class="rotation-accent" checked onchange="saveAlarmConfig()"> 2번 화면 근무자용 적용
-                    </label>
-                </div>
-                <div class="setting-item-row" style="border-top: 1px dashed #444; padding-top: 8px; margin-top: 5px;">
-                    <span>화면 전환 주기:</span>
-                    <div>
-                        <input type="number" id="page-interval-seconds" class="rotation-input" value="5" min="2" max="60" onchange="saveAlarmConfig()"> 초 간격
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="alarm-toggle-container" style="border-color: var(--popup-highlight);">
-            <div class="box-title-sm" style="color: var(--popup-highlight);">🚨 [전체 중앙] 긴급 공지 팝업 설정</div>
-
-            <div style="background: #1a1e24; padding: 8px; border-radius: 6px; border: 1px dashed var(--popup-highlight); margin-bottom: 3px;">
-                <div class="box-title-sm" style="color: #fff; font-size: 13px; margin-bottom: 5px;">📺 표출 대상 화면 선택</div>
-                <div style="display: flex; justify-content: space-around; gap: 5px;">
-                    <label style="font-size: 14px; font-weight: normal; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="all" checked onchange="saveAlarmConfig()"> 전체</label>
-                    <label style="font-size: 14px; font-weight: normal; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="guest" onchange="saveAlarmConfig()"> 손님용</label>
-                    <label style="font-size: 14px; font-weight: normal; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="worker" onchange="saveAlarmConfig()"> 근무자용</label>
-                </div>
-            </div>
-
-            <div style="background: #1a1e24; padding: 8px; border-radius: 6px; border: 1px dashed var(--popup-highlight); margin-bottom: 3px;">
-                <div class="box-title-sm" style="color: #fff; font-size: 13px; margin-bottom: 5px;">🔴 전체 수동 즉시 발동 스위치</div>
+            <div class="accordion-content">
                 <div class="alarm-radio-row">
-                    <label style="color: #ff4d4d;"><input type="radio" name="popup_manual_switch" class="popup-accent" value="forced_on" onchange="handleManualPopupToggle('global', this.value)"> ⚡ 강제ON</label>
-                    <label><input type="radio" name="popup_manual_switch" class="popup-accent" value="forced_off" checked onchange="handleManualPopupToggle('global', this.value)"> 💤 해제</label>
+                    <label><input type="radio" name="alarm_sound" value="on" checked onchange="handleAlarmToggle()"> 🔊 알람 ON</label>
+                    <label><input type="radio" name="alarm_sound" value="off" onchange="handleAlarmToggle()"> 🔇 OFF</label>
                 </div>
-            </div>
-
-            <div class="box-title-sm" style="color: #aaa; font-size: 12px; text-align: left; padding-left: 5px;">🕒 예약 자동 스케줄 설정</div>
-            <div class="alarm-radio-row">
-                <label><input type="radio" name="popup_mode" class="popup-accent" value="on" checked onchange="saveAlarmConfig()"> ▶️ ON</label>
-                <label><input type="radio" name="popup_mode" class="popup-accent" value="off" onchange="saveAlarmConfig()"> ⏸️ OFF</label>
-            </div>
-            <div class="alarm-time-setting">
-                <div class="setting-item-row">
-                    <span>표출 시작 시각:</span>
-                    <div class="popup-select-container">
-                        <select id="popup-hour" class="popup-select" onchange="saveAlarmConfig()"></select> 시
-                        <select id="popup-minute" class="popup-select" onchange="saveAlarmConfig()"></select> 분
+                <div class="alarm-time-setting">
+                    <div class="setting-item-row">
+                        <span>출발 전 설정:</span>
+                        <div>
+                            <input type="number" id="alarm-trigger-minutes" value="10" min="1" max="60" onchange="saveAlarmConfig()"> 분 전 알람 🔔
+                        </div>
                     </div>
-                </div>
-                <div class="setting-item-row">
-                    <span>팝업 유지 시간:</span>
-                    <div>
-                        <input type="number" id="popup-duration-seconds" class="popup-input" value="20" min="0" max="600" onchange="saveAlarmConfig()"> 초 <span style="font-size:12px;color:#aaa;">(0은 무제한)</span>
+                    <div class="setting-item-row" style="color: #00ffcc;">
+                        <span>알람 반복 횟수:</span>
+                        <div>
+                            <input type="number" id="alarm-repeat-count" value="5" min="1" max="20" onchange="saveAlarmConfig()"> 회 울림 🔔
+                        </div>
                     </div>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
-                    <span style="color: #ff4d4d; font-weight: bold;">📢 [전체 공지] 내용 입력창:</span>
-                    <textarea id="popup-message-text" class="popup-textarea" style="height: 60px;" placeholder="전체화면으로 띄울 공지내용을 적으세요" onchange="saveAlarmConfig()">기상 악화 및 정비 관계로 인하여 잠시 후 다음 항차 운항이 지연될 예정이오니 양해 바랍니다.</textarea>
                 </div>
             </div>
         </div>
 
-        <div class="alarm-toggle-container" style="border-color: var(--boat3-color);">
-            <div class="box-title-sm" style="color: var(--boat3-color);">🚨 [1호 영역] 긴급 팝업 설정</div>
-
-            <div style="background: #1a1e24; padding: 6px; border-radius: 6px; border: 1px dashed var(--boat3-color); margin-bottom: 3px;">
-                <div class="box-title-sm" style="color: #fff; font-size: 12px; margin-bottom: 4px;">🔴 1호 수동 즉시 발동</div>
-                <div class="alarm-radio-row">
-                    <label style="color: var(--boat3-color); font-size: 14px;"><input type="radio" name="popup_manual_1" value="forced_on" onchange="handleManualPopupToggle(1, this.value)"> ⚡ 강제ON</label>
-                    <label style="font-size: 14px;"><input type="radio" name="popup_manual_1" value="forced_off" checked onchange="handleManualPopupToggle(1, this.value)"> 💤 해제</label>
-                </div>
+        <!-- TTS 음성 안내방송 설정 영역 (아코디언 적용) -->
+        <div class="alarm-toggle-container" id="accordion-tts" style="border-color: var(--tts-highlight);">
+            <div class="accordion-header" onclick="toggleAccordion('accordion-tts')">
+                <div class="box-title-sm" style="color: var(--tts-highlight);">📢 [관리자/손님용] 음성 안내방송 설정</div>
+                <span class="accordion-arrow">▼</span>
             </div>
+            <div class="accordion-content">
+                <div class="alarm-radio-row">
+                    <label><input type="radio" name="tts_broadcast" class="tts-accent" value="on" checked onchange="handleTtsToggle()"> 📢 방송 ON</label>
+                    <label><input type="radio" name="tts_broadcast" class="tts-accent" value="off" onchange="handleTtsToggle()"> 🔇 OFF</label>
+                </div>
+                <div class="alarm-time-setting">
+                    <div class="setting-item-row">
+                        <span>방송 시작 (관리자/손님):</span>
+                        <div>
+                            출발 <input type="number" id="tts-trigger-minutes" class="tts-input" value="5" min="1" max="60" onchange="saveAlarmConfig()"> 분 전
+                        </div>
+                    </div>
+                    <div class="setting-item-row" style="color: var(--tts-highlight);">
+                        <span>방송 반복 (관리자/손님):</span>
+                        <div>
+                            <input type="number" id="tts-repeat-count" class="tts-input" value="2" min="1" max="5" onchange="saveAlarmConfig()"> 번 반복 🗣️
+                        </div>
+                    </div>
 
-            <div class="alarm-time-setting" style="border-top: none; padding-top: 0;">
-                <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
-                    <span style="font-size: 13px; color: var(--boat3-color);">📢 1호 전용 공지 내용:</span>
-                    <textarea id="popup-text-1" class="popup-textarea" placeholder="1호 긴급 공지내용 입력" onchange="saveAlarmConfig()">김시민 1호 기상 악화 및 정비 관계로 인하여 잠시 후 운항이 지연될 예정입니다.</textarea>
+                    <!-- 화면별 개별 방송 멘트 설정 -->
+                    <div style="border-top: 1px dashed #555; padding-top: 8px; margin-top: 4px; display: flex; flex-direction: column; gap: 6px;">
+                        <div style="font-size: 12px; color: #aaa; line-height: 1.3;">
+                            ※ 치환변수: <code style="color:#00ffcc;">{시}</code>, <code style="color:#00ffcc;">{분}</code>, <code style="color:#00ffcc;">{선박}</code>, <code style="color:#00ffcc;">{인원}</code>, <code style="color:#00ffcc;">{잔여}</code><br>
+                            ※ 근무자용 방송 시간·횟수는 근무자 화면 상단에서 개별 조절됩니다.
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 3px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 13px; color: #00ffcc;">🖥️ 관리자 화면 멘트:</span>
+                                <label style="font-size: 12px; color: #ccc;"><input type="checkbox" id="tts-enable-admin" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
+                            </div>
+                            <textarea id="tts-msg-admin" class="popup-textarea" style="height: 48px;" onchange="saveAlarmConfig()">관리자 알림. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명, 잔여석은 {잔여}석입니다.</textarea>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 3px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 13px; color: #61d800;">📺 손님용(1번) 화면 멘트:</span>
+                                <label style="font-size: 12px; color: #ccc;"><input type="checkbox" id="tts-enable-guest" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
+                            </div>
+                            <textarea id="tts-msg-guest" class="popup-textarea" style="height: 48px;" onchange="saveAlarmConfig()">승객 여러분께 안내 말씀 드립니다. 잠시 후 {시}시 {분}분에 출발하는 {선박} 탑승이 곧 시작됩니다. 탑승권을 소지하신 승객께서는 승선장으로 이동해 주시기 바랍니다.</textarea>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 3px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 13px; color: #ffcc00;">👷 근무자용(2번) 화면 멘트:</span>
+                                <label style="font-size: 12px; color: #ccc;"><input type="checkbox" id="tts-enable-worker" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
+                            </div>
+                            <textarea id="tts-msg-worker" class="popup-textarea" style="height: 48px;" onchange="saveAlarmConfig()">근무자 안내. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명입니다. 승선 인원 확인 및 안전 점검을 준비해 주세요.</textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 6px; margin-top: 6px;">
+                            <button type="button" class="btn-test-sound" onclick="testAlarmSound()">🔔 알람 소리 테스트</button>
+                            <button type="button" class="btn-test-sound btn-test-tts" onclick="testTtsBroadcast()">🗣️ 방송 소리 테스트</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="alarm-toggle-container" style="border-color: var(--boat4-color);">
-            <div class="box-title-sm" style="color: var(--boat4-color);">🚨 [2호 영역] 긴급 팝업 설정</div>
-
-            <div style="background: #1a1e24; padding: 6px; border-radius: 6px; border: 1px dashed var(--boat4-color); margin-bottom: 3px;">
-                <div class="box-title-sm" style="color: #fff; font-size: 12px; margin-bottom: 4px;">🔴 2호 수동 즉시 발동</div>
+        <!-- 자동 화면전환기 설정 영역 (아코디언 적용) -->
+        <div class="alarm-toggle-container" id="accordion-rotation" style="border-color: var(--rotation-highlight);">
+            <div class="accordion-header" onclick="toggleAccordion('accordion-rotation')">
+                <div class="box-title-sm" style="color: var(--rotation-highlight);">📺 자동 화면전환기 설정</div>
+                <span class="accordion-arrow">▼</span>
+            </div>
+            <div class="accordion-content">
                 <div class="alarm-radio-row">
-                    <label style="color: var(--boat4-color); font-size: 14px;"><input type="radio" name="popup_manual_2" value="forced_on" onchange="handleManualPopupToggle(2, this.value)"> ⚡ 강제ON</label>
-                    <label style="font-size: 14px;"><input type="radio" name="popup_manual_2" value="forced_off" checked onchange="handleManualPopupToggle(2, this.value)"> 💤 해제</label>
+                    <label><input type="radio" name="rotation_mode" class="rotation-accent" value="on" checked onchange="handleRotationToggle()"> ▶️ ON</label>
+                    <label><input type="radio" name="rotation_mode" class="rotation-accent" value="off" onchange="handleRotationToggle()"> ⏸️ OFF</label>
+                </div>
+                <div class="alarm-time-setting" style="border-top: 1px solid #444; padding-top: 10px;">
+                    <div class="setting-item-row" style="margin-bottom: 5px;">
+                        <span style="color: #fff;">대상 화면 선택:</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 6px; padding-left: 5px;">
+                        <label style="font-size: 14px; font-weight: normal; color: #ccc;">
+                            <input type="checkbox" id="rotation-target-guest" class="rotation-accent" checked onchange="saveAlarmConfig()"> 1번 화면 손님용 적용
+                        </label>
+                        <label style="font-size: 14px; font-weight: normal; color: #ccc;">
+                            <input type="checkbox" id="rotation-target-worker" class="rotation-accent" checked onchange="saveAlarmConfig()"> 2번 화면 근무자용 적용
+                        </label>
+                    </div>
+                    <div class="setting-item-row" style="border-top: 1px dashed #444; padding-top: 8px; margin-top: 5px;">
+                        <span>화면 전환 주기:</span>
+                        <div>
+                            <input type="number" id="page-interval-seconds" class="rotation-input" value="5" min="2" max="60" onchange="saveAlarmConfig()"> 초 간격
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div class="alarm-time-setting" style="border-top: none; padding-top: 0;">
-                <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
-                    <span style="font-size: 13px; color: var(--boat4-color);">📢 2호 전용 공지 내용:</span>
-                    <textarea id="popup-text-2" class="popup-textarea" placeholder="2호 긴급 공지내용 입력" onchange="saveAlarmConfig()">김시민 2호 기상 악화 및 정비 관계로 인하여 잠시 후 운항이 지연될 예정입니다.</textarea>
+        <!-- 전체 중앙 긴급 공지 팝업 설정 영역 (아코디언 적용) -->
+        <div class="alarm-toggle-container" id="accordion-global-popup" style="border-color: var(--popup-highlight);">
+            <div class="accordion-header" onclick="toggleAccordion('accordion-global-popup')">
+                <div class="box-title-sm" style="color: var(--popup-highlight);">🚨 [전체 중앙] 긴급 공지 팝업 설정</div>
+                <span class="accordion-arrow">▼</span>
+            </div>
+            <div class="accordion-content">
+                <div style="background: #1a1e24; padding: 8px; border-radius: 6px; border: 1px dashed var(--popup-highlight); margin-bottom: 3px;">
+                    <div class="box-title-sm" style="color: #fff; font-size: 13px; margin-bottom: 5px;">📺 표출 대상 화면 선택</div>
+                    <div style="display: flex; justify-content: space-around; gap: 5px;">
+                        <label style="font-size: 14px; font-weight: normal; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="all" checked onchange="saveAlarmConfig()"> 전체</label>
+                        <label style="font-size: 14px; font-weight: normal; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="guest" onchange="saveAlarmConfig()"> 손님용</label>
+                        <label style="font-size: 14px; font-weight: normal; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="worker" onchange="saveAlarmConfig()"> 근무자용</label>
+                    </div>
+                </div>
+
+                <div style="background: #1a1e24; padding: 8px; border-radius: 6px; border: 1px dashed var(--popup-highlight); margin-bottom: 3px;">
+                    <div class="box-title-sm" style="color: #fff; font-size: 13px; margin-bottom: 5px;">🔴 전체 수동 즉시 발동 스위치</div>
+                    <div class="alarm-radio-row">
+                        <label style="color: #ff4d4d;"><input type="radio" name="popup_manual_switch" class="popup-accent" value="forced_on" onchange="handleManualPopupToggle('global', this.value)"> ⚡ 강제ON</label>
+                        <label><input type="radio" name="popup_manual_switch" class="popup-accent" value="forced_off" checked onchange="handleManualPopupToggle('global', this.value)"> 💤 해제</label>
+                    </div>
+                </div>
+
+                <div class="box-title-sm" style="color: #aaa; font-size: 12px; text-align: left; padding-left: 5px;">🕒 예약 자동 스케줄 설정</div>
+                <div class="alarm-radio-row">
+                    <label><input type="radio" name="popup_mode" class="popup-accent" value="on" checked onchange="saveAlarmConfig()"> ▶️ ON</label>
+                    <label><input type="radio" name="popup_mode" class="popup-accent" value="off" onchange="saveAlarmConfig()"> ⏸️ OFF</label>
+                </div>
+                <div class="alarm-time-setting">
+                    <div class="setting-item-row">
+                        <span>표출 시작 시각:</span>
+                        <div class="popup-select-container">
+                            <select id="popup-hour" class="popup-select" onchange="saveAlarmConfig()"></select> 시
+                            <select id="popup-minute" class="popup-select" onchange="saveAlarmConfig()"></select> 분
+                        </div>
+                    </div>
+                    <div class="setting-item-row">
+                        <span>팝업 유지 시간:</span>
+                        <div>
+                            <input type="number" id="popup-duration-seconds" class="popup-input" value="20" min="0" max="600" onchange="saveAlarmConfig()"> 초 <span style="font-size:12px;color:#aaa;">(0은 무제한)</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                        <span style="color: #ff4d4d; font-weight: bold;">📢 [전체 공지] 내용 입력창:</span>
+                        <textarea id="popup-message-text" class="popup-textarea" style="height: 60px;" placeholder="전체화면으로 띄울 공지내용을 적으세요" onchange="saveAlarmConfig()">기상 악화 및 정비 관계로 인하여 잠시 후 다음 항차 운항이 지연될 예정이오니 양해 바랍니다.</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1호 영역 긴급 팝업 설정 영역 (아코디언 적용) -->
+        <div class="alarm-toggle-container" id="accordion-boat1-popup" style="border-color: var(--boat3-color);">
+            <div class="accordion-header" onclick="toggleAccordion('accordion-boat1-popup')">
+                <div class="box-title-sm" style="color: var(--boat3-color);">🚨 [1호 영역] 긴급 팝업 설정</div>
+                <span class="accordion-arrow">▼</span>
+            </div>
+            <div class="accordion-content">
+                <div style="background: #1a1e24; padding: 6px; border-radius: 6px; border: 1px dashed var(--boat3-color); margin-bottom: 3px;">
+                    <div class="box-title-sm" style="color: #fff; font-size: 12px; margin-bottom: 4px;">🔴 1호 수동 즉시 발동</div>
+                    <div class="alarm-radio-row">
+                        <label style="color: var(--boat3-color); font-size: 14px;"><input type="radio" name="popup_manual_1" value="forced_on" onchange="handleManualPopupToggle(1, this.value)"> ⚡ 강제ON</label>
+                        <label style="font-size: 14px;"><input type="radio" name="popup_manual_1" value="forced_off" checked onchange="handleManualPopupToggle(1, this.value)"> 💤 해제</label>
+                    </div>
+                </div>
+
+                <div class="alarm-time-setting" style="border-top: none; padding-top: 0;">
+                    <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                        <span style="font-size: 13px; color: var(--boat3-color);">📢 1호 전용 공지 내용:</span>
+                        <textarea id="popup-text-1" class="popup-textarea" placeholder="1호 긴급 공지내용 입력" onchange="saveAlarmConfig()">김시민 1호 기상 악화 및 정비 관계로 인하여 잠시 후 운항이 지연될 예정입니다.</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2호 영역 긴급 팝업 설정 영역 (아코디언 적용) -->
+        <div class="alarm-toggle-container" id="accordion-boat2-popup" style="border-color: var(--boat4-color);">
+            <div class="accordion-header" onclick="toggleAccordion('accordion-boat2-popup')">
+                <div class="box-title-sm" style="color: var(--boat4-color);">🚨 [2호 영역] 긴급 팝업 설정</div>
+                <span class="accordion-arrow">▼</span>
+            </div>
+            <div class="accordion-content">
+                <div style="background: #1a1e24; padding: 6px; border-radius: 6px; border: 1px dashed var(--boat4-color); margin-bottom: 3px;">
+                    <div class="box-title-sm" style="color: #fff; font-size: 12px; margin-bottom: 4px;">🔴 2호 수동 즉시 발동</div>
+                    <div class="alarm-radio-row">
+                        <label style="color: var(--boat4-color); font-size: 14px;"><input type="radio" name="popup_manual_2" value="forced_on" onchange="handleManualPopupToggle(2, this.value)"> ⚡ 강제ON</label>
+                        <label style="font-size: 14px;"><input type="radio" name="popup_manual_2" value="forced_off" checked onchange="handleManualPopupToggle(2, this.value)"> 💤 해제</label>
+                    </div>
+                </div>
+
+                <div class="alarm-time-setting" style="border-top: none; padding-top: 0;">
+                    <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                        <span style="font-size: 13px; color: var(--boat4-color);">📢 2호 전용 공지 내용:</span>
+                        <textarea id="popup-text-2" class="popup-textarea" placeholder="2호 긴급 공지내용 입력" onchange="saveAlarmConfig()">김시민 2호 기상 악화 및 정비 관계로 인하여 잠시 후 운항이 지연될 예정입니다.</textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1012,10 +1059,17 @@
         });
     }
 
+    window.toggleAccordion = function(containerId) {
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.classList.toggle('open');
+        }
+    };
+
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             const swCode = `
-                const CACHE_NAME = 'kimsimin-cache-v6';
+                const CACHE_NAME = 'kimsimin-cache-v7';
                 self.addEventListener('install', e => self.skipWaiting());
                 self.addEventListener('activate', e => e.waitUntil(
                     caches.keys().then(keys => Promise.all(
@@ -1091,14 +1145,15 @@
     const defaultConfigData = {
         lastDate: "",
         selectedPreset: "weekday",
+
         alarmSound: "on",
         alarmMinutes: 10,
-        alarmSeconds: 30,
-        alarmRepeatCount: 5,
-        pageIntervalSeconds: 5,
+        alarmRepeatCount: 5, 
         ttsBroadcast: "on",
         ttsMinutes: 5,
         ttsRepeatCount: 2,
+
+        pageIntervalSeconds: 5,
         ttsEnableAdmin: true,
         ttsEnableGuest: true,
         ttsEnableWorker: true,
@@ -1150,6 +1205,7 @@
     let activeVisualAlarms = { 1: [], 2: [] };
     let activeTtsBroadcasts = { 1: [], 2: [] };
     let alarmSoundIntervals = {};
+    let isTtsSpeakingNow = false; 
 
     let guestPageStatus = {
         1: { currentPage: 1, lastRotationTime: Date.now() },
@@ -1224,19 +1280,11 @@
             configData.boat1AlarmRep = aRep;
             configData.boat1TtsMin = tMin;
             configData.boat1TtsRep = tRep;
-            configData.alarmMinutes = aMin;
-            configData.alarmRepeatCount = aRep;
-            configData.ttsMinutes = tMin;
-            configData.ttsRepeatCount = tRep;
         } else {
             configData.boat2AlarmMin = aMin;
             configData.boat2AlarmRep = aRep;
             configData.boat2TtsMin = tMin;
             configData.boat2TtsRep = tRep;
-            configData.alarmMinutes = aMin;
-            configData.alarmRepeatCount = aRep;
-            configData.ttsMinutes = tMin;
-            configData.ttsRepeatCount = tRep;
         }
         saveConfigData();
         updateUI();
@@ -1440,18 +1488,10 @@
         let trigVal = parseInt(document.getElementById('alarm-trigger-minutes').value) || 10;
         if(trigVal < 1) trigVal = 1; if(trigVal > 60) trigVal = 60;
         configData.alarmMinutes = trigVal;
-        configData.boat1AlarmMin = trigVal;
-        configData.boat2AlarmMin = trigVal;
-
-        let durVal = parseInt(document.getElementById('alarm-duration-seconds').value) || 30;
-        if(durVal < 1) durVal = 1; if(durVal > 300) durVal = 300;
-        configData.alarmSeconds = durVal;
 
         let repVal = parseInt(document.getElementById('alarm-repeat-count').value) || 5;
         if(repVal < 1) repVal = 1; if(repVal > 20) repVal = 20;
         configData.alarmRepeatCount = repVal;
-        configData.boat1AlarmRep = repVal;
-        configData.boat2AlarmRep = repVal;
 
         let rotVal = parseInt(document.getElementById('page-interval-seconds').value) || 5;
         if(rotVal < 2) rotVal = 2; if(rotVal > 60) rotVal = 60;
@@ -1463,14 +1503,10 @@
         let ttsMins = parseInt(document.getElementById('tts-trigger-minutes').value) || 5;
         if (ttsMins < 1) ttsMins = 1; if (ttsMins > 60) ttsMins = 60;
         configData.ttsMinutes = ttsMins;
-        configData.boat1TtsMin = ttsMins;
-        configData.boat2TtsMin = ttsMins;
 
         let ttsRepeat = parseInt(document.getElementById('tts-repeat-count').value) || 2;
         if (ttsRepeat < 1) ttsRepeat = 1; if (ttsRepeat > 5) ttsRepeat = 5;
         configData.ttsRepeatCount = ttsRepeat;
-        configData.boat1TtsRep = ttsRepeat;
-        configData.boat2TtsRep = ttsRepeat;
 
         if (document.getElementById('tts-enable-admin')) configData.ttsEnableAdmin = document.getElementById('tts-enable-admin').checked;
         if (document.getElementById('tts-enable-guest')) configData.ttsEnableGuest = document.getElementById('tts-enable-guest').checked;
@@ -1690,7 +1726,6 @@
         const ctx = getSharedAudioContext();
         if (ctx) {
             if (ctx.state === 'suspended') ctx.resume();
-            // 무음 짧은 펄스로 오디오 장치 잠금 해제
             try {
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
@@ -1766,9 +1801,12 @@
     }
 
     function startInfiniteAlarmLoop(id, time) {
-        const isMasterOn = (configData.alarmSound || 'on') === 'on';
-        const isBoatOn = (id === 1 ? (configData.boat1Alarm || 'on') : (configData.boat2Alarm || 'on')) === 'on';
-        if (!isMasterOn || !isBoatOn) return;
+        // [화면별 독립 제어] 관리자(본체) 화면인지, 근무자 화면인지, 손님 화면인지에 따라 알람 ON/OFF 및 반복 횟수 분기
+        const isAlarmEnabled = isWorker
+            ? ((id === 1 ? (configData.boat1Alarm || 'on') : (configData.boat2Alarm || 'on')) === 'on')
+            : (isCustomerGuest ? false : ((configData.alarmSound || 'on') === 'on'));
+
+        if (!isAlarmEnabled) return;
 
         if (!activeVisualAlarms[id].includes(time)) activeVisualAlarms[id].push(time);
         updateUI(); 
@@ -1781,21 +1819,29 @@
         try {
             const ctx = getSharedAudioContext();
             if (!ctx) return;
-            const alarmStartTime = Date.now();
-            const maxDurationSeconds = configData.alarmSeconds || 30;
-            const maxRepeats = (id === 1 ? configData.boat1AlarmRep : configData.boat2AlarmRep) || configData.alarmRepeatCount || 5;
+            
+            const maxRepeats = isWorker
+                ? ((id === 1 ? configData.boat1AlarmRep : configData.boat2AlarmRep) || 5)
+                : (configData.alarmRepeatCount || 5);
+                
             let currentRepeatCount = 0;
 
             playSingleBeepSignal(ctx, ctx.currentTime);
             currentRepeatCount++;
 
-            alarmSoundIntervals[alarmKey] = setInterval(() => {
-                const masterCheck = (configData.alarmSound || 'on') === 'on';
-                const boatCheck = (id === 1 ? (configData.boat1Alarm || 'on') : (configData.boat2Alarm || 'on')) === 'on';
-                if (!masterCheck || !boatCheck) { window.dismissAlarm(id, time); return; }
+            if (currentRepeatCount >= maxRepeats) {
+                setTimeout(() => { window.dismissAlarm(id, time); }, 700);
+                return;
+            }
 
-                const elapsedSeconds = (Date.now() - alarmStartTime) / 1000;
-                if (elapsedSeconds >= maxDurationSeconds || currentRepeatCount >= maxRepeats) { 
+            alarmSoundIntervals[alarmKey] = setInterval(() => {
+                const checkEnabled = isWorker
+                    ? ((id === 1 ? (configData.boat1Alarm || 'on') : (configData.boat2Alarm || 'on')) === 'on')
+                    : (isCustomerGuest ? false : ((configData.alarmSound || 'on') === 'on'));
+
+                if (!checkEnabled) { window.dismissAlarm(id, time); return; }
+
+                if (currentRepeatCount >= maxRepeats) { 
                     window.dismissAlarm(id, time); 
                     return; 
                 }
@@ -1832,13 +1878,21 @@
     }
 
     function checkTenMinutesAlarm(id, times) {
+        // 손님용(1번) 화면은 알람 소리 울림 대상에서 제외 (근무자 및 관리자만 울림)
         if (isCustomerGuest) return;
-        const isMasterOn = (configData.alarmSound || 'on') === 'on';
-        const isBoatOn = (id === 1 ? (configData.boat1Alarm || 'on') : (configData.boat2Alarm || 'on')) === 'on';
-        if (!isMasterOn || !isBoatOn) return;
 
-        const triggerMinutes = (id === 1 ? configData.boat1AlarmMin : configData.boat2AlarmMin) || configData.alarmMinutes || 10;
+        const isAlarmEnabled = isWorker
+            ? ((id === 1 ? (configData.boat1Alarm || 'on') : (configData.boat2Alarm || 'on')) === 'on')
+            : ((configData.alarmSound || 'on') === 'on');
+        if (!isAlarmEnabled) return;
+
+        const triggerMinutes = isWorker
+            ? ((id === 1 ? configData.boat1AlarmMin : configData.boat2AlarmMin) || 10)
+            : (configData.alarmMinutes || 10);
+
+        const rolePrefix = isWorker ? 'worker' : 'admin';
         const now = new Date();
+        const todayStr = now.toLocaleDateString();
 
         times.forEach(t => {
             const [tH, tM] = t.split(':').map(Number);
@@ -1846,16 +1900,19 @@
             const diffMs = targetTime.getTime() - now.getTime();
             const diffMins = diffMs / 60000;
 
-            if (diffMins > (triggerMinutes - 0.05) && diffMins <= triggerMinutes) {
+            if (diffMins <= triggerMinutes && diffMins > 0) {
                 const booked = (boatData[id].seats && boatData[id].seats[t]) || 0;
                 if (booked <= 0) return;
 
-                const uniqueKey = `${id}-${t}-${triggerMinutes}-${now.getMinutes()}`;
+                const uniqueKey = `${todayStr}-${rolePrefix}-${id}-${t}-${triggerMinutes}`;
                 if (!playedAlarms[uniqueKey]) {
                     const cStat = (boatData[id].customStatus && boatData[id].customStatus[t]) || "auto";
                     const isHalted = cStat.includes("중지") || cStat === "운항없음" || cStat === "점 검 중" || cStat === "점검중";
 
-                    if (!isHalted) { playedAlarms[uniqueKey] = true; startInfiniteAlarmLoop(id, t); }
+                    if (!isHalted) { 
+                        playedAlarms[uniqueKey] = true; 
+                        startInfiniteAlarmLoop(id, t); 
+                    }
                 }
             }
         });
@@ -1866,6 +1923,7 @@
         const remain = Math.max(0, capacity - booked);
         let template = "";
 
+        // [화면별 독립 제어] 각 모니터(관리자, 손님용, 근무자용)에 맞는 독립된 TTS 멘트 템플릿 반환
         if (isCustomerGuest) {
             template = configData.ttsMsgGuest || defaultConfigData.ttsMsgGuest;
         } else if (isWorker) {
@@ -1883,18 +1941,31 @@
     }
 
     function checkTtsSpeechBroadcast(id, times) {
-        // 화면 역할별 방송 활성화 여부 체크
+        if (isTtsSpeakingNow || (('speechSynthesis' in window) && window.speechSynthesis.speaking)) {
+            return;
+        }
+
+        // [화면별 독립 제어] 각 화면별 사용 여부 체크
         if (isCustomerGuest && configData.ttsEnableGuest === false) return;
         if (isWorker && configData.ttsEnableWorker === false) return;
         if (!isGuest && configData.ttsEnableAdmin === false) return;
 
-        const isMasterOn = (configData.ttsBroadcast || 'on') === 'on';
-        const isBoatOn = (id === 1 ? (configData.boat1Tts || 'on') : (configData.boat2Tts || 'on')) === 'on';
-        if (!isMasterOn || !isBoatOn) return;
+        const isTtsEnabled = isWorker
+            ? ((id === 1 ? (configData.boat1Tts || 'on') : (configData.boat2Tts || 'on')) === 'on')
+            : ((configData.ttsBroadcast || 'on') === 'on');
+        if (!isTtsEnabled) return;
 
-        const ttsTriggerMinutes = (id === 1 ? configData.boat1TtsMin : configData.boat2TtsMin) || configData.ttsMinutes || 5;
-        const maxLoops = (id === 1 ? configData.boat1TtsRep : configData.boat2TtsRep) || configData.ttsRepeatCount || 2;
+        const ttsTriggerMinutes = isWorker
+            ? ((id === 1 ? configData.boat1TtsMin : configData.boat2TtsMin) || 5)
+            : (configData.ttsMinutes || 5);
+
+        const maxLoops = isWorker
+            ? ((id === 1 ? configData.boat1TtsRep : configData.boat2TtsRep) || 2)
+            : (configData.ttsRepeatCount || 2);
+
+        const rolePrefix = isWorker ? 'worker' : (isCustomerGuest ? 'guest' : 'admin');
         const now = new Date();
+        const todayStr = now.toLocaleDateString();
 
         times.forEach(t => {
             const [tH, tM] = t.split(':').map(Number);
@@ -1902,8 +1973,8 @@
             const diffMs = targetTime.getTime() - now.getTime();
             const diffMins = diffMs / 60000;
 
-            if (diffMins > (ttsTriggerMinutes - 0.05) && diffMins <= ttsTriggerMinutes) {
-                const broadcastKey = `${id}-${t}-${ttsTriggerMinutes}-${now.getMinutes()}`;
+            if (diffMins <= ttsTriggerMinutes && diffMins > 0) {
+                const broadcastKey = `${todayStr}-${rolePrefix}-${id}-${t}-${ttsTriggerMinutes}`;
                 if (!playedBroadcasts[broadcastKey]) {
                     const data = boatData[id]; 
                     const capacity = data.capacity || 0;
@@ -1935,20 +2006,31 @@
     function executeNativeTTS(phrase, remainingLoops, id, time) {
         if (!('speechSynthesis' in window)) return;
 
-        const isMasterOn = (configData.ttsBroadcast || 'on') === 'on';
-        const isBoatOn = (id === 1 ? (configData.boat1Tts || 'on') : (configData.boat2Tts || 'on')) === 'on';
-        if (!isMasterOn || !isBoatOn) { window.dismissTtsBroadcast(id, time); return; }
+        const isTtsEnabled = isWorker
+            ? ((id === 1 ? (configData.boat1Tts || 'on') : (configData.boat2Tts || 'on')) === 'on')
+            : ((configData.ttsBroadcast || 'on') === 'on');
+        
+        if (!isTtsEnabled) { 
+            isTtsSpeakingNow = false;
+            window.dismissTtsBroadcast(id, time); 
+            return; 
+        }
 
-        if (remainingLoops <= 0 || !activeTtsBroadcasts[id].includes(time)) { window.dismissTtsBroadcast(id, time); return; }
+        if (remainingLoops <= 0 || !activeTtsBroadcasts[id].includes(time)) { 
+            isTtsSpeakingNow = false;
+            window.dismissTtsBroadcast(id, time); 
+            return; 
+        }
 
         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
 
         window.speechSynthesis.cancel();
-        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
 
-        // Chrome에서 cancel() 직후 speak() 호출 시 무음 처리되는 버그 방지를 위한 80ms 지연
         setTimeout(() => {
-            if (!activeTtsBroadcasts[id].includes(time)) return;
+            if (!activeTtsBroadcasts[id].includes(time)) {
+                isTtsSpeakingNow = false;
+                return;
+            }
 
             const utterance = new SpeechSynthesisUtterance(phrase); 
             const voices = window.speechSynthesis.getVoices();
@@ -1961,23 +2043,35 @@
             if (selectedVoice) utterance.voice = selectedVoice;
             utterance.lang = 'ko-KR';
             utterance.volume = 1.0;
-            utterance.rate = 0.94;
-            utterance.pitch = 0.98;
+            utterance.rate = 0.95;
+            utterance.pitch = 1.0;
+
+            utterance.onstart = function() {
+                isTtsSpeakingNow = true;
+            };
 
             utterance.onend = function() {
                 const nextLoops = remainingLoops - 1;
                 if (nextLoops > 0 && activeTtsBroadcasts[id].includes(time)) { 
-                    setTimeout(() => { executeNativeTTS(phrase, nextLoops, id, time); }, 3000);
-                } else { window.dismissTtsBroadcast(id, time); }
+                    setTimeout(() => { executeNativeTTS(phrase, nextLoops, id, time); }, 1500);
+                } else { 
+                    isTtsSpeakingNow = false;
+                    window.dismissTtsBroadcast(id, time); 
+                }
             };
+
             utterance.onerror = function() {
                 const nextLoops = remainingLoops - 1;
                 if (nextLoops > 0 && activeTtsBroadcasts[id].includes(time)) {
-                    setTimeout(() => { executeNativeTTS(phrase, nextLoops, id, time); }, 3000);
-                } else { window.dismissTtsBroadcast(id, time); }
+                    setTimeout(() => { executeNativeTTS(phrase, nextLoops, id, time); }, 1500);
+                } else { 
+                    isTtsSpeakingNow = false;
+                    window.dismissTtsBroadcast(id, time); 
+                }
             };
+
             window.speechSynthesis.speak(utterance);
-        }, 80);
+        }, 100);
     }
 
     function checkEmergencyPopupSchedule() {
@@ -2131,10 +2225,10 @@
 
             const bAlarmState = (id === 1 ? configData.boat1Alarm : configData.boat2Alarm) || 'on';
             const bTtsState = (id === 1 ? configData.boat1Tts : configData.boat2Tts) || 'on';
-            const bAlarmMin = (id === 1 ? configData.boat1AlarmMin : configData.boat2AlarmMin) || configData.alarmMinutes || 10;
-            const bAlarmRep = (id === 1 ? configData.boat1AlarmRep : configData.boat2AlarmRep) || configData.alarmRepeatCount || 5;
-            const bTtsMin = (id === 1 ? configData.boat1TtsMin : configData.boat2TtsMin) || configData.ttsMinutes || 5;
-            const bTtsRep = (id === 1 ? configData.boat1TtsRep : configData.boat2TtsRep) || configData.ttsRepeatCount || 2;
+            const bAlarmMin = (id === 1 ? configData.boat1AlarmMin : configData.boat2AlarmMin) || 10;
+            const bAlarmRep = (id === 1 ? configData.boat1AlarmRep : configData.boat2AlarmRep) || 5;
+            const bTtsMin = (id === 1 ? configData.boat1TtsMin : configData.boat2TtsMin) || 5;
+            const bTtsRep = (id === 1 ? configData.boat1TtsRep : configData.boat2TtsRep) || 2;
             const bFocusTime = (id === 1 ? configData.boat1FocusTime : configData.boat2FocusTime) || "auto";
 
             const alarmBtn = document.getElementById(`worker-alarm-btn-${id}`);
@@ -2210,11 +2304,20 @@
 
             const duration = parseInt(boatData[id].duration) || 20;
             let autoTargetTime = null;
+            
             for (let i = 0; i < times.length; i++) {
                 const [tH, tM] = times[i].split(':').map(Number);
                 const fTime = new Date(); fTime.setHours(tH, tM, 0, 0);
                 const dMins = (fTime.getTime() - now.getTime()) / 60000;
-                if (dMins >= -duration) {
+
+                if (dMins <= 0 && dMins >= -duration) {
+                    if (i + 1 < times.length) {
+                        autoTargetTime = times[i + 1];
+                    } else {
+                        autoTargetTime = times[i];
+                    }
+                    break;
+                } else if (dMins > -duration) {
                     autoTargetTime = times[i];
                     break;
                 }
@@ -2331,7 +2434,8 @@
                     remainText = `<span class="over-capacity-text">⚠️ 초과 +${Math.abs(remain)}명</span>`;
                 }
 
-                if (isWorker && t === activeHighlightTime) rowClass += " row-current-highlight";
+                const targetHighlightTime = isWorker ? activeHighlightTime : autoTargetTime;
+                if (t === targetHighlightTime) rowClass += " row-current-highlight";
 
                 const isAlarmActive = activeVisualAlarms[id].includes(t);
                 const isTtsActive = activeTtsBroadcasts[id].includes(t);
@@ -2409,16 +2513,23 @@
                 const alarmRadio = document.querySelector(`input[name="alarm_sound"][value="${configData.alarmSound || 'on'}"]`);
                 if (alarmRadio) alarmRadio.checked = true;
 
-                if (document.getElementById('alarm-trigger-minutes')) document.getElementById('alarm-trigger-minutes').value = configData.alarmMinutes || 10;
-                if (document.getElementById('alarm-duration-seconds')) document.getElementById('alarm-duration-seconds').value = configData.alarmSeconds || 30;
-                if (document.getElementById('alarm-repeat-count')) document.getElementById('alarm-repeat-count').value = configData.alarmRepeatCount || 5;
-                if (document.getElementById('page-interval-seconds')) document.getElementById('page-interval-seconds').value = configData.pageIntervalSeconds || 5;
+                const alarmTrigEl = document.getElementById('alarm-trigger-minutes');
+                if (alarmTrigEl && document.activeElement !== alarmTrigEl) alarmTrigEl.value = configData.alarmMinutes || 10;
+
+                const alarmRepEl = document.getElementById('alarm-repeat-count');
+                if (alarmRepEl && document.activeElement !== alarmRepEl) alarmRepEl.value = configData.alarmRepeatCount || 5;
+
+                const pageIntEl = document.getElementById('page-interval-seconds');
+                if (pageIntEl && document.activeElement !== pageIntEl) pageIntEl.value = configData.pageIntervalSeconds || 5;
 
                 const ttsRadio = document.querySelector(`input[name="tts_broadcast"][value="${configData.ttsBroadcast || 'on'}"]`);
                 if (ttsRadio) ttsRadio.checked = true;
 
-                if (document.getElementById('tts-trigger-minutes')) document.getElementById('tts-trigger-minutes').value = configData.ttsMinutes || 5;
-                if (document.getElementById('tts-repeat-count')) document.getElementById('tts-repeat-count').value = configData.ttsRepeatCount || 2;
+                const ttsTrigEl = document.getElementById('tts-trigger-minutes');
+                if (ttsTrigEl && document.activeElement !== ttsTrigEl) ttsTrigEl.value = configData.ttsMinutes || 5;
+
+                const ttsRepEl = document.getElementById('tts-repeat-count');
+                if (ttsRepEl && document.activeElement !== ttsRepEl) ttsRepEl.value = configData.ttsRepeatCount || 2;
 
                 if (document.getElementById('tts-enable-admin')) document.getElementById('tts-enable-admin').checked = configData.ttsEnableAdmin !== false;
                 if (document.getElementById('tts-enable-guest')) document.getElementById('tts-enable-guest').checked = configData.ttsEnableGuest !== false;
