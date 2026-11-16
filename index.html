@@ -1,60 +1,71 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+    <!-- 문서 인코딩(UTF-8) 및 모바일/태블릿 반응형 화면 비율 설정 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>김시민호 실시간 잔여석 관리 프로그램 (멀티모니터 순차 오디오 제어)</title>
 
-    <!-- PWA 적용: 웹 앱 Manifest 및 메타 태그 연결 -->
+    <!-- PWA(프로그레시브 웹 앱) 설정: 태블릿에서 주소창 없는 전체화면 앱처럼 실행하기 위한 메타 태그 -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121418">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <!-- 엑셀 파일 파싱을 위한 SheetJS CDN -->
+    <!-- 사전예매자 엑셀(.xlsx, .xls) 파일을 브라우저에서 직접 읽기 위한 SheetJS 외부 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
+        /* ==========================================================================
+           [1. CSS 변수 정의] 프로그램 전체에서 공통으로 사용하는 색상 테마 및 상태 배경색
+           ========================================================================== */
         :root {
-            --primary-dark: #002d5a;
-            --boat3-color: #28a745;
-            --boat4-color: #2c7be5;
-            --bg-color: #121418;
-            --card-bg: #ffffff;
-            --success: #0040ff;
-            --danger: #e60000;
+            --primary-dark: #002d5a;       /* 기본 짙은 남색 (버튼 등) */
+            --boat3-color: #28a745;        /* 김시민 1호 대표 색상 (초록색) */
+            --boat4-color: #2c7be5;        /* 김시민 2호 대표 색상 (파란색) */
+            --bg-color: #121418;           /* 전체 배경 어두운 테마 색 */
+            --card-bg: #ffffff;            /* 선박 현황판 카드 흰색 배경 */
+            --success: #0040ff;            /* 잔여석 강조 파란색 */
+            --danger: #e60000;             /* 경고 및 초과 인원 빨간색 */
 
-            --ended-gray: #f0f0f0;
-            --ended-text-color: #999999;
-            --dark-green: #006400;
-            --yellow-btn: #fbc02d;
-            --yellow-btn-border: #f9a825;
+            --ended-gray: #f0f0f0;         /* 운항 종료된 행 배경색 */
+            --ended-text-color: #999999;   /* 운항 종료된 행 글자색 */
+            --dark-green: #006400;         /* 티켓발권종료 상태 뱃지 배경색 */
+            --yellow-btn: #fbc02d;         /* 변경 적용 버튼 노란색 */
+            --yellow-btn-border: #f9a825;  /* 변경 적용 버튼 테두리색 */
 
-            --available-bg: #b3e5fc;
-            --sailing-bg: #fff59d;
-            --ticketing-ended-bg: #c8e6c9;
-            --boarding-start-bg: #ffe0b2;
-            --boarding-close-bg: #fff9c4;
-            --soldout-blink-bg: #ff3b30;
+            /* 운항 상태별 테이블 행(Row) 배경색 */
+            --available-bg: #b3e5fc;       /* 티켓발권가능 (하늘색) */
+            --sailing-bg: #fff59d;         /* 운항중 (연노랑) */
+            --ticketing-ended-bg: #c8e6c9; /* 티켓발권종료 (연초록) */
+            --boarding-start-bg: #ffe0b2;  /* 탑승시작 (연주황) */
+            --boarding-close-bg: #fff9c4;  /* 탑승마감 (밝은 노랑) */
+            --soldout-blink-bg: #ff3b30;   /* 매진 강조 (빨간색) */
 
-            --highlight: #00ffcc;
-            --tts-highlight: #ff9f43;
-            --rotation-highlight: #00ecff;
-            --popup-highlight: #ff4d4d;
-            --excel-btn-bg: #107c41;
+            /* 우측 시스템 설정 사이드바 포인트 색상 */
+            --highlight: #00ffcc;          /* 관리자 알람 및 기본 강조 민트색 */
+            --tts-highlight: #ff9f43;      /* 음성 안내방송(TTS) 주황색 */
+            --rotation-highlight: #00ecff; /* 자동 화면전환기 하늘색 */
+            --popup-highlight: #ff4d4d;    /* 긴급 공지 팝업 빨간색 */
+            --excel-btn-bg: #107c41;       /* 엑셀 업로드 버튼 초록색 */
         }
 
+        /* ==========================================================================
+           [2. 전체 레이아웃] 좌측 선박 현황판 + 중앙 크기조절바 + 우측 시스템 설정 사이드바
+           ========================================================================== */
         body {
             font-family: 'Pretendard', -apple-system, sans-serif;
             background-color: var(--bg-color);
             margin: 0; padding: 10px; color: #333;
             display: flex; flex-direction: row; height: 100vh; box-sizing: border-box;
-            overflow: hidden;
+            overflow: hidden; /* 전체 화면 스크롤 방지 (내부 테이블만 스크롤) */
             position: relative;
         }
 
+        /* 김시민 1호와 2호 영역을 담는 좌측 메인 컨테이너 */
         .main-container { display: flex; gap: 10px; flex: 1; min-height: 0; min-width: 0; }
 
+        /* 개별 선박(1호, 2호) 카드 영역 */
         .boat-section {
             flex: 1; background: var(--card-bg); border-radius: 15px;
             display: flex; flex-direction: column; overflow: hidden;
@@ -63,6 +74,7 @@
             min-width: 0;
         }
 
+        /* 마우스로 드래그하여 우측 사이드바 너비를 조절하는 구분선(Resizer) */
         #resizer {
             width: 8px;
             background-color: #343a40;
@@ -76,6 +88,7 @@
         }
         #resizer:hover, #resizer.resizing { background-color: var(--highlight); }
 
+        /* 우측 시스템 설정 및 관리 사이드바 */
         #right-sidebar {
             width: 390px;
             min-width: 280px;
@@ -87,12 +100,16 @@
             flex-shrink: 0;
         }
 
+        /* 우측 사이드바 최상단 제목 */
         #sidebar-title {
-            color: #fff; font-size: 24px; font-weight: 900; text-align: center;
-            padding-bottom: 12px; border-bottom: 2px dashed #444; margin-bottom: 4px;
-            line-height: 1.3;
+            color: #fff; font-size: 30px; font-weight: 900; text-align: center;
+            padding-bottom: 14px; border-bottom: 3px dashed #555; margin-bottom: 6px;
+            line-height: 1.3; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
+        /* ==========================================================================
+           [3. 사이드바 버튼 및 아코디언(접기/펼치기) 메뉴 스타일]
+           ========================================================================== */
         .btn-group-top { display: flex; flex-direction: column; gap: 10px; width: 100%; }
         .btn-open-guest {
             background-color: var(--highlight); color: #000; border: none; padding: 14px;
@@ -102,6 +119,7 @@
         .btn-open-guest:hover { filter: brightness(1.1); }
         .btn-reset-all { background-color: #ff4d4d !important; color: white !important; }
 
+        /* 엑셀 업로드 박스 & 시간표 프리셋 박스 */
         .excel-upload-container {
             display: flex; flex-direction: column; gap: 10px; background: #1b382b; 
             padding: 14px; border-radius: 10px; border: 1px solid var(--excel-btn-bg); width: 100%;
@@ -127,6 +145,7 @@
         }
         .btn-excel-upload:hover { filter: brightness(1.15); }
 
+        /* 근무자용(2번 화면) 상단 퀵 제어 바 */
         .worker-quick-control {
             display: none; background: #1e2631; padding: 10px 14px; border-bottom: 3px solid var(--highlight);
             align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
@@ -149,12 +168,14 @@
         .worker-control-item button.active-on { background: #28a745; border-color: #1e7e34; }
         .worker-control-item button.active-off { background: #dc3545; border-color: #bd2130; }
 
+        /* 아코디언 설정 박스 컨테이너 */
         .alarm-toggle-container {
             display: flex; flex-direction: column; gap: 12px; background: #282e38; 
             padding: 16px; border-radius: 10px; border: 2px solid #444; width: 100%;
             box-sizing: border-box;
         }
         
+        /* 아코디언 클릭 헤더 (제목 + 크게보기 + 화살표) */
         .accordion-header {
             display: flex; justify-content: space-between; align-items: center;
             cursor: pointer; user-select: none; padding: 4px 0; gap: 8px;
@@ -163,11 +184,14 @@
         .accordion-header-actions {
             display: flex; align-items: center; gap: 8px; flex-shrink: 0;
         }
+        /* 크게보기 버튼 스타일 */
         .btn-popup-zoom {
             background: rgba(255, 255, 255, 0.15); color: #fff; border: 1px solid rgba(255,255,255,0.4);
             border-radius: 6px; padding: 4px 8px; font-size: 13px; font-weight: 800; cursor: pointer;
         }
         .btn-popup-zoom:hover { background: var(--highlight); color: #000; }
+        
+        /* 화살표 아이콘 (열리면 180도 회전) */
         .accordion-arrow {
             font-size: 18px; color: #ddd; transition: transform 0.2s ease; font-weight: bold;
         }
@@ -175,6 +199,7 @@
             transform: rotate(180deg);
         }
 
+        /* 아코디언 본문 (기본은 숨김 display:none, .open 클래스가 붙으면 display:flex로 펼쳐짐) */
         .accordion-content {
             display: none; flex-direction: column; gap: 14px;
             border-top: 1px solid #555; padding-top: 12px; margin-top: 4px;
@@ -183,6 +208,7 @@
             display: flex;
         }
 
+        /* 라디오 버튼, 체크박스, 숫자 입력칸 스타일 */
         .alarm-radio-row { display: flex; gap: 18px; align-items: center; justify-content: center; flex-wrap: wrap; }
         .alarm-toggle-container label, .modal-setting-body label {
             color: #fff; font-size: 19px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px;
@@ -228,56 +254,70 @@
         .box-title-sm { color: #fff; font-size: 19px; font-weight: 900; text-align: left; margin: 0; line-height: 1.3; }
         .preset-container .box-title-sm, .excel-upload-container .box-title-sm { text-align: center; }
 
+        /* ==========================================================================
+           [4. 크게보기 상세 설정 모달 팝업 스타일]
+           ========================================================================== */
         .config-modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.82); z-index: 9999990;
+            background: rgba(0, 0, 0, 0.85); z-index: 9999990;
             justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(6px);
         }
         .config-modal-overlay.active { display: flex; }
 
         .config-modal-box {
-            width: 100%; max-width: 760px; max-height: 90vh;
-            background: #1e242d; border-radius: 18px; border: 3px solid var(--highlight);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            width: 100%; max-width: 950px; max-height: 95vh;
+            background: #171b22; border-radius: 20px; border: 4px solid var(--highlight);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.9);
             display: flex; flex-direction: column; overflow: hidden;
             animation: popupScaleIn 0.2s ease-out;
         }
         .config-modal-header {
-            background: #14181f; padding: 20px 26px; border-bottom: 2px solid #343d4b;
+            background: #101319; padding: 22px 30px; border-bottom: 3px solid #2d3542;
             display: flex; justify-content: space-between; align-items: center;
         }
         .config-modal-title {
-            font-size: 26px; font-weight: 900; color: var(--highlight); margin: 0;
+            font-size: 32px !important; font-weight: 900; color: var(--highlight); margin: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
         .btn-modal-close {
-            background: #ff4d4d; color: #fff; border: none; border-radius: 10px;
-            padding: 10px 20px; font-size: 20px; font-weight: 900; cursor: pointer;
+            background: #ff4d4d; color: #fff; border: none; border-radius: 12px;
+            padding: 12px 24px; font-size: 22px; font-weight: 900; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
         .btn-modal-close:hover { filter: brightness(1.15); }
 
+        /* 모달 내부로 이동된 설정 요소들을 큼직하게 확대 표시 */
         .modal-setting-body {
-            padding: 24px 28px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px;
-            color: #fff; font-size: 20px; font-weight: 800;
+            padding: 30px 35px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px;
+            color: #fff; font-size: 24px !important; font-weight: 800;
         }
         .modal-setting-body .alarm-time-setting {
-            font-size: 20px; gap: 16px; border-top: none; padding-top: 0;
+            font-size: 24px !important; gap: 20px; border-top: none; padding-top: 0;
         }
-        .modal-setting-body label { font-size: 22px; }
-        .modal-setting-body input[type="number"] { width: 90px; height: 48px; font-size: 24px; }
-        .modal-setting-body select.popup-select { width: 88px; height: 48px; font-size: 22px; }
-        .modal-setting-body textarea.popup-textarea { height: 95px; font-size: 19px; }
+        .modal-setting-body label { font-size: 26px !important; font-weight: 900; gap: 12px; }
+        .modal-setting-body input[type="number"] { width: 110px; height: 56px; font-size: 28px !important; font-weight: 900; }
+        .modal-setting-body select.popup-select { width: 110px; height: 56px; font-size: 26px !important; font-weight: 900; }
+        .modal-setting-body textarea.popup-textarea { height: 140px !important; font-size: 22px !important; font-weight: 700; line-height: 1.5; padding: 14px; }
+        .modal-setting-body span, .modal-setting-body div { font-size: inherit; }
+        .modal-setting-body .setting-item-row { font-size: 24px !important; }
+        .modal-setting-body .btn-test-sound { font-size: 22px !important; padding: 16px 20px !important; font-weight: 900; border-radius: 10px; }
+        .modal-setting-body input[type="radio"], .modal-setting-body input[type="checkbox"] { width: 28px !important; height: 28px !important; }
 
         .config-modal-footer {
-            background: #14181f; padding: 16px 26px; border-top: 2px solid #343d4b;
+            background: #101319; padding: 20px 30px; border-top: 3px solid #2d3542;
             display: flex; justify-content: flex-end; gap: 12px;
         }
         .btn-modal-confirm {
-            background: var(--highlight); color: #000; border: none; border-radius: 10px;
-            padding: 14px 32px; font-size: 22px; font-weight: 900; cursor: pointer;
+            background: var(--highlight); color: #000; border: none; border-radius: 12px;
+            padding: 16px 36px; font-size: 24px; font-weight: 900; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,255,204,0.3);
         }
         .btn-modal-confirm:hover { filter: brightness(1.1); }
 
+        /* ==========================================================================
+           [5. 선박 상단 헤더, 설정 입력창, 손님용 배너, 공지사항 영역]
+           ========================================================================== */
         .boat-header { 
             padding: 10px 15px; color: white; 
             display: flex; align-items: center; justify-content: space-between; 
@@ -286,6 +326,7 @@
         .boat-title-area { display: flex; align-items: center; gap: 20px; }
         .boat-title { font-size: clamp(36px, 6vw, 78px); font-weight: 900; letter-spacing: -2px; text-shadow: 3px 3px 6px rgba(0,0,0,0.4); }
 
+        /* 손님용 화면 우측 하단 페이지 표시기 (10항차 초과 시) */
         .page-badge {
             display: none; position: absolute; right: 20px; bottom: 20px;
             background: rgba(0, 0, 0, 0.85); color: #ffffff; padding: 6px 18px;
@@ -301,6 +342,7 @@
         .boat-date { font-size: clamp(18px, 2.5vw, 35px); font-weight: 700; color: rgba(255,255,255,1); line-height: 1.1; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
         .boat-clock { font-size: clamp(22px, 3.5vw, 42px); font-weight: 900; line-height: 1.1; color: #ffffff !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.6); }
 
+        /* 관리자용 선박별 시간표/정원/공지 수정 영역 */
         .setting-area { background: #f8f9fa; padding: 12px; border-bottom: 1px solid #ddd; display: flex; flex-direction: column; gap: 8px; }
         .setting-area .setting-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .setting-row input[type="text"], .setting-row input[type="number"] { padding: 0 10px; font-size: 20px; border: 1px solid #ccc; border-radius: 6px; height: 50px; box-sizing: border-box; }
@@ -324,6 +366,7 @@
         .cap-edit-input { width: 100% !important; border: none !important; text-align: center; font-size: 20px; font-weight: bold; outline: none; background: transparent; }
         .notice-edit-input { width: 100% !important; border: none !important; text-align: left; font-size: 18px; font-weight: bold; outline: none; background: transparent; resize: none; height: 44px; padding: 10px 0 0 10px; box-sizing: border-box; font-family: inherit; }
 
+        /* 손님용 화면 상단 소요시간/운항코스 배너 */
         .guest-info-banner { 
             display: none; background: #f0f7ff; padding: 10px; border-bottom: 2px solid #2c7be5;
             justify-content: space-around; align-items: center; font-size: 28px; font-weight: 900;
@@ -332,6 +375,7 @@
         .info-item { color: #002d5a; }
         .info-val { color: #e60000; margin-left: 5px; }
 
+        /* 근무자용 화면 안내사항 표시 박스 */
         .notice-view-container {
             display: none; background: #fffdeb; padding: 15px 20px; border-bottom: 3px dashed #f9a825;
             min-height: 90px; box-sizing: border-box; flex-direction: column; justify-content: center;
@@ -340,6 +384,9 @@
         .notice-title { font-size: 22px; font-weight: 800; color: #d63031; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
         .notice-content { font-size: clamp(20px, 3.5vw, 30px); font-weight: 900; color: #2d3436; line-height: 1.3; white-space: normal; word-break: break-all; }
 
+        /* ==========================================================================
+           [6. 긴급 공지 오버레이 팝업 (전체 중앙 / 1호 전용 / 2호 전용)]
+           ========================================================================== */
         .emergency-fullscreen-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background-color: rgba(0, 0, 0, 0.88); z-index: 999999;
@@ -395,6 +442,9 @@
             font-size: clamp(16px, 2.2vw, 24px); font-weight: bold; color: #555; text-align: center;
         }
 
+        /* ==========================================================================
+           [7. 운항 시간표 테이블 및 상태별 행/뱃지 디자인]
+           ========================================================================== */
         .table-wrapper { flex: 1; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; table-layout: auto; } 
         th { background: #eee; padding: 12px 4px; border-bottom: 3px solid #ddd; position: sticky; top: 0; z-index: 10; font-size: clamp(18px, 2.5vw, 30px); font-weight: 900; white-space: nowrap; }
@@ -402,6 +452,7 @@
         td { padding: 8px 4px; text-align: center; border-bottom: 1px solid #eee; font-weight: 900; font-size: clamp(20px, 3vw, 37px); letter-spacing: -1.5px; position: relative; line-height: 1.2; white-space: nowrap; }
         td:first-child { font-size: clamp(22px, 3.2vw, 40px); font-weight: 900; letter-spacing: -1px; }
 
+        /* 현재 다가오는 기준 항차 행 강조 테두리 및 화살표(▶) 표시 */
         tr.row-current-highlight td {
             border-top: 4px solid #ff9800 !important;
             border-bottom: 4px solid #ff9800 !important;
@@ -422,29 +473,30 @@
             border-radius: 6px; border: 2px dashed #ff0000; display: inline-block; font-size: clamp(18px, 2.5vw, 32px);
         }
 
+        /* 상태별 테이블 셀 배경색 지정 */
         .row-available-bg td { background-color: #b3e5fc !important; color: #0d47a1 !important; }
         .row-sailing-bg td { background-color: #fff59d !important; color: #f57f17 !important; }
         .row-ticketing-ended-bg td { background-color: #c8e6c9 !important; color: #1b5e20 !important; }
         .row-boarding-start-bg td { background-color: #ffe0b2 !important; color: #e65100 !important; }
         .row-boarding-close-solid td { background-color: #fff9c4 !important; color: #f57f17 !important; }
 
+        /* 매진 행 빨간 배경 및 손님용 깜빡임 애니메이션 */
         tr.row-soldout-blink td { background-color: var(--soldout-blink-bg) !important; }
         tr.row-soldout-blink td, tr.row-soldout-blink td span, tr.row-soldout-blink td div, tr.row-soldout-blink td .remain-count, tr.row-soldout-blink td .slash-divider { color: #ffffff !important; }
-
         .is-guest .row-soldout-blink td { animation: textBlinker 1.5s linear infinite; }
 
+        /* 운항중지/종료 행 회색 처리 및 손님용 취소선 */
         .row-halted-gray-bg td { background-color: var(--ended-gray) !important; color: var(--ended-text-color) !important; }
         .row-halted-gray-bg .remain-count, .row-halted-gray-bg .slash-divider { color: var(--ended-text-color) !important; }
-
         .is-guest .row-halted-gray-bg td.line-through-cell {
             text-decoration: line-through; text-decoration-color: #000000 !important; text-decoration-thickness: 4px; 
         }
         .row-ended td { background-color: var(--ended-gray) !important; color: var(--ended-text-color) !important; }
         .row-ended .remain-count { color: var(--ended-text-color) !important; }
 
+        /* 인원 증감(+, -) 버튼 스타일 */
         .status-cell-flex { display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-group { display: flex; gap: 4px; }
-
         .btn-adj { 
             min-width: 58px; min-height: 58px; width: 58px; height: 58px; 
             border: 2px solid #bbb; background: #ffffff; 
@@ -455,6 +507,7 @@
         }
         .btn-adj:active { transform: scale(0.92); background-color: #e2e8f0; }
 
+        /* 운항상태 뱃지 스타일 */
         .status-text { 
             font-size: clamp(20px, 3vw, 37px); font-weight: 900; position: relative; z-index: 10; 
             display: inline-block; line-height: 1.1; white-space: nowrap; 
@@ -472,6 +525,7 @@
         .text-boarding-start { background-color: #ff9800 !important; color: #000000 !important; border: 2px solid #e65100 !important; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); } 
         .text-boarding-close { background-color: #fbc02d !important; color: #000000 !important; border: 2px solid #f57f17 !important; font-weight: 900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); } 
 
+        /* 알람확인 / 방송확인 중지 버튼 */
         .btn-alarm-stop {
             background-color: #ffffff !important; color: #ff1251 !important; border: 3px solid #000000 !important; 
             padding: 5px 12px; font-size: 28px !important; font-weight: 900; border-radius: 8px; cursor: pointer; 
@@ -483,6 +537,9 @@
             animation: textBlinker 1.2s linear infinite; box-shadow: 0 4px 10px rgba(0,0,0,0.3); touch-action: manipulation;
         }
 
+        /* ==========================================================================
+           [8. 하단 일괄 상태 변경 패널 & 손님용 숨김 규칙 & 알림 배너]
+           ========================================================================== */
         .admin-panel { background: #eee; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
         .control-row-single { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
@@ -500,12 +557,14 @@
         .admin-panel input, .admin-panel select, .btn-update { flex: 1; min-width: 120px; height: 55px; text-align: center; font-size: 20px; font-weight: bold; border-radius: 6px; border: 1px solid #ccc; }
         .btn-update { background: var(--primary-dark); color: white; cursor: pointer; border: none; touch-action: manipulation; } 
 
+        /* 손님용(is-guest) 접속 시 관리자 전용 조작 패널들을 모두 숨김 */
         .is-guest #right-sidebar,
         .is-guest #resizer,
         .is-guest .admin-panel, 
         .is-guest .setting-area, 
         .is-guest .btn-group { display: none !important; }
 
+        /* 세로 화면 또는 태블릿/모바일 화면 대응 미디어 쿼리 */
         @media (max-width: 1024px) or (orientation: portrait) {
             body { flex-direction: column; height: auto; overflow-y: auto; }
             .main-container { flex-direction: column !important; }
@@ -515,6 +574,7 @@
             .checkbox-list { position: fixed; bottom: 20px; left: 5vw; right: 5vw; width: 90vw; max-height: 50vh; z-index: 1000000; }
         }
 
+        /* 오프라인 경고 배너 */
         #offline-banner {
             display: none; position: fixed; top: 0; left: 0; width: 100%;
             background-color: #d63031; color: #ffffff; text-align: center;
@@ -523,6 +583,7 @@
         }
         #offline-banner.active { display: block; }
 
+        /* 브라우저 오디오 정책(사용자 터치 필요) 해제를 유도하는 상단 플로팅 배너 */
         #audio-unlock-banner {
             display: none; position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
             background: linear-gradient(135deg, #ff3b30, #ff9500); color: #ffffff;
@@ -541,6 +602,7 @@
         .btn-test-sound:hover { filter: brightness(1.15); }
         .btn-test-tts { background-color: #e67e22; }
 
+        /* 하단 토스트 알림창 */
         #toast-notification {
             display: none; position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.9); color: #00ffcc; border: 2px solid #00ffcc;
@@ -558,10 +620,14 @@
 </head>
 <body id="main-body">
 
+    <!-- 네트워크 단절 알림 배너 -->
     <div id="offline-banner">⚠️ 네트워크 연결 끊김 - 로컬 대기열 모드로 전환되었습니다.</div>
+    <!-- 브라우저 자동재생 제한 해제 터치 배너 -->
     <div id="audio-unlock-banner" class="show" onclick="unlockAllAudioSystems()">🔊 여기를 눌러 알람·방송 소리를 켜주세요 (터치 필수)</div>
+    <!-- 하단 안내 토스트 메시지 -->
     <div id="toast-notification"></div>
 
+    <!-- [모달] 우측 설정 메뉴의 '크게보기' 클릭 시 띄워지는 확대 설정창 -->
     <div id="config-modal-overlay" class="config-modal-overlay" onclick="if(event.target===this) closeConfigModal()">
         <div id="config-modal-box" class="config-modal-box">
             <div class="config-modal-header">
@@ -575,6 +641,7 @@
         </div>
     </div>
 
+    <!-- [긴급 팝업] 전체 모니터 중앙에 띄워지는 긴급 공지사항 팝업 -->
     <div id="emergency-overlay" class="emergency-fullscreen-overlay">
         <div id="emergency-popup-inner-box" class="emergency-popup-box popup-global-theme">
             <div class="emergency-popup-header">
@@ -586,9 +653,13 @@
         </div>
     </div>
 
+    <!-- ==========================================================================
+         [메인 좌측 영역] 김시민 1호 및 김시민 2호 실시간 현황판
+         ========================================================================== -->
     <div class="main-container">
-        <!-- [HTML] 김시민 1호 메인 섹션 -->
+        <!-- [1호 섹션 시작] -->
         <div class="boat-section" id="section-1">
+            <!-- 1호 전용 긴급 공지 오버레이 -->
             <div id="boat-popup-overlay-1" class="boat-popup-overlay">
                 <div class="boat-popup-box popup-customer-theme">
                     <div class="emergency-popup-header">
@@ -600,6 +671,7 @@
                 </div>
             </div>
 
+            <!-- 1호 상단 타이틀 및 현재 날짜/시계 -->
             <div class="boat-header boat3-title">
                 <div class="boat-title-area">
                     <div class="boat-title">&nbsp;&nbsp;&nbsp;김시민 1호</div>
@@ -610,7 +682,7 @@
                 </div>
             </div>
 
-            <!-- 1호 근무자 화면 상단 간편 제어 패널 -->
+            <!-- 1호 근무자 화면(mode=guest_v) 전용 상단 간편 제어 바 -->
             <div class="worker-quick-control">
                 <div class="worker-control-item">
                     <button id="worker-alarm-btn-1" onclick="toggleWorkerAlarm(1)" class="active-on">🔔 알람 ON</button>
@@ -632,16 +704,19 @@
                 </div>
             </div>
 
+            <!-- 1호 근무자용 실시간 공지사항 출력 영역 -->
             <div class="notice-view-container" id="notice-view-container-1">
                 <div class="notice-title">📢 김시민 1호 안내사항</div>
                 <div class="notice-content" id="notice-text-1">현재 정상 운항 중입니다.</div>
             </div>
 
+            <!-- 1호 손님용 상단 소요시간/운항코스 배너 -->
             <div class="guest-info-banner" id="guest-banner-1">
                 <div class="info-item">●소요시간 : <span class="info-val" id="g-dur-1">-</span>분</div>
                 <div class="info-item">●운항코스 : <span class="info-val" id="g-course-1">-</span></div>
             </div>
 
+            <!-- 1호 관리자용 시간표, 탑승정원, 소요시간, 운항코스, 공지사항 설정 영역 -->
             <div class="setting-area">
                 <div class="setting-row">
                     <input type="text" id="time-input-1" placeholder="시간표 (쉼표 구분)" style="flex: 1;">
@@ -674,6 +749,7 @@
                 </div>
             </div>
 
+            <!-- 1호 시간표 테이블 본문 -->
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -688,6 +764,7 @@
                 </table>
             </div>
 
+            <!-- 1호 하단 다중 시간 선택 및 인원/상태 일괄 변경 패널 -->
             <div class="admin-panel">
                 <div class="control-row-single">
                     <div class="custom-multiselect">
@@ -711,8 +788,9 @@
             <span id="page-indicator-1" class="page-badge">[-]</span>
         </div>
 
-        <!-- [HTML] 김시민 2호 메인 섹션 -->
+        <!-- [2호 섹션 시작] (1호와 동일한 구조의 김시민 2호 현황판) -->
         <div class="boat-section" id="section-2">
+            <!-- 2호 전용 긴급 공지 오버레이 -->
             <div id="boat-popup-overlay-2" class="boat-popup-overlay">
                 <div class="boat-popup-box popup-staff-theme">
                     <div class="emergency-popup-header">
@@ -724,6 +802,7 @@
                 </div>
             </div>
 
+            <!-- 2호 상단 타이틀 및 현재 날짜/시계 -->
             <div class="boat-header boat4-title">
                 <div class="boat-title-area">
                     <div class="boat-title">&nbsp;&nbsp;&nbsp;김시민 2호</div>
@@ -734,7 +813,7 @@
                 </div>
             </div>
 
-            <!-- 2호 근무자 화면 상단 간편 제어 패널 -->
+            <!-- 2호 근무자 화면 상단 간편 제어 바 -->
             <div class="worker-quick-control">
                 <div class="worker-control-item">
                     <button id="worker-alarm-btn-2" onclick="toggleWorkerAlarm(2)" class="active-on">🔔 알람 ON</button>
@@ -756,16 +835,19 @@
                 </div>
             </div>
 
+            <!-- 2호 근무자용 실시간 공지사항 출력 영역 -->
             <div class="notice-view-container" id="notice-view-container-2">
                 <div class="notice-title">📢 김시민 2호 안내사항</div>
                 <div class="notice-content" id="notice-text-2">현재 정상 운항 중입니다. </div>
             </div>
 
+            <!-- 2호 손님용 상단 배너 -->
             <div class="guest-info-banner" id="guest-banner-2">
                 <div class="info-item">●소요시간 : <span class="info-val" id="g-dur-2">-</span>분</div>
                 <div class="info-item">●운항코스 : <span class="info-val" id="g-course-2">-</span></div>
             </div>
 
+            <!-- 2호 관리자용 설정 영역 -->
             <div class="setting-area">
                 <div class="setting-row">
                     <input type="text" id="time-input-2" placeholder="시간표 (쉼표 구분)" style="flex: 1;">
@@ -798,6 +880,7 @@
                 </div>
             </div>
 
+            <!-- 2호 시간표 테이블 본문 -->
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -812,6 +895,7 @@
                 </table>
             </div>
 
+            <!-- 2호 하단 일괄 변경 패널 -->
             <div class="admin-panel">
                 <div class="control-row-single">
                     <div class="custom-multiselect">
@@ -836,17 +920,23 @@
         </div>
     </div>
 
+    <!-- 좌우 너비 조절 핸들바 -->
     <div id="resizer"></div>
 
+    <!-- ==========================================================================
+         [메인 우측 사이드바] 시스템 설정 및 관리 (아코디언 열기/접기 수정 완료)
+         ========================================================================== -->
     <div id="right-sidebar">
         <div id="sidebar-title">⚙️ 시스템 설정 및 관리</div>
 
+        <!-- 외부 모니터창 열기 및 전체 초기화 버튼 -->
         <div class="btn-group-top">
             <button class="btn-open-guest" onclick="openGuestWindow('h')">📺 1번 화면 손님용 오픈</button>
             <button class="btn-open-guest" onclick="openGuestWindow('v')" style="background-color: #ffcc00;">📺 2번 화면 근무자용 오픈</button>
             <button class="btn-open-guest btn-reset-all" onclick="confirmResetAll()">⚠️ 전체 데이터 초기화</button>
         </div>
 
+        <!-- 운항 시간표 프리셋 (평일/주말/축제) -->
         <div class="preset-container">
             <div class="box-title-sm" style="color: #61b3ff;">📅 운항 시간표 프리셋</div>
             <div class="preset-btn-group" style="margin-top: 6px;">
@@ -856,6 +946,7 @@
             </div>
         </div>
 
+        <!-- 사전예매 엑셀 파일 업로드 -->
         <div class="excel-upload-container">
             <div class="box-title-sm" style="color: #61d800;">📊 사전예매 엑셀 자동 반영</div>
             <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelUpload(event)">
@@ -864,12 +955,14 @@
             </button>
         </div>
 
-        <!-- 관리자용 알람 사운드 설정 영역 -->
+        <!-- [아코디언 1] 관리자 전용 알람 사운드 설정 -->
         <div class="alarm-toggle-container" id="accordion-alarm">
+            <!-- 헤더(제목 또는 화살표) 클릭 시 toggleAccordion 호출하여 접기/펼치기 -->
             <div class="accordion-header" onclick="toggleAccordion('accordion-alarm')">
                 <div class="box-title-sm" style="color: #00ffcc;">🔔 [관리자 전용] 알람 사운드 설정</div>
                 <div class="accordion-header-actions">
-                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingWithAccordion('accordion-alarm', '🔔 [관리자 전용] 알람 사운드 설정', '#00ffcc')">크게보기</span>
+                    <!-- event.stopPropagation()으로 '크게보기' 클릭 시 아코디언 접힘과 겹치지 않게 처리 -->
+                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingModal('accordion-alarm', '🔔 [관리자 전용] 알람 사운드 설정', '#00ffcc')">크게보기</span>
                     <span class="accordion-arrow">▼</span>
                 </div>
             </div>
@@ -898,12 +991,12 @@
             </div>
         </div>
 
-        <!-- TTS 음성 안내방송 설정 영역 -->
+        <!-- [아코디언 2] 음성 안내방송(TTS) 설정 -->
         <div class="alarm-toggle-container" id="accordion-tts" style="border-color: var(--tts-highlight);">
             <div class="accordion-header" onclick="toggleAccordion('accordion-tts')">
                 <div class="box-title-sm" style="color: var(--tts-highlight);">📢 [관리자/손님용] 음성 안내방송 설정</div>
                 <div class="accordion-header-actions">
-                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingWithAccordion('accordion-tts', '📢 [관리자/손님용] 음성 안내방송 설정', '#ff9f43')">크게보기</span>
+                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingModal('accordion-tts', '📢 [관리자/손님용] 음성 안내방송 설정', '#ff9f43')">크게보기</span>
                     <span class="accordion-arrow">▼</span>
                 </div>
             </div>
@@ -965,12 +1058,12 @@
             </div>
         </div>
 
-        <!-- 자동 화면전환기 설정 영역 -->
+        <!-- [아코디언 3] 자동 화면전환기 설정 -->
         <div class="alarm-toggle-container" id="accordion-rotation" style="border-color: var(--rotation-highlight);">
             <div class="accordion-header" onclick="toggleAccordion('accordion-rotation')">
                 <div class="box-title-sm" style="color: var(--rotation-highlight);">📺 자동 화면전환기 설정</div>
                 <div class="accordion-header-actions">
-                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingWithAccordion('accordion-rotation', '📺 자동 화면전환기 설정', '#00ecff')">크게보기</span>
+                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingModal('accordion-rotation', '📺 자동 화면전환기 설정', '#00ecff')">크게보기</span>
                     <span class="accordion-arrow">▼</span>
                 </div>
             </div>
@@ -1001,12 +1094,12 @@
             </div>
         </div>
 
-        <!-- 전체 중앙 긴급 공지 팝업 설정 영역 -->
+        <!-- [아코디언 4] 전체 중앙 긴급 공지 팝업 설정 -->
         <div class="alarm-toggle-container" id="accordion-global-popup" style="border-color: var(--popup-highlight);">
             <div class="accordion-header" onclick="toggleAccordion('accordion-global-popup')">
                 <div class="box-title-sm" style="color: var(--popup-highlight);">🚨 [전체 중앙] 긴급 공지 팝업 설정</div>
                 <div class="accordion-header-actions">
-                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingWithAccordion('accordion-global-popup', '🚨 [전체 중앙] 긴급 공지 팝업 설정', '#ff4d4d')">크게보기</span>
+                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingModal('accordion-global-popup', '🚨 [전체 중앙] 긴급 공지 팝업 설정', '#ff4d4d')">크게보기</span>
                     <span class="accordion-arrow">▼</span>
                 </div>
             </div>
@@ -1055,12 +1148,12 @@
             </div>
         </div>
 
-        <!-- 1호 영역 긴급 팝업 설정 영역 -->
+        <!-- [아코디언 5] 1호 영역 긴급 팝업 설정 -->
         <div class="alarm-toggle-container" id="accordion-boat1-popup" style="border-color: var(--boat3-color);">
             <div class="accordion-header" onclick="toggleAccordion('accordion-boat1-popup')">
                 <div class="box-title-sm" style="color: var(--boat3-color);">🚨 [1호 영역] 긴급 팝업 설정</div>
                 <div class="accordion-header-actions">
-                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingWithAccordion('accordion-boat1-popup', '🚨 [1호 영역] 긴급 팝업 설정', '#28a745')">크게보기</span>
+                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingModal('accordion-boat1-popup', '🚨 [1호 영역] 긴급 팝업 설정', '#28a745')">크게보기</span>
                     <span class="accordion-arrow">▼</span>
                 </div>
             </div>
@@ -1082,12 +1175,12 @@
             </div>
         </div>
 
-        <!-- 2호 영역 긴급 팝업 설정 영역 -->
+        <!-- [아코디언 6] 2호 영역 긴급 팝업 설정 -->
         <div class="alarm-toggle-container" id="accordion-boat2-popup" style="border-color: var(--boat4-color);">
             <div class="accordion-header" onclick="toggleAccordion('accordion-boat2-popup')">
                 <div class="box-title-sm" style="color: var(--boat4-color);">🚨 [2호 영역] 긴급 팝업 설정</div>
                 <div class="accordion-header-actions">
-                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingWithAccordion('accordion-boat2-popup', '🚨 [2호 영역] 긴급 팝업 설정', '#2c7be5')">크게보기</span>
+                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingModal('accordion-boat2-popup', '🚨 [2호 영역] 긴급 팝업 설정', '#2c7be5')">크게보기</span>
                     <span class="accordion-arrow">▼</span>
                 </div>
             </div>
@@ -1110,10 +1203,15 @@
         </div>
     </div>
 
+<!-- ==========================================================================
+     [JavaScript 모듈] Firebase 실시간 동기화, 아코디언 제어, 순차 오디오, UI 렌더링
+     ========================================================================== -->
 <script type="module">
+    // Firebase SDK 불러오기 (앱 초기화 및 실시간 데이터베이스 기능)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue, runTransaction, push, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+    // Firebase 프로젝트 접속 설정 정보
     const firebaseConfig = {
         apiKey: "AIzaSyASAWsxM_6x5iFFme8wqePiFzNytsNOF5E",
         authDomain: "mulbitnaru930.firebaseapp.com",
@@ -1125,9 +1223,13 @@
         measurementId: "G-1NDDNRLE7P"
     };
 
+    // Firebase 앱 및 실시간 데이터베이스(db) 인스턴스 생성
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    /* --------------------------------------------------------------------------
+       [1] 우측 사이드바 마우스 드래그 너비 조절(Resizer) 로직
+       -------------------------------------------------------------------------- */
     const resizer = document.getElementById('resizer');
     const rightSidebar = document.getElementById('right-sidebar');
     let isResizing = false;
@@ -1158,23 +1260,26 @@
         });
     }
 
+    /* --------------------------------------------------------------------------
+       [2] 우측 시스템 설정 아코디언(열기/접기) 및 크게보기 모달 제어
+       -------------------------------------------------------------------------- */
     let activeModalContainerId = null;
 
-    // 아코디언 토글 전용 함수 (헤더 클릭 시 펼치기/접기)
+    // 아코디언 헤더(제목/화살표) 클릭 시 .open 클래스를 토글하여 열리고 접히도록 처리
     window.toggleAccordion = function(containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
         container.classList.toggle('open');
     };
 
-    // 대형 설정 모달창 오픈 함수
-    window.openSettingWithAccordion = function(containerId, titleText, accentColor) {
+    // '크게보기' 버튼 클릭 시 해당 설정 내용을 중앙 대형 모달창으로 이동시켜 표시
+    window.openSettingModal = function(containerId, titleText, accentColor) {
         const container = document.getElementById(containerId);
         const contentEl = document.getElementById(`content-${containerId}`);
         if (!container || !contentEl) return;
 
-        container.classList.add('open');
-        restoreModalContent();
+        container.classList.add('open'); // 해당 아코디언도 열린 상태로 유지
+        restoreModalContent();           // 기존에 열려있던 모달 내용이 있다면 원위치 복구
 
         const overlay = document.getElementById('config-modal-overlay');
         const box = document.getElementById('config-modal-box');
@@ -1185,6 +1290,7 @@
         titleEl.style.color = accentColor || '#00ffcc';
         box.style.borderColor = accentColor || '#00ffcc';
 
+        // 아코디언 본문의 DOM 요소들을 모달 내부로 이동 (입력 이벤트 및 상태 유지)
         while (contentEl.firstChild) {
             modalBody.appendChild(contentEl.firstChild);
         }
@@ -1193,6 +1299,7 @@
         overlay.classList.add('active');
     };
 
+    // 모달을 닫을 때 모달 내부의 DOM 요소들을 원래 아코디언 본문으로 되돌림
     function restoreModalContent() {
         if (!activeModalContainerId) return;
         const contentEl = document.getElementById(`content-${activeModalContainerId}`);
@@ -1211,12 +1318,14 @@
         if (overlay) overlay.classList.remove('active');
     };
 
+    // ESC 키를 누르면 열려있는 설정 모달 닫기
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && activeModalContainerId) {
             window.closeConfigModal();
         }
     });
 
+    // 화면 하단에 3.2초간 안내 메시지를 띄우는 토스트 알림 함수
     function showToast(msg) {
         const toast = document.getElementById('toast-notification');
         if (!toast) return;
@@ -1228,10 +1337,13 @@
         }, 3200);
     }
 
+    /* --------------------------------------------------------------------------
+       [3] 서비스 워커(오프라인 캐시) 및 네트워크 단절 시 로컬 대기열 동기화
+       -------------------------------------------------------------------------- */
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             const swCode = `
-                const CACHE_NAME = 'kimsimin-cache-v10';
+                const CACHE_NAME = 'kimsimin-cache-v9';
                 self.addEventListener('install', e => self.skipWaiting());
                 self.addEventListener('activate', e => e.waitUntil(
                     caches.keys().then(keys => Promise.all(
@@ -1257,6 +1369,7 @@
         localStorage.setItem('kimsimin_pending_queue', JSON.stringify(pendingOfflineQueue));
     }
 
+    // 인터넷이 다시 연결되면 오프라인 동안 쌓인 변경 내역을 순차적으로 서버에 전송
     function processOfflineQueue() {
         if (!isOnlineStatus || pendingOfflineQueue.length === 0) return;
         const queueCopy = [...pendingOfflineQueue];
@@ -1284,6 +1397,9 @@
         document.getElementById('offline-banner').classList.add('active');
     });
 
+    /* --------------------------------------------------------------------------
+       [4] 기본 운항 시간표 프리셋 및 초기 데이터 구조 정의
+       -------------------------------------------------------------------------- */
     const presetSchedules = {
         weekday: {
             1: ["13:15", "14:15", "15:15", "16:15", "17:15", "19:15", "20:15", "21:15"],
@@ -1307,14 +1423,12 @@
     const defaultConfigData = {
         lastDate: "",
         selectedPreset: "weekday",
-
         alarmSound: "on",
         alarmMinutes: 10,
         alarmRepeatCount: 5, 
         ttsBroadcast: "on",
         ttsMinutes: 5,
         ttsRepeatCount: 2,
-
         pageIntervalSeconds: 5,
         ttsEnableAdmin: true,
         ttsEnableGuest: true,
@@ -1325,37 +1439,13 @@
         rotationMode: "on",
         rotationTargetGuest: true,
         rotationTargetWorker: true,
-
-        boat1Alarm: "on",
-        boat1AlarmMin: 10,
-        boat1AlarmRep: 5,
-        boat1Tts: "on",
-        boat1TtsMin: 5,
-        boat1TtsRep: 2,
-        boat1FocusTime: "auto",
-
-        boat2Alarm: "on",
-        boat2AlarmMin: 10,
-        boat2AlarmRep: 5,
-        boat2Tts: "on",
-        boat2TtsMin: 5,
-        boat2TtsRep: 2,
-        boat2FocusTime: "auto",
-
-        popupMode: "on",
-        popupHour: "12",
-        popupMinute: "00",
-        popupDurationSeconds: 20,
+        boat1Alarm: "on", boat1AlarmMin: 10, boat1AlarmRep: 5, boat1Tts: "on", boat1TtsMin: 5, boat1TtsRep: 2, boat1FocusTime: "auto",
+        boat2Alarm: "on", boat2AlarmMin: 10, boat2AlarmRep: 5, boat2Tts: "on", boat2TtsMin: 5, boat2TtsRep: 2, boat2FocusTime: "auto",
+        popupMode: "on", popupHour: "12", popupMinute: "00", popupDurationSeconds: 20,
         popupMessageText: "기상 악화 및 정비 관계로 인하여 잠시 후 다음 항차 운항이 지연될 예정이오니 양해 바랍니다.",
-        popupActiveUntil: 0,
-        popupManualSwitch: "forced_off",
-        popupTargetScreen: "all",
-
-        popupText1: "김시민 1호 기상 악화 및 정비 관계로 인하여 잠시 후 운항이 지연될 예정입니다.",
-        popupManual1: "forced_off",
-
-        popupText2: "김시민 2호 기상 악화 및 정비 관계로 인하여 잠시 후 운항이 지연될 예정입니다.",
-        popupManual2: "forced_off"
+        popupActiveUntil: 0, popupManualSwitch: "forced_off", popupTargetScreen: "all",
+        popupText1: "김시민 1호 기상 악화 및 정비 관계로 인하여 잠시 후 운항이 지연될 예정입니다.", popupManual1: "forced_off",
+        popupText2: "김시민 2호 기상 악화 및 정비 관계로 인하여 잠시 후 운항이 지연될 예정입니다.", popupManual2: "forced_off"
     };
 
     let boatData = JSON.parse(JSON.stringify(defaultBoatData));
@@ -1372,6 +1462,7 @@
         2: { currentPage: 1, lastRotationTime: Date.now() }
     };
 
+    // URL 파라미터(?mode=guest_h 또는 ?mode=guest_v)에 따라 화면 모드(관리자 / 손님용 / 근무자용) 구분
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('mode'); 
     if (mode === 'guest_h') document.body.classList.add('is-guest', 'mode-h'); 
@@ -1380,6 +1471,7 @@
     const isCustomerGuest = (mode === 'guest_h');
     const isWorker = (mode === 'guest_v');
 
+    // 긴급 팝업 예약 시각(시/분) 드롭다운 옵션 생성
     function buildPopupTimeSelectOptions() {
         const globalH = document.getElementById('popup-hour');
         const globalM = document.getElementById('popup-minute');
@@ -1391,12 +1483,14 @@
     }
     buildPopupTimeSelectOptions();
 
+    /* --------------------------------------------------------------------------
+       [5] 근무자(2번 화면) 상단 제어 및 Firebase 데이터 저장 함수
+       -------------------------------------------------------------------------- */
     window.toggleWorkerAlarm = function(id) {
         const key = id === 1 ? 'boat1Alarm' : 'boat2Alarm';
         const cur = configData[key] || 'on';
         const next = cur === 'on' ? 'off' : 'on';
         configData[key] = next;
-
         if (next === 'off') stopBoatAlarms(id);
         saveConfigData();
         updateUI();
@@ -1407,7 +1501,6 @@
         const cur = configData[key] || 'on';
         const next = cur === 'on' ? 'off' : 'on';
         configData[key] = next;
-
         if (next === 'off') stopBoatTts(id);
         saveConfigData();
         updateUI();
@@ -1419,32 +1512,24 @@
         const ttsMinIn = document.getElementById(`worker-tts-min-${id}`);
         const ttsRepIn = document.getElementById(`worker-tts-rep-${id}`);
 
-        let aMin = parseInt(alarmMinIn.value) || 10;
-        if (aMin < 1) aMin = 1; if (aMin > 60) aMin = 60;
+        let aMin = Math.min(60, Math.max(1, parseInt(alarmMinIn.value) || 10));
         alarmMinIn.value = aMin;
 
-        let aRep = parseInt(alarmRepIn.value) || 5;
-        if (aRep < 1) aRep = 1; if (aRep > 20) aRep = 20;
+        let aRep = Math.min(20, Math.max(1, parseInt(alarmRepIn.value) || 5));
         alarmRepIn.value = aRep;
 
-        let tMin = parseInt(ttsMinIn.value) || 5;
-        if (tMin < 1) tMin = 1; if (tMin > 60) tMin = 60;
+        let tMin = Math.min(60, Math.max(1, parseInt(ttsMinIn.value) || 5));
         ttsMinIn.value = tMin;
 
-        let tRep = parseInt(ttsRepIn.value) || 2;
-        if (tRep < 1) tRep = 1; if (tRep > 5) tRep = 5;
+        let tRep = Math.min(5, Math.max(1, parseInt(ttsRepIn.value) || 2));
         ttsRepIn.value = tRep;
 
         if (id === 1) {
-            configData.boat1AlarmMin = aMin;
-            configData.boat1AlarmRep = aRep;
-            configData.boat1TtsMin = tMin;
-            configData.boat1TtsRep = tRep;
+            configData.boat1AlarmMin = aMin; configData.boat1AlarmRep = aRep;
+            configData.boat1TtsMin = tMin; configData.boat1TtsRep = tRep;
         } else {
-            configData.boat2AlarmMin = aMin;
-            configData.boat2AlarmRep = aRep;
-            configData.boat2TtsMin = tMin;
-            configData.boat2TtsRep = tRep;
+            configData.boat2AlarmMin = aMin; configData.boat2AlarmRep = aRep;
+            configData.boat2TtsMin = tMin; configData.boat2TtsRep = tRep;
         }
         saveConfigData();
         updateUI();
@@ -1457,6 +1542,7 @@
         updateUI();
     };
 
+    // 선박 운항 및 발권 데이터를 Firebase Realtime Database에 저장
     function saveBoatData() {
         if (!isOnlineStatus) {
             pendingOfflineQueue.push({ type: 'boat_data', timestamp: Date.now() });
@@ -1470,6 +1556,7 @@
         });
     }
 
+    // 시스템 설정(알람, TTS, 팝업 등)을 Firebase Realtime Database에 저장
     function saveConfigData() {
         if (isGuest && !isWorker) return;
         if (!isOnlineStatus) {
@@ -1484,6 +1571,9 @@
         });
     }
 
+    /* --------------------------------------------------------------------------
+       [6] 프리셋 적용 및 엑셀 파일 자동 파싱(사전예매 인원 반영)
+       -------------------------------------------------------------------------- */
     window.applySchedulePreset = function(presetKey) {
         if (!presetSchedules[presetKey]) return;
         if (confirm(`'${presetKey === 'weekday' ? '평일' : presetKey === 'weekend' ? '주말/공휴일' : '축제 기간'}' 시간표 프리셋을 적용하시겠습니까?`)) {
@@ -1492,7 +1582,6 @@
             configData.selectedPreset = presetKey;
             configData.boat1FocusTime = "auto";
             configData.boat2FocusTime = "auto";
-
             saveBoatData();
             saveConfigData();
             updateUI();
@@ -1511,6 +1600,7 @@
         });
     }
 
+    // 업로드된 엑셀 파일에서 오늘 날짜의 탑승시각별 예매 인원수를 집계해 자동 반영
     window.handleExcelUpload = function(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -1546,11 +1636,7 @@
                 }
 
                 const now = new Date();
-                const curYear = now.getFullYear();
-                const curMonth = String(now.getMonth() + 1).padStart(2, '0');
-                const curDay = String(now.getDate()).padStart(2, '0');
-                const todayStr = `${curYear}-${curMonth}-${curDay}`;
-
+                const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
                 const timeCounts = {};
                 let hasValidDateData = false;
                 let foundDates = new Set();
@@ -1560,18 +1646,12 @@
                     if (rawTime) {
                         let fullStr = String(rawTime).trim();
                         if (fullStr.includes(" ")) {
-                            let parts = fullStr.split(" ");
-                            let datePart = parts[0];
-                            let timePart = parts[1];
-
+                            let [datePart, timePart] = fullStr.split(" ");
                             foundDates.add(datePart);
-
-                            if (datePart === todayStr) {
+                            if (datePart === todayStr && timePart.length >= 5) {
                                 hasValidDateData = true;
-                                if (timePart.length >= 5) {
-                                    let timeStr = timePart.substring(0, 5);
-                                    timeCounts[timeStr] = (timeCounts[timeStr] || 0) + 1;
-                                }
+                                let timeStr = timePart.substring(0, 5);
+                                timeCounts[timeStr] = (timeCounts[timeStr] || 0) + 1;
                             }
                         } else if (fullStr.length >= 5 && fullStr.includes(":")) {
                             hasValidDateData = true;
@@ -1582,8 +1662,7 @@
                 });
 
                 if (!hasValidDateData) {
-                    let foundDatesArr = Array.from(foundDates);
-                    let foundStr = foundDatesArr.length > 0 ? foundDatesArr.join(", ") : "날짜 정보 없음";
+                    let foundStr = foundDates.size > 0 ? Array.from(foundDates).join(", ") : "날짜 정보 없음";
                     alert(`❌ [업로드 실패]\n\n오늘 날짜(${todayStr})와 일치하는 탑승 예약 데이터가 없습니다.\n(감지된 컬럼: [${timeColumnKey}], 감지된 날짜: ${foundStr})`);
                     return;
                 }
@@ -1597,7 +1676,6 @@
                 Object.keys(timeCounts).forEach(time => {
                     const count = timeCounts[time];
                     let matchedBoat = null;
-
                     if (boatData[1].times && boatData[1].times.includes(time)) {
                         boatData[1].seats[time] = count;
                         matchedBoat = "1호";
@@ -1605,7 +1683,6 @@
                         boatData[2].seats[time] = count;
                         matchedBoat = "2호";
                     }
-
                     if (matchedBoat) {
                         matchSummary.push(`- 김시민 ${matchedBoat} [${time}] : ${count}명`);
                         totalUpdated++;
@@ -1620,7 +1697,6 @@
                 } else {
                     alert(`⚠️ 데이터는 확인되었으나, 현재 1호/2호 시간표와 일치하는 출발 시간이 없습니다.`);
                 }
-
             } catch (err) {
                 console.error("엑셀 파일 파싱 오류:", err);
                 alert("⚠️ 엑셀 파일을 읽는 도중 오류가 발생했습니다.");
@@ -1631,6 +1707,9 @@
         reader.readAsArrayBuffer(file);
     };
 
+    /* --------------------------------------------------------------------------
+       [7] 설정 값 저장 및 선박별 시간표/정원/인원/공지 조작 함수
+       -------------------------------------------------------------------------- */
     window.handleManualPopupToggle = function(targetType, val) {
         if (isGuest && !isWorker) return;
         if (targetType === 'global') configData.popupManualSwitch = val;
@@ -1639,34 +1718,22 @@
         saveConfigData();
     };
 
+    // 우측 사이드바 및 크게보기 모달에서 변경된 모든 설정값을 읽어와 저장
     window.saveAlarmConfig = function() {
         if (isGuest && !isWorker) return; 
 
         const alarmOpt = document.querySelector('input[name="alarm_sound"]:checked');
         if (alarmOpt) configData.alarmSound = alarmOpt.value;
 
-        let trigVal = parseInt(document.getElementById('alarm-trigger-minutes').value) || 10;
-        if(trigVal < 1) trigVal = 1; if(trigVal > 60) trigVal = 60;
-        configData.alarmMinutes = trigVal;
-
-        let repVal = parseInt(document.getElementById('alarm-repeat-count').value) || 5;
-        if(repVal < 1) repVal = 1; if(repVal > 20) repVal = 20;
-        configData.alarmRepeatCount = repVal;
-
-        let rotVal = parseInt(document.getElementById('page-interval-seconds').value) || 5;
-        if(rotVal < 2) rotVal = 2; if(rotVal > 60) rotVal = 60;
-        configData.pageIntervalSeconds = rotVal;
+        configData.alarmMinutes = Math.min(60, Math.max(1, parseInt(document.getElementById('alarm-trigger-minutes').value) || 10));
+        configData.alarmRepeatCount = Math.min(20, Math.max(1, parseInt(document.getElementById('alarm-repeat-count').value) || 5));
+        configData.pageIntervalSeconds = Math.min(60, Math.max(2, parseInt(document.getElementById('page-interval-seconds').value) || 5));
 
         const ttsOption = document.querySelector('input[name="tts_broadcast"]:checked');
         if (ttsOption) configData.ttsBroadcast = ttsOption.value;
 
-        let ttsMins = parseInt(document.getElementById('tts-trigger-minutes').value) || 5;
-        if (ttsMins < 1) ttsMins = 1; if (ttsMins > 60) ttsMins = 60;
-        configData.ttsMinutes = ttsMins;
-
-        let ttsRepeat = parseInt(document.getElementById('tts-repeat-count').value) || 2;
-        if (ttsRepeat < 1) ttsRepeat = 1; if (ttsRepeat > 5) ttsRepeat = 5;
-        configData.ttsRepeatCount = ttsRepeat;
+        configData.ttsMinutes = Math.min(60, Math.max(1, parseInt(document.getElementById('tts-trigger-minutes').value) || 5));
+        configData.ttsRepeatCount = Math.min(5, Math.max(1, parseInt(document.getElementById('tts-repeat-count').value) || 2));
 
         if (document.getElementById('tts-enable-admin')) configData.ttsEnableAdmin = document.getElementById('tts-enable-admin').checked;
         if (document.getElementById('tts-enable-guest')) configData.ttsEnableGuest = document.getElementById('tts-enable-guest').checked;
@@ -1793,6 +1860,7 @@
         alert("선택한 시간의 운항 상태가 성공적으로 변경되었습니다.");
     };
 
+    // +, - 버튼 클릭 시 다중 기기 동시 수정을 안전하게 처리하는 Firebase Transaction
     window.adjust = function(id, time, amt) {
         if (navigator.vibrate) navigator.vibrate(40);
 
@@ -1834,6 +1902,7 @@
         }
     };
 
+    // 손님용(h) 또는 근무자용(v) 새 창 오픈
     window.openGuestWindow = function(type) {
         window.open(window.location.pathname + `?mode=guest_${type}`, `GuestWin_${type}_` + Date.now(), 'width=1200,height=900');
     };
@@ -1854,11 +1923,11 @@
         window.saveAlarmConfig(); updateUI();
     };
 
-    // ==========================================================================
-    // 멀티모니터 브라우저간 충돌 방지 및 전역 순차 재생 큐 (Sequential Audio Queue)
-    // ==========================================================================
+    /* --------------------------------------------------------------------------
+       [8] 멀티모니터 순차 오디오(알람 + TTS) 제어 엔진 (BroadcastChannel 통신)
+       -------------------------------------------------------------------------- */
     const TAB_INSTANCE_ID = `${mode || 'admin'}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-    const ROLE_PRIORITY = isWorker ? 2 : (isCustomerGuest ? 3 : 1); 
+    const ROLE_PRIORITY = isWorker ? 2 : (isCustomerGuest ? 3 : 1); // 우선순위: 관리자(1) -> 근무자(2) -> 손님용(3)
     const audioSyncChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('kimsimin_audio_seq_channel') : null;
 
     let localAudioQueue = [];        
@@ -1868,6 +1937,7 @@
     let remoteLockExpiresAt = 0;     
     let alarmLoopTimer = null;
 
+    // 다른 모니터 창에서 소리를 재생 중인지 실시간으로 신호를 주고받아 소리 겹침 방지
     if (audioSyncChannel) {
         audioSyncChannel.onmessage = (event) => {
             const msg = event.data;
@@ -1889,26 +1959,17 @@
     }
 
     function acquireGlobalAudioLock(estimatedMs) {
-        if (remoteLockOwner && Date.now() < remoteLockExpiresAt) {
-            return false;
-        }
+        if (remoteLockOwner && Date.now() < remoteLockExpiresAt) return false;
         remoteLockOwner = null;
         if (audioSyncChannel) {
-            audioSyncChannel.postMessage({
-                type: 'AUDIO_LOCK_ACQUIRED',
-                sender: TAB_INSTANCE_ID,
-                durationMs: estimatedMs
-            });
+            audioSyncChannel.postMessage({ type: 'AUDIO_LOCK_ACQUIRED', sender: TAB_INSTANCE_ID, durationMs: estimatedMs });
         }
         return true;
     }
 
     function releaseGlobalAudioLock() {
         if (audioSyncChannel) {
-            audioSyncChannel.postMessage({
-                type: 'AUDIO_LOCK_RELEASED',
-                sender: TAB_INSTANCE_ID
-            });
+            audioSyncChannel.postMessage({ type: 'AUDIO_LOCK_RELEASED', sender: TAB_INSTANCE_ID });
         }
     }
 
@@ -1956,13 +2017,9 @@
             setTimeout(processSequentialAudioQueue, 600);
         };
 
-        if (nextJob.kind === 'alarm') {
-            runSequentialAlarmJob(nextJob, finishJob);
-        } else if (nextJob.kind === 'tts') {
-            runSequentialTtsJob(nextJob, finishJob);
-        } else {
-            finishJob();
-        }
+        if (nextJob.kind === 'alarm') runSequentialAlarmJob(nextJob, finishJob);
+        else if (nextJob.kind === 'tts') runSequentialTtsJob(nextJob, finishJob);
+        else finishJob();
     }
 
     function runSequentialAlarmJob(job, onComplete) {
@@ -2001,18 +2058,14 @@
                 clearInterval(alarmLoopTimer);
                 alarmLoopTimer = null;
                 setTimeout(() => {
-                    if (job.boatId && job.time && !job.isTest) {
-                        window.dismissAlarm(job.boatId, job.time);
-                    }
+                    if (job.boatId && job.time && !job.isTest) window.dismissAlarm(job.boatId, job.time);
                     onComplete();
                 }, 700);
             }
         };
 
         playOnceAndCheck();
-        if (count < maxRepeats) {
-            alarmLoopTimer = setInterval(playOnceAndCheck, 1000);
-        }
+        if (count < maxRepeats) alarmLoopTimer = setInterval(playOnceAndCheck, 1000);
     }
 
     function runSequentialTtsJob(job, onComplete) {
@@ -2042,12 +2095,9 @@
 
             speakKoreanPhrase(job.phrase, () => {
                 remainingLoops--;
-                if (remainingLoops > 0) {
-                    setTimeout(speakNextLoop, 1200);
-                } else {
-                    if (job.boatId && job.time && !job.isTest) {
-                        window.dismissTtsBroadcast(job.boatId, job.time);
-                    }
+                if (remainingLoops > 0) setTimeout(speakNextLoop, 1200);
+                else {
+                    if (job.boatId && job.time && !job.isTest) window.dismissTtsBroadcast(job.boatId, job.time);
                     onComplete();
                 }
             });
@@ -2057,13 +2107,8 @@
     }
 
     function abortCurrentLocalAudio() {
-        if (alarmLoopTimer) {
-            clearInterval(alarmLoopTimer);
-            alarmLoopTimer = null;
-        }
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-        }
+        if (alarmLoopTimer) { clearInterval(alarmLoopTimer); alarmLoopTimer = null; }
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         localAudioQueue = [];
         if (isLocalPlaying) {
             isLocalPlaying = false;
@@ -2075,12 +2120,9 @@
     window.dismissAlarm = function(id, time) {
         activeVisualAlarms[id] = activeVisualAlarms[id].filter(t => t !== time);
         localAudioQueue = localAudioQueue.filter(q => !(q.kind === 'alarm' && q.boatId === id && q.time === time));
-
         if (activeAudioJob && activeAudioJob.kind === 'alarm' && activeAudioJob.boatId === id && activeAudioJob.time === time) {
             if (alarmLoopTimer) { clearInterval(alarmLoopTimer); alarmLoopTimer = null; }
-            isLocalPlaying = false;
-            activeAudioJob = null;
-            releaseGlobalAudioLock();
+            isLocalPlaying = false; activeAudioJob = null; releaseGlobalAudioLock();
             setTimeout(processSequentialAudioQueue, 300);
         }
         updateUI();
@@ -2089,18 +2131,17 @@
     window.dismissTtsBroadcast = function(id, time) {
         activeTtsBroadcasts[id] = activeTtsBroadcasts[id].filter(t => t !== time);
         localAudioQueue = localAudioQueue.filter(q => !(q.kind === 'tts' && q.boatId === id && q.time === time));
-
         if (activeAudioJob && activeAudioJob.kind === 'tts' && activeAudioJob.boatId === id && activeAudioJob.time === time) {
             if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-            isLocalPlaying = false;
-            activeAudioJob = null;
-            releaseGlobalAudioLock();
+            isLocalPlaying = false; activeAudioJob = null; releaseGlobalAudioLock();
             setTimeout(processSequentialAudioQueue, 300);
         }
         updateUI();
     };
 
-    // Web Audio API & 한국어 음성 합성(TTS) 엔진
+    /* --------------------------------------------------------------------------
+       [9] Web Audio API 알람음 생성 및 Web Speech API 한국어 TTS 발화 처리
+       -------------------------------------------------------------------------- */
     let sharedAudioCtx = null;
     let audioSystemUnlocked = false;
     let cachedKoreanVoice = null;
@@ -2119,23 +2160,18 @@
 
     if ('speechSynthesis' in window) {
         loadKoreanVoice();
-        window.speechSynthesis.onvoiceschanged = () => {
-            loadKoreanVoice();
-        };
+        window.speechSynthesis.onvoiceschanged = () => { loadKoreanVoice(); };
     }
 
     function getSharedAudioContext() {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!AudioContextClass) return null;
-        if (!sharedAudioCtx) {
-            sharedAudioCtx = new AudioContextClass();
-        }
-        if (sharedAudioCtx.state === 'suspended') {
-            sharedAudioCtx.resume().catch(() => {});
-        }
+        if (!sharedAudioCtx) sharedAudioCtx = new AudioContextClass();
+        if (sharedAudioCtx.state === 'suspended') sharedAudioCtx.resume().catch(() => {});
         return sharedAudioCtx;
     }
 
+    // 사용자 첫 클릭/터치 시 브라우저의 오디오 잠금을 해제
     window.unlockAllAudioSystems = function() {
         const ctx = getSharedAudioContext();
         if (ctx) {
@@ -2144,21 +2180,16 @@
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 gain.gain.setValueAtTime(0.001, ctx.currentTime);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(ctx.currentTime);
-                osc.stop(ctx.currentTime + 0.05);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.05);
             } catch (e) {}
         }
 
         if ('speechSynthesis' in window) {
             loadKoreanVoice();
-            if (window.speechSynthesis.paused) {
-                window.speechSynthesis.resume();
-            }
+            if (window.speechSynthesis.paused) window.speechSynthesis.resume();
             const unlockUtter = new SpeechSynthesisUtterance('');
-            unlockUtter.volume = 0;
-            unlockUtter.lang = 'ko-KR';
+            unlockUtter.volume = 0; unlockUtter.lang = 'ko-KR';
             window.speechSynthesis.speak(unlockUtter);
         }
 
@@ -2174,20 +2205,13 @@
         }
 
         window.speechSynthesis.cancel();
-        if (window.speechSynthesis.paused) {
-            window.speechSynthesis.resume();
-        }
+        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
 
         setTimeout(() => {
             const utter = new SpeechSynthesisUtterance(phrase);
             const voice = cachedKoreanVoice || loadKoreanVoice();
-            if (voice) {
-                utter.voice = voice;
-            }
-            utter.lang = 'ko-KR';
-            utter.volume = 1.0;
-            utter.rate = 0.95;
-            utter.pitch = 1.0;
+            if (voice) utter.voice = voice;
+            utter.lang = 'ko-KR'; utter.volume = 1.0; utter.rate = 0.95; utter.pitch = 1.0;
 
             const keepAliveTimer = setInterval(() => {
                 if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
@@ -2198,16 +2222,8 @@
                 }
             }, 4000);
 
-            utter.onend = () => {
-                clearInterval(keepAliveTimer);
-                if (onDoneCallback) onDoneCallback(true);
-            };
-
-            utter.onerror = (err) => {
-                clearInterval(keepAliveTimer);
-                console.warn("TTS 발화 오류:", err);
-                if (onDoneCallback) onDoneCallback(false);
-            };
+            utter.onend = () => { clearInterval(keepAliveTimer); if (onDoneCallback) onDoneCallback(true); };
+            utter.onerror = (err) => { clearInterval(keepAliveTimer); console.warn("TTS 발화 오류:", err); if (onDoneCallback) onDoneCallback(false); };
 
             window.speechSynthesis.speak(utter);
         }, 150);
@@ -2216,13 +2232,7 @@
     window.testAlarmSound = function() {
         window.unlockAllAudioSystems();
         showToast("🔔 알람 테스트 소리를 순차 대기열에 등록했습니다.");
-        enqueueSequentialAudio({
-            uniqueJobId: `test-alarm-${Date.now()}`,
-            kind: 'alarm',
-            priority: 0,
-            repeatCount: 2,
-            isTest: true
-        });
+        enqueueSequentialAudio({ uniqueJobId: `test-alarm-${Date.now()}`, kind: 'alarm', priority: 0, repeatCount: 2, isTest: true });
     };
 
     window.testTtsBroadcast = function() {
@@ -2230,21 +2240,13 @@
         const now = new Date();
         const sampleText = buildRoleTtsSpeech(1, now.getHours(), now.getMinutes(), 12, boatData[1].capacity || 25);
         showToast("🗣️ 방송 소리 테스트를 순차 대기열에 등록했습니다.");
-        enqueueSequentialAudio({
-            uniqueJobId: `test-tts-${Date.now()}`,
-            kind: 'tts',
-            priority: 0,
-            phrase: sampleText,
-            repeatCount: 1,
-            isTest: true
-        });
+        enqueueSequentialAudio({ uniqueJobId: `test-tts-${Date.now()}`, kind: 'tts', priority: 0, phrase: sampleText, repeatCount: 1, isTest: true });
     };
 
+    // 전자 딩-동 알람음 파형 생성
     function playSingleBeepSignal(ctx, nowTime) {
         if (!ctx) return;
-        if (ctx.state === 'suspended') {
-            ctx.resume().catch(() => {});
-        }
+        if (ctx.state === 'suspended') ctx.resume().catch(() => {});
         const osc1 = ctx.createOscillator(); const gain1 = ctx.createGain();
         osc1.type = 'sine'; osc1.frequency.setValueAtTime(587.33, nowTime);
         gain1.gain.setValueAtTime(0.65, nowTime); gain1.gain.exponentialRampToValueAtTime(0.01, nowTime + 0.35);
@@ -2270,14 +2272,7 @@
             ? ((id === 1 ? configData.boat1AlarmRep : configData.boat2AlarmRep) || 5)
             : (configData.alarmRepeatCount || 5);
 
-        enqueueSequentialAudio({
-            uniqueJobId: `alarm-${TAB_INSTANCE_ID}-${id}-${time}`,
-            kind: 'alarm',
-            priority: ROLE_PRIORITY,
-            boatId: id,
-            time: time,
-            repeatCount: maxRepeats
-        });
+        enqueueSequentialAudio({ uniqueJobId: `alarm-${TAB_INSTANCE_ID}-${id}-${time}`, kind: 'alarm', priority: ROLE_PRIORITY, boatId: id, time: time, repeatCount: maxRepeats });
     }
 
     function stopBoatAlarms(id) {
@@ -2285,9 +2280,7 @@
         localAudioQueue = localAudioQueue.filter(q => !(q.kind === 'alarm' && q.boatId === id));
         if (activeAudioJob && activeAudioJob.kind === 'alarm' && activeAudioJob.boatId === id) {
             if (alarmLoopTimer) { clearInterval(alarmLoopTimer); alarmLoopTimer = null; }
-            isLocalPlaying = false;
-            activeAudioJob = null;
-            releaseGlobalAudioLock();
+            isLocalPlaying = false; activeAudioJob = null; releaseGlobalAudioLock();
             setTimeout(processSequentialAudioQueue, 300);
         }
     }
@@ -2297,9 +2290,7 @@
         localAudioQueue = localAudioQueue.filter(q => !(q.kind === 'tts' && q.boatId === id));
         if (activeAudioJob && activeAudioJob.kind === 'tts' && activeAudioJob.boatId === id) {
             if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-            isLocalPlaying = false;
-            activeAudioJob = null;
-            releaseGlobalAudioLock();
+            isLocalPlaying = false; activeAudioJob = null; releaseGlobalAudioLock();
             setTimeout(processSequentialAudioQueue, 300);
         }
     }
@@ -2307,22 +2298,20 @@
     function stopAllAlarms() {
         activeVisualAlarms = { 1: [], 2: [] };
         localAudioQueue = localAudioQueue.filter(q => q.kind !== 'alarm');
-        if (activeAudioJob && activeAudioJob.kind === 'alarm') {
-            abortCurrentLocalAudio();
-        }
+        if (activeAudioJob && activeAudioJob.kind === 'alarm') abortCurrentLocalAudio();
     }
 
     function stopAllTtsBroadcasts() {
         activeTtsBroadcasts = { 1: [], 2: [] };
         localAudioQueue = localAudioQueue.filter(q => q.kind !== 'tts');
-        if (activeAudioJob && activeAudioJob.kind === 'tts') {
-            abortCurrentLocalAudio();
-        }
+        if (activeAudioJob && activeAudioJob.kind === 'tts') abortCurrentLocalAudio();
     }
 
+    /* --------------------------------------------------------------------------
+       [10] 출발 전 자동 알람/TTS 트리거, 긴급 팝업 스케줄, 자정 자동 리셋
+       -------------------------------------------------------------------------- */
     function checkTenMinutesAlarm(id, times) {
         if (isCustomerGuest) return;
-
         const isAlarmEnabled = isWorker
             ? ((id === 1 ? (configData.boat1Alarm || 'on') : (configData.boat2Alarm || 'on')) === 'on')
             : ((configData.alarmSound || 'on') === 'on');
@@ -2339,8 +2328,7 @@
         times.forEach(t => {
             const [tH, tM] = t.split(':').map(Number);
             const targetTime = new Date(); targetTime.setHours(tH, tM, 0, 0);
-            const diffMs = targetTime.getTime() - now.getTime();
-            const diffMins = diffMs / 60000;
+            const diffMins = (targetTime.getTime() - now.getTime()) / 60000;
 
             if (diffMins <= triggerMinutes && diffMins > 0) {
                 const booked = (boatData[id].seats && boatData[id].seats[t]) || 0;
@@ -2350,11 +2338,7 @@
                 if (!playedAlarms[uniqueKey]) {
                     const cStat = (boatData[id].customStatus && boatData[id].customStatus[t]) || "auto";
                     const isHalted = cStat.includes("중지") || cStat === "운항없음" || cStat === "점 검 중" || cStat === "점검중";
-
-                    if (!isHalted) { 
-                        playedAlarms[uniqueKey] = true; 
-                        startInfiniteAlarmLoop(id, t); 
-                    }
+                    if (!isHalted) { playedAlarms[uniqueKey] = true; startInfiniteAlarmLoop(id, t); }
                 }
             }
         });
@@ -2365,13 +2349,9 @@
         const remain = Math.max(0, capacity - booked);
         let template = "";
 
-        if (isCustomerGuest) {
-            template = configData.ttsMsgGuest || defaultConfigData.ttsMsgGuest;
-        } else if (isWorker) {
-            template = configData.ttsMsgWorker || defaultConfigData.ttsMsgWorker;
-        } else {
-            template = configData.ttsMsgAdmin || defaultConfigData.ttsMsgAdmin;
-        }
+        if (isCustomerGuest) template = configData.ttsMsgGuest || defaultConfigData.ttsMsgGuest;
+        else if (isWorker) template = configData.ttsMsgWorker || defaultConfigData.ttsMsgWorker;
+        else template = configData.ttsMsgAdmin || defaultConfigData.ttsMsgAdmin;
 
         return template
             .replace(/\{시\}/g, String(tH))
@@ -2406,8 +2386,7 @@
         times.forEach(t => {
             const [tH, tM] = t.split(':').map(Number);
             const targetTime = new Date(); targetTime.setHours(tH, tM, 0, 0);
-            const diffMs = targetTime.getTime() - now.getTime();
-            const diffMins = diffMs / 60000;
+            const diffMins = (targetTime.getTime() - now.getTime()) / 60000;
 
             if (diffMins <= ttsTriggerMinutes && diffMins > 0) {
                 const broadcastKey = `${todayStr}-${rolePrefix}-${id}-${t}-${ttsTriggerMinutes}`;
@@ -2420,22 +2399,15 @@
                     if (booked <= 0) return;
 
                     const isHalted = cStat.includes("중지") || cStat === "운항없음" || cStat === "점 검 중" || cStat === "점검중";
-
                     if (!isHalted) {
                         playedBroadcasts[broadcastKey] = true;
                         if (!activeTtsBroadcasts[id].includes(t)) activeTtsBroadcasts[id].push(t);
                         updateUI();
 
                         const speechText = buildRoleTtsSpeech(id, tH, tM, booked, capacity);
-
                         enqueueSequentialAudio({
-                            uniqueJobId: `tts-${TAB_INSTANCE_ID}-${id}-${t}`,
-                            kind: 'tts',
-                            priority: ROLE_PRIORITY,
-                            boatId: id,
-                            time: t,
-                            phrase: speechText,
-                            repeatCount: maxLoops
+                            uniqueJobId: `tts-${TAB_INSTANCE_ID}-${id}-${t}`, kind: 'tts', priority: ROLE_PRIORITY,
+                            boatId: id, time: t, phrase: speechText, repeatCount: maxLoops
                         });
                     }
                 }
@@ -2464,13 +2436,7 @@
         }
 
         const targetScreenSetting = configData.popupTargetScreen || 'all';
-        if (targetScreenSetting === 'guest' && mode !== 'guest_h') {
-            if (overlayGlobal) overlayGlobal.classList.remove('active');
-            if (overlay1) overlay1.classList.remove('active');
-            if (overlay2) overlay2.classList.remove('active');
-            return;
-        }
-        if (targetScreenSetting === 'worker' && mode !== 'guest_v') {
+        if ((targetScreenSetting === 'guest' && mode !== 'guest_h') || (targetScreenSetting === 'worker' && mode !== 'guest_v')) {
             if (overlayGlobal) overlayGlobal.classList.remove('active');
             if (overlay1) overlay1.classList.remove('active');
             if (overlay2) overlay2.classList.remove('active');
@@ -2478,12 +2444,7 @@
         }
 
         const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const date = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const dateTimeStr = `${year}년 ${month}월 ${date}일 ${hours}시 ${minutes}분`;
+        const dateTimeStr = `${now.getFullYear()}년 ${String(now.getMonth() + 1).padStart(2, '0')}월 ${String(now.getDate()).padStart(2, '0')}일 ${String(now.getHours()).padStart(2, '0')}시 ${String(now.getMinutes()).padStart(2, '0')}분`;
 
         let globalActive = false;
         const globalManual = configData.popupManualSwitch || 'forced_off';
@@ -2507,9 +2468,7 @@
                     saveConfigData();
                 }
             }
-            if (configData.popupActiveUntil > 0 && now.getTime() < configData.popupActiveUntil) {
-                globalActive = true;
-            }
+            if (configData.popupActiveUntil > 0 && now.getTime() < configData.popupActiveUntil) globalActive = true;
         }
 
         if (globalActive) {
@@ -2520,8 +2479,7 @@
             if (overlayGlobal) overlayGlobal.classList.remove('active');
         }
 
-        let boat1Active = (configData.popupManual1 === 'forced_on');
-        if (boat1Active) {
+        if (configData.popupManual1 === 'forced_on') {
             if (msgBox1) msgBox1.innerText = configData.popupText1 || "";
             if (timeDisplay1) timeDisplay1.innerText = dateTimeStr;
             if (overlay1) overlay1.classList.add('active');
@@ -2529,8 +2487,7 @@
             if (overlay1) overlay1.classList.remove('active');
         }
 
-        let boat2Active = (configData.popupManual2 === 'forced_on');
-        if (boat2Active) {
+        if (configData.popupManual2 === 'forced_on') {
             if (msgBox2) msgBox2.innerText = configData.popupText2 || "";
             if (timeDisplay2) timeDisplay2.innerText = dateTimeStr;
             if (overlay2) overlay2.classList.add('active');
@@ -2539,6 +2496,7 @@
         }
     }
 
+    // 날짜가 바뀌면(자정 경과) 예약 인원 및 임시 상태를 자동으로 초기화
     function checkMidnightReset() {
         const today = new Date().toLocaleDateString();
         const lastDate = configData.lastDate;
@@ -2561,20 +2519,14 @@
         }
     }
 
+    /* --------------------------------------------------------------------------
+       [11] 매 1초마다 실행되는 메인 화면 렌더링(updateUI) 함수
+       -------------------------------------------------------------------------- */
     function updateUI() {
         const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const date = String(now.getDate()).padStart(2, '0');
-
         const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-        const dayStr = dayNames[now.getDay()];
-        const dateFormatted = `${year}년 ${month}월 ${date}일 (${dayStr})`;
-
-        const hoursStr = String(now.getHours()).padStart(2, '0');
-        const minutesStr = String(now.getMinutes()).padStart(2, '0');
-        const secondsStr = String(now.getSeconds()).padStart(2, '0');
-        const timeFormatted = `${hoursStr}시 ${minutesStr}분 ${secondsStr}초`;
+        const dateFormatted = `${now.getFullYear()}년 ${String(now.getMonth() + 1).padStart(2, '0')}월 ${String(now.getDate()).padStart(2, '0')}일 (${dayNames[now.getDay()]})`;
+        const timeFormatted = `${String(now.getHours()).padStart(2, '0')}시 ${String(now.getMinutes()).padStart(2, '0')}분 ${String(now.getSeconds()).padStart(2, '0')}초`;
 
         updatePresetButtonsUI();
 
@@ -2592,6 +2544,7 @@
             if (gDur) gDur.innerText = boatData[id].duration || "-";
             if (gCourse) gCourse.innerText = boatData[id].course || "-";
 
+            // 근무자용 상단 컨트롤 UI 동기화
             const bAlarmState = (id === 1 ? configData.boat1Alarm : configData.boat2Alarm) || 'on';
             const bTtsState = (id === 1 ? configData.boat1Tts : configData.boat2Tts) || 'on';
             const bAlarmMin = (id === 1 ? configData.boat1AlarmMin : configData.boat2AlarmMin) || 10;
@@ -2633,6 +2586,7 @@
                 focusSelect.value = bFocusTime;
             }
 
+            // 관리자용 입력칸 동기화 (입력 포커스 중일 때는 덮어쓰기 방지)
             if (!isGuest) {
                 const capIn = document.getElementById(`cap-direct-${id}`);
                 const durIn = document.getElementById(`dur-direct-${id}`);
@@ -2646,11 +2600,11 @@
             }
         });
 
+        // 각 선박의 시간표 행(Row) 생성 및 상태 자동 판별
         [1, 2].forEach(id => {
             const times = boatData[id].times || [];
             const tbody = document.getElementById(`table-${id}`);
             const listContainer = document.getElementById(`list-${id}`);
-
             if (!tbody) return;
 
             if (!isGuest && listContainer) {
@@ -2671,20 +2625,16 @@
             checkTenMinutesAlarm(id, times);
             checkTtsSpeechBroadcast(id, times);
 
+            // 현재 시각 기준 가장 가까운 다음 운항 항차 계산
             const duration = parseInt(boatData[id].duration) || 20;
             let autoTargetTime = null;
-            
             for (let i = 0; i < times.length; i++) {
                 const [tH, tM] = times[i].split(':').map(Number);
                 const fTime = new Date(); fTime.setHours(tH, tM, 0, 0);
                 const dMins = (fTime.getTime() - now.getTime()) / 60000;
 
                 if (dMins <= 0 && dMins >= -duration) {
-                    if (i + 1 < times.length) {
-                        autoTargetTime = times[i + 1];
-                    } else {
-                        autoTargetTime = times[i];
-                    }
+                    autoTargetTime = (i + 1 < times.length) ? times[i + 1] : times[i];
                     break;
                 } else if (dMins > -duration) {
                     autoTargetTime = times[i];
@@ -2695,6 +2645,7 @@
             const bFocusSetting = (id === 1 ? configData.boat1FocusTime : configData.boat2FocusTime) || "auto";
             const activeHighlightTime = (bFocusSetting === "auto") ? autoTargetTime : bFocusSetting;
 
+            // 10개 초과 시간표일 때 자동 화면전환기(페이지 롤링) 처리
             let pageTimes = times;
             const rotationMode = configData.rotationMode || "on";
             const targetGuest = configData.rotationTargetGuest !== false;
@@ -2730,11 +2681,13 @@
                 if (pageIndicator) pageIndicator.style.display = "none";
             }
 
+            // 개별 시간대(Row) HTML 조립
             let tbodyHtml = "";
             pageTimes.forEach(t => {
                 const capacity = boatData[id].capacity || 0;
                 let booked = (boatData[id].seats && boatData[id].seats[t]) || 0;
 
+                // 손님용 화면에서는 정원을 초과했더라도 최대 정원까지만 표시
                 if (isCustomerGuest && booked > capacity) booked = capacity;
 
                 const remain = capacity - booked;
@@ -2750,29 +2703,21 @@
                 let remainText = remain;
                 let remainClass = "remain-count";
 
+                // 수동 상태가 지정된 경우 우선 적용, 아니면 출발 남은 시간(diffMins)에 따라 자동 상태 판정
                 if (customStat !== "auto") {
                     statusText = customStat;
-                    if (customStat === "운항없음" || customStat.includes("중지")) {
-                        rowClass = "row-halted-gray-bg"; statusClass = "text-ended-box";
-                    } else if (customStat === "점 검 중") {
-                        rowClass = "row-halted-gray-bg"; statusClass = "text-maintenance-gray";
-                    } else if (customStat === "탑승시작") {
-                        rowClass = "row-boarding-start-bg"; statusClass = "text-boarding-start";
-                    } else if (customStat === "티켓발권마감") {
-                        rowClass = "row-ticketing-ended-bg"; statusClass = "bg-dark-green-yellow";
-                    } else if (customStat === "탑승(승선)마감") {
-                        rowClass = "row-boarding-close-solid"; statusClass = "text-boarding-close";
-                    }
+                    if (customStat === "운항없음" || customStat.includes("중지")) { rowClass = "row-halted-gray-bg"; statusClass = "text-ended-box"; }
+                    else if (customStat === "점 검 중") { rowClass = "row-halted-gray-bg"; statusClass = "text-maintenance-gray"; }
+                    else if (customStat === "탑승시작") { rowClass = "row-boarding-start-bg"; statusClass = "text-boarding-start"; }
+                    else if (customStat === "티켓발권마감") { rowClass = "row-ticketing-ended-bg"; statusClass = "bg-dark-green-yellow"; }
+                    else if (customStat === "탑승(승선)마감") { rowClass = "row-boarding-close-solid"; statusClass = "text-boarding-close"; }
                 } else {
                     if (diffMins < -duration) {
                         statusText = booked > 0 ? "운항종료(End)" : "종료(End)";
                         rowClass = "row-ended"; statusClass = "text-ended-box";
                     } else if (diffMins <= 0) {
-                        if (booked <= 0) {
-                            statusText = "종료(End)"; rowClass = "row-ended"; statusClass = "text-ended-box";
-                        } else {
-                            statusText = "운 항 중"; rowClass = "row-sailing-bg"; statusClass = "text-blue";
-                        }
+                        if (booked <= 0) { statusText = "종료(End)"; rowClass = "row-ended"; statusClass = "text-ended-box"; }
+                        else { statusText = "운 항 중"; rowClass = "row-sailing-bg"; statusClass = "text-blue"; }
                     } else if (diffMins <= 5) {
                         statusText = booked <= 0 ? "티켓발권가능" : "탑승마감";
                         rowClass = booked <= 0 ? "row-available-bg" : "row-boarding-close-solid";
@@ -2799,6 +2744,7 @@
                     remainClass += " text-soldout-zero";
                 }
 
+                // 관리자 및 근무자 화면에서는 정원 초과 인원 경고 표시
                 if (remain < 0 && (!isGuest || isWorker)) {
                     remainText = `<span class="over-capacity-text">⚠️ 초과 +${Math.abs(remain)}명</span>`;
                 }
@@ -2857,6 +2803,9 @@
         checkEmergencyPopupSchedule();
     }
 
+    /* --------------------------------------------------------------------------
+       [12] Firebase 실시간 데이터 수신 리스너 및 메인 타이머 실행
+       -------------------------------------------------------------------------- */
     const boatDataRef = ref(db, 'namgang/boatData');
     onValue(boatDataRef, (snapshot) => {
         const val = snapshot.val();
@@ -2949,10 +2898,7 @@
         }
     });
 
-    window.addEventListener('beforeunload', () => {
-        releaseGlobalAudioLock();
-    });
-
+    // 화면 아무 곳이나 클릭/터치하면 드롭다운 닫기 및 오디오 시스템 잠금 해제
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.custom-multiselect')) {
             document.querySelectorAll('.checkbox-list').forEach(el => el.classList.remove('show'));
@@ -2967,6 +2913,7 @@
         }
     }, { passive: true });
 
+    // 1초마다 시계, 상태 판별, 알람, 화면 전환을 실시간 갱신
     setInterval(() => { updateUI(); }, 1000);
 </script>
 </body>
