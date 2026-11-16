@@ -920,7 +920,7 @@
                                 <span style="font-size: 17px; color: #61d800;">📺 손님용(1번) 화면 멘트:</span>
                                 <label style="font-size: 17px; color: #fff;"><input type="checkbox" id="tts-enable-guest" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
                             </div>
-                            <textarea id="tts-msg-guest" class="popup-textarea" onchange="saveAlarmConfig()">승객 여러분께 안내 말씀 드립니다. 잠시 후 {시}시 {분}분에 출발하는 {선박}의 탑승이 곧 시작됩니다. 티켓을 소지하신 탑승객께서는 출발시간과 선박명을 확인하시고 탑승장으로 이동해 주시기 바랍니다.{선박}는 음주자 및 반려견은 탑승이 금지되어 있습니다. 감사합니다. We would like to inform our passengers. Boarding will soon begin on {선박}, departing at {시}:{분} minutes later. Passengers with tickets must check the departure time and ship name before proceeding to the boarding area. Drinking alcohol and dogs are prohibited from boarding the {선박}. thank you. </textarea>
+                            <textarea id="tts-msg-guest" class="popup-textarea" onchange="saveAlarmConfig()">승객 여러분께 안내 말씀 드립니다. 잠시 후 {시}시 {분}분에 출발하는 {선박}의 탑승이 곧 시작됩니다. 티켓을 소지하신 탑승객께서는 출발시간과 선박명을 확인하시고 탑승장으로 이동해 주시기 바랍니다.{선박}는 음주자 및 반려견은 탑승이 금지되어 있습니다. 감사합니다.</textarea>
                         </div>
 
                         <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -1177,10 +1177,7 @@
 
     let isOnlineStatus = navigator.onLine;
     let pendingOfflineQueue = JSON.parse(localStorage.getItem('kimsimin_pending_queue') || "[]");
-    
-    function saveOfflineQueue() { 
-        localStorage.setItem('kimsimin_pending_queue', JSON.stringify(pendingOfflineQueue)); 
-    }
+    function saveOfflineQueue() { localStorage.setItem('kimsimin_pending_queue', JSON.stringify(pendingOfflineQueue)); }
 
     function processOfflineQueue() {
         if (!isOnlineStatus || pendingOfflineQueue.length === 0) return;
@@ -1213,7 +1210,7 @@
         ttsBroadcast: "on", ttsMinutes: 5, ttsRepeatCount: 2, pageIntervalSeconds: 5,
         ttsEnableAdmin: true, ttsEnableGuest: true, ttsEnableWorker: true,
         ttsMsgAdmin: "관리자 알림. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명, 잔여석은 {잔여}명 입니다.",
-        ttsMsgGuest: "승객 여러분께 안내 말씀 드립니다. 잠시 후 {시}시 {분}분에 출발하는 {선박}의 탑승이 곧 시작됩니다. 티켓을 소지하신 탑승객께서는 출발시간과 선박명을 확인하시고 탑승장으로 이동해 주시기 바랍니다.{선박}는 음주자 및 반려견은 탑승이 금지되어 있습니다. 감사합니다. We would like to inform our passengers. Boarding will soon begin on {선박}, departing at {시}:{분} minutes later. Passengers with tickets must check the departure time and ship name before proceeding to the boarding area. Drinking alcohol and dogs are prohibited from boarding the {선박}. thank you.",
+        ttsMsgGuest: "승객 여러분께 안내 말씀 드립니다. 잠시 후 {시}시 {분}분에 출발하는 {선박}의 탑승이 곧 시작됩니다. 티켓을 소지하신 탑승객께서는 출발시간과 선박명을 확인하시고 탑승장으로 이동해 주시기 바랍니다.{선박}는 음주자 및 반려견은 탑승이 금지되어 있습니다. 감사합니다.",
         ttsMsgWorker: "근무자 안내. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명입니다. 탑승 인원 및 안전 점검을 확인해 주시고 {선박}의 출발를 준비해 주세요.",
         rotationMode: "on", rotationTargetGuest: true, rotationTargetWorker: true,
         boat1Alarm: "on", boat1AlarmMin: 10, boat1AlarmRep: 5, boat1Tts: "on", boat1TtsMin: 5, boat1TtsRep: 2, boat1FocusTime: "auto",
@@ -1325,7 +1322,6 @@
         });
     }
 
-    // [보완 적용] SheetJS 셀 날짜 파싱 안정성 개선 ({ cellDates: true })
     window.handleExcelUpload = function(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -1333,7 +1329,7 @@
         reader.onload = function(e) {
             try {
                 const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                const workbook = XLSX.read(data, { type: 'array' });
                 const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
                 if (!jsonRows || jsonRows.length === 0) { alert("⚠️ 엑셀 파일에 데이터가 없습니다."); return; }
 
@@ -1352,19 +1348,7 @@
                 jsonRows.forEach(row => {
                     const rawTime = row[timeColumnKey];
                     if (rawTime) {
-                        let fullStr = "";
-                        if (rawTime instanceof Date) {
-                            let hh = String(rawTime.getHours()).padStart(2, '0');
-                            let mm = String(rawTime.getMinutes()).padStart(2, '0');
-                            let ss = String(rawTime.getSeconds()).padStart(2, '0');
-                            let yyyy = rawTime.getFullYear();
-                            let MM = String(rawTime.getMonth() + 1).padStart(2, '0');
-                            let dd = String(rawTime.getDate()).padStart(2, '0');
-                            fullStr = `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}`;
-                        } else {
-                            fullStr = String(rawTime).trim();
-                        }
-
+                        let fullStr = String(rawTime).trim();
                         if (fullStr.includes(" ")) {
                             let [datePart, timePart] = fullStr.split(" ");
                             if (datePart === todayStr && timePart.length >= 5) {
@@ -1546,17 +1530,7 @@
             if (!boatData[id].seats) boatData[id].seats = {};
             let cur = boatData[id].seats[time] || 0;
             boatData[id].seats[time] = Math.max(0, cur + amt);
-            
-            // [보완 적용] 오프라인 큐 중복 조작 병합(Debounce/Merge) 최적화
-            const existingIdx = pendingOfflineQueue.findIndex(q => q.type === 'seat_adjust' && q.boatId === id && q.time === time);
-            if (existingIdx !== -1) {
-                pendingOfflineQueue[existingIdx].amt += amt;
-                if (pendingOfflineQueue[existingIdx].amt === 0) {
-                    pendingOfflineQueue.splice(existingIdx, 1);
-                }
-            } else {
-                pendingOfflineQueue.push({ type: 'seat_adjust', boatId: id, time: time, amt: amt, timestamp: Date.now() });
-            }
+            pendingOfflineQueue.push({ type: 'seat_adjust', boatId: id, time: time, amt: amt, timestamp: Date.now() });
             saveOfflineQueue(); updateUI(); return;
         }
 
@@ -1573,12 +1547,7 @@
                 updateUI();
             }
         }).catch(() => {
-            const existingIdx = pendingOfflineQueue.findIndex(q => q.type === 'seat_adjust' && q.boatId === id && q.time === time);
-            if (existingIdx !== -1) {
-                pendingOfflineQueue[existingIdx].amt += amt;
-            } else {
-                pendingOfflineQueue.push({ type: 'seat_adjust', boatId: id, time: time, amt: amt, timestamp: Date.now() });
-            }
+            pendingOfflineQueue.push({ type: 'seat_adjust', boatId: id, time: time, amt: amt, timestamp: Date.now() });
             saveOfflineQueue();
         });
     };
@@ -1632,13 +1601,11 @@
         }
     }
 
-    // [보완 적용] 브라우저 백그라운드 복귀 시 즉시 화면 갱신 및 오디오 복구
     document.addEventListener('visibilitychange', async () => {
         if (document.visibilityState === 'visible') {
             await requestScreenWakeLock();
             const ctx = getSharedAudioContext();
             if (ctx && ctx.state === 'suspended') ctx.resume();
-            updateUI(); // 복귀 즉시 시간 및 상태 동기화
         }
     });
 
@@ -1698,8 +1665,7 @@
             isLocalPlaying = false;
             activeAudioJob = null;
             releaseGlobalAudioLock();
-            // [보완 적용] 알람과 TTS 출력 사이의 간격(Delay)을 800ms로 안전하게 확보하여 소리 뭉침 방지
-            setTimeout(processSequentialAudioQueue, 800);
+            setTimeout(processSequentialAudioQueue, 600);
         };
 
         if (nextJob.kind === 'alarm') runSequentialAlarmJob(nextJob, finishJob);
@@ -1825,6 +1791,7 @@
         return sharedAudioCtx;
     }
 
+    // [모바일 절전 끊김 방지] 무음 오디오 채널을 주기적으로 백그라운드 재생하여 브라우저 CPU 절전 차단
     function startSilentKeepAlive() {
         if (silentKeepAliveInterval) return;
         silentKeepAliveInterval = setInterval(() => {
@@ -1834,13 +1801,13 @@
                 try {
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
-                    gain.gain.setValueAtTime(0.00001, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.00001, ctx.currentTime); // 들리지 않는 초미세 볼륨
                     osc.connect(gain); gain.connect(ctx.destination);
                     osc.start(ctx.currentTime);
                     osc.stop(ctx.currentTime + 0.1);
                 } catch (e) {}
             }
-        }, 15000);
+        }, 15000); // 15초마다 무음 신호 펄스 송출
     }
 
     window.unlockAllAudioSystems = async function() {
