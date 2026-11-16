@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>김시민호 실시간 잔여석 관리 프로그램 (화면별 독립 제어)</title>
+    <title>김시민호 실시간 잔여석 관리 프로그램 (멀티모니터 순차 오디오 제어)</title>
 
     <!-- PWA 적용: 웹 앱 Manifest 및 메타 태그 연결 -->
     <link rel="manifest" href="manifest.json">
@@ -15,9 +15,6 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
-        /* ==========================================================================
-           [CSS] 전역 색상 변수 설정 (:root)
-           ========================================================================== */
         :root {
             --primary-dark: #002d5a;
             --boat3-color: #28a745;
@@ -80,52 +77,52 @@
         #resizer:hover, #resizer.resizing { background-color: var(--highlight); }
 
         #right-sidebar {
-            width: 320px;
-            min-width: 240px;
-            max-width: 600px;
-            background-color: #1e222b; padding: 15px;
-            display: flex; flex-direction: column; gap: 12px; border-radius: 15px;
+            width: 390px;
+            min-width: 280px;
+            max-width: 650px;
+            background-color: #1e222b; padding: 16px;
+            display: flex; flex-direction: column; gap: 14px; border-radius: 15px;
             box-sizing: border-box; border: 1px solid #343a40;
             overflow-y: auto; z-index: 10;
             flex-shrink: 0;
         }
 
         #sidebar-title {
-            color: #fff; font-size: 20px; font-weight: 900; text-align: center;
-            padding-bottom: 12px; border-bottom: 2px dashed #444; margin-bottom: 3px;
+            color: #fff; font-size: 24px; font-weight: 900; text-align: center;
+            padding-bottom: 12px; border-bottom: 2px dashed #444; margin-bottom: 4px;
             line-height: 1.3;
         }
 
         .btn-group-top { display: flex; flex-direction: column; gap: 10px; width: 100%; }
         .btn-open-guest {
-            background-color: var(--highlight); color: #000; border: none; padding: 12px;
-            font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; text-align: center;
+            background-color: var(--highlight); color: #000; border: none; padding: 14px;
+            font-size: 20px; font-weight: 900; border-radius: 10px; cursor: pointer; text-align: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.2s; touch-action: manipulation;
         }
         .btn-open-guest:hover { filter: brightness(1.1); }
         .btn-reset-all { background-color: #ff4d4d !important; color: white !important; }
 
         .excel-upload-container {
-            display: flex; flex-direction: column; gap: 8px; background: #1b382b; 
-            padding: 12px; border-radius: 8px; border: 1px solid var(--excel-btn-bg); width: 100%;
+            display: flex; flex-direction: column; gap: 10px; background: #1b382b; 
+            padding: 14px; border-radius: 10px; border: 1px solid var(--excel-btn-bg); width: 100%;
             box-sizing: border-box; text-align: center;
         }
         .preset-container {
-            display: flex; flex-direction: column; gap: 8px; background: #1a2a3a; 
-            padding: 12px; border-radius: 8px; border: 1px solid #2c7be5; width: 100%;
+            display: flex; flex-direction: column; gap: 10px; background: #1a2a3a; 
+            padding: 14px; border-radius: 10px; border: 1px solid #2c7be5; width: 100%;
             box-sizing: border-box; text-align: center;
         }
-        .preset-btn-group { display: flex; gap: 6px; }
+        .preset-btn-group { display: flex; gap: 8px; }
         .btn-preset {
-            flex: 1; padding: 10px 4px; font-size: 14px; font-weight: bold; border: none; border-radius: 6px;
+            flex: 1; padding: 12px 6px; font-size: 16px; font-weight: 800; border: none; border-radius: 8px;
             cursor: pointer; transition: all 0.2s; color: #fff; background: #2c7be5; touch-action: manipulation;
         }
         .btn-preset:hover { filter: brightness(1.15); }
         .btn-preset.active { background: var(--highlight); color: #000; box-shadow: 0 0 8px var(--highlight); }
 
         .btn-excel-upload {
-            background-color: var(--excel-btn-bg); color: #ffffff; border: none; padding: 12px;
-            font-size: 17px; font-weight: bold; border-radius: 8px; cursor: pointer;
+            background-color: var(--excel-btn-bg); color: #ffffff; border: none; padding: 14px;
+            font-size: 19px; font-weight: 900; border-radius: 8px; cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;
         }
         .btn-excel-upload:hover { filter: brightness(1.15); }
@@ -153,73 +150,133 @@
         .worker-control-item button.active-off { background: #dc3545; border-color: #bd2130; }
 
         .alarm-toggle-container {
-            display: flex; flex-direction: column; gap: 10px; background: #282e38; 
-            padding: 12px; border-radius: 8px; border: 1px solid #444; width: 100%;
+            display: flex; flex-direction: column; gap: 12px; background: #282e38; 
+            padding: 16px; border-radius: 10px; border: 2px solid #444; width: 100%;
             box-sizing: border-box;
         }
         
         .accordion-header {
             display: flex; justify-content: space-between; align-items: center;
-            cursor: pointer; user-select: none; padding: 2px 0;
+            cursor: pointer; user-select: none; padding: 4px 0; gap: 8px;
         }
-        .accordion-header:hover { filter: brightness(1.15); }
+        .accordion-header:hover { filter: brightness(1.2); }
+        .accordion-header-actions {
+            display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+        }
+        .btn-popup-zoom {
+            background: rgba(255, 255, 255, 0.15); color: #fff; border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 6px; padding: 4px 8px; font-size: 13px; font-weight: 800; cursor: pointer;
+        }
+        .btn-popup-zoom:hover { background: var(--highlight); color: #000; }
         .accordion-arrow {
-            font-size: 14px; color: #aaa; transition: transform 0.2s ease;
+            font-size: 18px; color: #ddd; transition: transform 0.2s ease; font-weight: bold;
         }
         .alarm-toggle-container.open .accordion-arrow {
             transform: rotate(180deg);
         }
 
         .accordion-content {
-            display: none; flex-direction: column; gap: 10px;
-            border-top: 1px solid #444; padding-top: 10px; margin-top: 2px;
+            display: none; flex-direction: column; gap: 14px;
+            border-top: 1px solid #555; padding-top: 12px; margin-top: 4px;
         }
         .alarm-toggle-container.open .accordion-content {
             display: flex;
         }
 
-        .alarm-radio-row { display: flex; gap: 15px; align-items: center; justify-content: center; flex-wrap: wrap; }
-        .alarm-toggle-container label {
-            color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;
+        .alarm-radio-row { display: flex; gap: 18px; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .alarm-toggle-container label, .modal-setting-body label {
+            color: #fff; font-size: 19px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px;
         }
 
-        .alarm-toggle-container input[type="radio"] {
-            width: 18px; height: 18px; cursor: pointer; accent-color: var(--highlight); margin: 0;
+        .alarm-toggle-container input[type="radio"], .modal-setting-body input[type="radio"] {
+            width: 22px; height: 22px; cursor: pointer; accent-color: var(--highlight); margin: 0;
         }
-        .alarm-toggle-container input[type="radio"].tts-accent { accent-color: var(--tts-highlight); }
-        .alarm-toggle-container input[type="radio"].rotation-accent { accent-color: var(--rotation-highlight); }
-        .alarm-toggle-container input[type="radio"].popup-accent { accent-color: var(--popup-highlight); }
-        .alarm-toggle-container input[type="checkbox"].rotation-accent {
-            width: 18px; height: 18px; cursor: pointer; accent-color: var(--rotation-highlight); margin: 0;
+        input[type="radio"].tts-accent { accent-color: var(--tts-highlight) !important; }
+        input[type="radio"].rotation-accent { accent-color: var(--rotation-highlight) !important; }
+        input[type="radio"].popup-accent { accent-color: var(--popup-highlight) !important; }
+        input[type="checkbox"].rotation-accent, input[type="checkbox"].tts-accent {
+            width: 22px; height: 22px; cursor: pointer; accent-color: var(--rotation-highlight); margin: 0;
         }
+        input[type="checkbox"].tts-accent { accent-color: var(--tts-highlight); }
 
         .alarm-time-setting {
-            display: flex; flex-direction: column; gap: 8px; color: #ccc; font-size: 15px; font-weight: bold;
-            border-top: 1px solid #444; padding-top: 10px; width: 100%;
+            display: flex; flex-direction: column; gap: 12px; color: #eee; font-size: 18px; font-weight: 800;
+            border-top: 1px solid #555; padding-top: 12px; width: 100%;
         }
-        .setting-item-row { display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 4px; }
+        .setting-item-row { display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 8px; }
 
-        .alarm-time-setting input[type="number"] {
-            width: 60px; height: 32px; text-align: center; font-size: 16px; font-weight: bold;
-            border: 1px solid var(--highlight); background: #000; color: var(--highlight); border-radius: 4px;
+        .alarm-time-setting input[type="number"], .modal-setting-body input[type="number"] {
+            width: 74px; height: 40px; text-align: center; font-size: 20px; font-weight: 900;
+            border: 2px solid var(--highlight); background: #000; color: var(--highlight); border-radius: 6px;
         }
-        .alarm-time-setting input[type="number"].tts-input { border-color: var(--tts-highlight); color: var(--tts-highlight); }
-        .alarm-time-setting input[type="number"].rotation-input { border-color: var(--rotation-highlight); color: var(--rotation-highlight); }
-        .alarm-time-setting input[type="number"].popup-input { border-color: var(--popup-highlight); color: var(--popup-highlight); }
+        input[type="number"].tts-input { border-color: var(--tts-highlight) !important; color: var(--tts-highlight) !important; }
+        input[type="number"].rotation-input { border-color: var(--rotation-highlight) !important; color: var(--rotation-highlight) !important; }
+        input[type="number"].popup-input { border-color: var(--popup-highlight) !important; color: var(--popup-highlight) !important; }
 
-        .popup-select-container { display: flex; align-items: center; gap: 4px; }
+        .popup-select-container { display: flex; align-items: center; gap: 6px; font-size: 18px; }
         .popup-select {
-            width: 58px; height: 32px; font-size: 14px; font-weight: bold; text-align: center;
-            border: 1px solid var(--popup-highlight); background: #000; color: var(--popup-highlight); border-radius: 4px;
+            width: 72px; height: 40px; font-size: 19px; font-weight: 900; text-align: center;
+            border: 2px solid var(--popup-highlight); background: #000; color: var(--popup-highlight); border-radius: 6px;
             outline: none; padding-left: 2px;
         }
 
-        .alarm-time-setting textarea.popup-textarea {
-            width: 100%; height: 55px; font-size: 13px; background: #000; color: #fff; 
-            border: 1px solid #555; border-radius: 4px; padding: 5px; box-sizing: border-box; resize: none;
+        .alarm-time-setting textarea.popup-textarea, .modal-setting-body textarea.popup-textarea {
+            width: 100%; height: 75px; font-size: 17px; font-weight: 700; line-height: 1.4; background: #000; color: #fff; 
+            border: 2px solid #666; border-radius: 8px; padding: 10px; box-sizing: border-box; resize: vertical;
         }
 
-        .box-title-sm { color: #fff; font-size: 15px; font-weight: bold; text-align: center; margin: 0; }
+        .box-title-sm { color: #fff; font-size: 19px; font-weight: 900; text-align: left; margin: 0; line-height: 1.3; }
+        .preset-container .box-title-sm, .excel-upload-container .box-title-sm { text-align: center; }
+
+        .config-modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.82); z-index: 9999990;
+            justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;
+            backdrop-filter: blur(4px);
+        }
+        .config-modal-overlay.active { display: flex; }
+
+        .config-modal-box {
+            width: 100%; max-width: 760px; max-height: 90vh;
+            background: #1e242d; border-radius: 18px; border: 3px solid var(--highlight);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            display: flex; flex-direction: column; overflow: hidden;
+            animation: popupScaleIn 0.2s ease-out;
+        }
+        .config-modal-header {
+            background: #14181f; padding: 20px 26px; border-bottom: 2px solid #343d4b;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .config-modal-title {
+            font-size: 26px; font-weight: 900; color: var(--highlight); margin: 0;
+        }
+        .btn-modal-close {
+            background: #ff4d4d; color: #fff; border: none; border-radius: 10px;
+            padding: 10px 20px; font-size: 20px; font-weight: 900; cursor: pointer;
+        }
+        .btn-modal-close:hover { filter: brightness(1.15); }
+
+        .modal-setting-body {
+            padding: 24px 28px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px;
+            color: #fff; font-size: 20px; font-weight: 800;
+        }
+        .modal-setting-body .alarm-time-setting {
+            font-size: 20px; gap: 16px; border-top: none; padding-top: 0;
+        }
+        .modal-setting-body label { font-size: 22px; }
+        .modal-setting-body input[type="number"] { width: 90px; height: 48px; font-size: 24px; }
+        .modal-setting-body select.popup-select { width: 88px; height: 48px; font-size: 22px; }
+        .modal-setting-body textarea.popup-textarea { height: 95px; font-size: 19px; }
+
+        .config-modal-footer {
+            background: #14181f; padding: 16px 26px; border-top: 2px solid #343d4b;
+            display: flex; justify-content: flex-end; gap: 12px;
+        }
+        .btn-modal-confirm {
+            background: var(--highlight); color: #000; border: none; border-radius: 10px;
+            padding: 14px 32px; font-size: 22px; font-weight: 900; cursor: pointer;
+        }
+        .btn-modal-confirm:hover { filter: brightness(1.1); }
 
         .boat-header { 
             padding: 10px 15px; color: white; 
@@ -311,7 +368,7 @@
         }
 
         @keyframes popupScaleIn {
-            from { transform: scale(0.9); opacity: 0; }
+            from { transform: scale(0.92); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
         }
 
@@ -477,12 +534,20 @@
         #audio-unlock-banner.show { display: flex; align-items: center; gap: 10px; }
 
         .btn-test-sound {
-            background-color: #2c7be5; color: #fff; border: none; padding: 8px 10px;
-            font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer;
+            background-color: #2c7be5; color: #fff; border: none; padding: 12px 14px;
+            font-size: 17px; font-weight: 900; border-radius: 8px; cursor: pointer;
             flex: 1; transition: all 0.2s; touch-action: manipulation;
         }
         .btn-test-sound:hover { filter: brightness(1.15); }
         .btn-test-tts { background-color: #e67e22; }
+
+        #toast-notification {
+            display: none; position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9); color: #00ffcc; border: 2px solid #00ffcc;
+            padding: 14px 28px; border-radius: 12px; font-size: 20px; font-weight: 900;
+            z-index: 999999999; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+        #toast-notification.show { display: block; }
 
         @keyframes textBlinker {
             0% { opacity: 1.0; }
@@ -495,6 +560,20 @@
 
     <div id="offline-banner">⚠️ 네트워크 연결 끊김 - 로컬 대기열 모드로 전환되었습니다.</div>
     <div id="audio-unlock-banner" class="show" onclick="unlockAllAudioSystems()">🔊 여기를 눌러 알람·방송 소리를 켜주세요 (터치 필수)</div>
+    <div id="toast-notification"></div>
+
+    <div id="config-modal-overlay" class="config-modal-overlay" onclick="if(event.target===this) closeConfigModal()">
+        <div id="config-modal-box" class="config-modal-box">
+            <div class="config-modal-header">
+                <h2 id="config-modal-title" class="config-modal-title">⚙️ 상세 설정</h2>
+                <button type="button" class="btn-modal-close" onclick="closeConfigModal()">✕ 닫기</button>
+            </div>
+            <div id="config-modal-body" class="modal-setting-body"></div>
+            <div class="config-modal-footer">
+                <button type="button" class="btn-modal-confirm" onclick="closeConfigModal()">✅ 설정 완료 및 닫기</button>
+            </div>
+        </div>
+    </div>
 
     <div id="emergency-overlay" class="emergency-fullscreen-overlay">
         <div id="emergency-popup-inner-box" class="emergency-popup-box popup-global-theme">
@@ -785,13 +864,16 @@
             </button>
         </div>
 
-        <!-- 관리자용 알람 사운드 설정 영역 (아코디언 적용) -->
+        <!-- 관리자용 알람 사운드 설정 영역 -->
         <div class="alarm-toggle-container" id="accordion-alarm">
-            <div class="accordion-header" onclick="toggleAccordion('accordion-alarm')">
+            <div class="accordion-header" onclick="openSettingWithAccordion('accordion-alarm', '🔔 [관리자 전용] 알람 사운드 설정', '#00ffcc')">
                 <div class="box-title-sm" style="color: #00ffcc;">🔔 [관리자 전용] 알람 사운드 설정</div>
-                <span class="accordion-arrow">▼</span>
+                <div class="accordion-header-actions">
+                    <span class="btn-popup-zoom">크게보기</span>
+                    <span class="accordion-arrow">▼</span>
+                </div>
             </div>
-            <div class="accordion-content">
+            <div class="accordion-content" id="content-accordion-alarm">
                 <div class="alarm-radio-row">
                     <label><input type="radio" name="alarm_sound" value="on" checked onchange="handleAlarmToggle()"> 🔊 알람 ON</label>
                     <label><input type="radio" name="alarm_sound" value="off" onchange="handleAlarmToggle()"> 🔇 OFF</label>
@@ -809,67 +891,72 @@
                             <input type="number" id="alarm-repeat-count" value="5" min="1" max="20" onchange="saveAlarmConfig()"> 회 울림 🔔
                         </div>
                     </div>
+                    <div style="display: flex; gap: 8px; margin-top: 4px;">
+                        <button type="button" class="btn-test-sound" onclick="testAlarmSound()">🔔 알람 소리 즉시 테스트</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- TTS 음성 안내방송 설정 영역 (아코디언 적용) -->
+        <!-- TTS 음성 안내방송 설정 영역 -->
         <div class="alarm-toggle-container" id="accordion-tts" style="border-color: var(--tts-highlight);">
-            <div class="accordion-header" onclick="toggleAccordion('accordion-tts')">
+            <div class="accordion-header" onclick="openSettingWithAccordion('accordion-tts', '📢 [관리자/손님용] 음성 안내방송 설정', '#ff9f43')">
                 <div class="box-title-sm" style="color: var(--tts-highlight);">📢 [관리자/손님용] 음성 안내방송 설정</div>
-                <span class="accordion-arrow">▼</span>
+                <div class="accordion-header-actions">
+                    <span class="btn-popup-zoom">크게보기</span>
+                    <span class="accordion-arrow">▼</span>
+                </div>
             </div>
-            <div class="accordion-content">
+            <div class="accordion-content" id="content-accordion-tts">
                 <div class="alarm-radio-row">
                     <label><input type="radio" name="tts_broadcast" class="tts-accent" value="on" checked onchange="handleTtsToggle()"> 📢 방송 ON</label>
                     <label><input type="radio" name="tts_broadcast" class="tts-accent" value="off" onchange="handleTtsToggle()"> 🔇 OFF</label>
                 </div>
                 <div class="alarm-time-setting">
                     <div class="setting-item-row">
-                        <span>방송 시작 (관리자/손님):</span>
+                        <span>방송 시작 시각:</span>
                         <div>
                             출발 <input type="number" id="tts-trigger-minutes" class="tts-input" value="5" min="1" max="60" onchange="saveAlarmConfig()"> 분 전
                         </div>
                     </div>
                     <div class="setting-item-row" style="color: var(--tts-highlight);">
-                        <span>방송 반복 (관리자/손님):</span>
+                        <span>방송 반복 횟수:</span>
                         <div>
                             <input type="number" id="tts-repeat-count" class="tts-input" value="2" min="1" max="5" onchange="saveAlarmConfig()"> 번 반복 🗣️
                         </div>
                     </div>
 
-                    <!-- 화면별 개별 방송 멘트 설정 -->
-                    <div style="border-top: 1px dashed #555; padding-top: 8px; margin-top: 4px; display: flex; flex-direction: column; gap: 6px;">
-                        <div style="font-size: 12px; color: #aaa; line-height: 1.3;">
-                            ※ 치환변수: <code style="color:#00ffcc;">{시}</code>, <code style="color:#00ffcc;">{분}</code>, <code style="color:#00ffcc;">{선박}</code>, <code style="color:#00ffcc;">{인원}</code>, <code style="color:#00ffcc;">{잔여}</code><br>
-                            ※ 근무자용 방송 시간·횟수는 근무자 화면 상단에서 개별 조절됩니다.
+                    <div style="border-top: 1px dashed #666; padding-top: 10px; margin-top: 4px; display: flex; flex-direction: column; gap: 10px;">
+                        <div style="font-size: 15px; color: #ccc; line-height: 1.4; background: #181c22; padding: 8px; border-radius: 6px;">
+                            ※ 자동 변환 변수: <code style="color:#00ffcc;">{시}</code>, <code style="color:#00ffcc;">{분}</code>, <code style="color:#00ffcc;">{선박}</code>, <code style="color:#00ffcc;">{인원}</code>, <code style="color:#00ffcc;">{잔여}</code><br>
+                            ※ 멀티모니터 사용 시 <b>관리자 → 근무자 → 손님용</b> 순서로 겹치지 않고 차례대로 자동 송출됩니다.
                         </div>
 
-                        <div style="display: flex; flex-direction: column; gap: 3px;">
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 13px; color: #00ffcc;">🖥️ 관리자 화면 멘트:</span>
-                                <label style="font-size: 12px; color: #ccc;"><input type="checkbox" id="tts-enable-admin" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
+                                <span style="font-size: 17px; color: #00ffcc;">🖥️ 관리자 화면 멘트:</span>
+                                <label style="font-size: 17px; color: #fff;"><input type="checkbox" id="tts-enable-admin" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
                             </div>
-                            <textarea id="tts-msg-admin" class="popup-textarea" style="height: 48px;" onchange="saveAlarmConfig()">관리자 알림. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명, 잔여석은 {잔여}석입니다.</textarea>
+                            <textarea id="tts-msg-admin" class="popup-textarea" onchange="saveAlarmConfig()">관리자 알림. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명, 잔여석은 {잔여}석입니다.</textarea>
                         </div>
 
-                        <div style="display: flex; flex-direction: column; gap: 3px;">
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 13px; color: #61d800;">📺 손님용(1번) 화면 멘트:</span>
-                                <label style="font-size: 12px; color: #ccc;"><input type="checkbox" id="tts-enable-guest" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
+                                <span style="font-size: 17px; color: #61d800;">📺 손님용(1번) 화면 멘트:</span>
+                                <label style="font-size: 17px; color: #fff;"><input type="checkbox" id="tts-enable-guest" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
                             </div>
-                            <textarea id="tts-msg-guest" class="popup-textarea" style="height: 48px;" onchange="saveAlarmConfig()">승객 여러분께 안내 말씀 드립니다. 잠시 후 {시}시 {분}분에 출발하는 {선박} 탑승이 곧 시작됩니다. 탑승권을 소지하신 승객께서는 승선장으로 이동해 주시기 바랍니다.</textarea>
+                            <textarea id="tts-msg-guest" class="popup-textarea" onchange="saveAlarmConfig()">승객 여러분께 안내 말씀 드립니다. 잠시 후 {시}시 {분}분에 출발하는 {선박} 탑승이 곧 시작됩니다. 탑승권을 소지하신 승객께서는 승선장으로 이동해 주시기 바랍니다.</textarea>
                         </div>
 
-                        <div style="display: flex; flex-direction: column; gap: 3px;">
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 13px; color: #ffcc00;">👷 근무자용(2번) 화면 멘트:</span>
-                                <label style="font-size: 12px; color: #ccc;"><input type="checkbox" id="tts-enable-worker" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
+                                <span style="font-size: 17px; color: #ffcc00;">👷 근무자용(2번) 화면 멘트:</span>
+                                <label style="font-size: 17px; color: #fff;"><input type="checkbox" id="tts-enable-worker" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
                             </div>
-                            <textarea id="tts-msg-worker" class="popup-textarea" style="height: 48px;" onchange="saveAlarmConfig()">근무자 안내. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명입니다. 승선 인원 확인 및 안전 점검을 준비해 주세요.</textarea>
+                            <textarea id="tts-msg-worker" class="popup-textarea" onchange="saveAlarmConfig()">근무자 안내. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명입니다. 승선 인원 확인 및 안전 점검을 준비해 주세요.</textarea>
                         </div>
 
-                        <div style="display: flex; gap: 6px; margin-top: 6px;">
+                        <div style="display: flex; gap: 8px; margin-top: 6px;">
                             <button type="button" class="btn-test-sound" onclick="testAlarmSound()">🔔 알람 소리 테스트</button>
                             <button type="button" class="btn-test-sound btn-test-tts" onclick="testTtsBroadcast()">🗣️ 방송 소리 테스트</button>
                         </div>
@@ -878,30 +965,33 @@
             </div>
         </div>
 
-        <!-- 자동 화면전환기 설정 영역 (아코디언 적용) -->
+        <!-- 자동 화면전환기 설정 영역 -->
         <div class="alarm-toggle-container" id="accordion-rotation" style="border-color: var(--rotation-highlight);">
-            <div class="accordion-header" onclick="toggleAccordion('accordion-rotation')">
+            <div class="accordion-header" onclick="openSettingWithAccordion('accordion-rotation', '📺 자동 화면전환기 설정', '#00ecff')">
                 <div class="box-title-sm" style="color: var(--rotation-highlight);">📺 자동 화면전환기 설정</div>
-                <span class="accordion-arrow">▼</span>
+                <div class="accordion-header-actions">
+                    <span class="btn-popup-zoom">크게보기</span>
+                    <span class="accordion-arrow">▼</span>
+                </div>
             </div>
-            <div class="accordion-content">
+            <div class="accordion-content" id="content-accordion-rotation">
                 <div class="alarm-radio-row">
                     <label><input type="radio" name="rotation_mode" class="rotation-accent" value="on" checked onchange="handleRotationToggle()"> ▶️ ON</label>
                     <label><input type="radio" name="rotation_mode" class="rotation-accent" value="off" onchange="handleRotationToggle()"> ⏸️ OFF</label>
                 </div>
-                <div class="alarm-time-setting" style="border-top: 1px solid #444; padding-top: 10px;">
-                    <div class="setting-item-row" style="margin-bottom: 5px;">
+                <div class="alarm-time-setting">
+                    <div class="setting-item-row" style="margin-bottom: 4px;">
                         <span style="color: #fff;">대상 화면 선택:</span>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 6px; padding-left: 5px;">
-                        <label style="font-size: 14px; font-weight: normal; color: #ccc;">
+                    <div style="display: flex; flex-direction: column; gap: 10px; padding-left: 6px;">
+                        <label style="font-size: 18px; color: #eee;">
                             <input type="checkbox" id="rotation-target-guest" class="rotation-accent" checked onchange="saveAlarmConfig()"> 1번 화면 손님용 적용
                         </label>
-                        <label style="font-size: 14px; font-weight: normal; color: #ccc;">
+                        <label style="font-size: 18px; color: #eee;">
                             <input type="checkbox" id="rotation-target-worker" class="rotation-accent" checked onchange="saveAlarmConfig()"> 2번 화면 근무자용 적용
                         </label>
                     </div>
-                    <div class="setting-item-row" style="border-top: 1px dashed #444; padding-top: 8px; margin-top: 5px;">
+                    <div class="setting-item-row" style="border-top: 1px dashed #555; padding-top: 10px; margin-top: 6px;">
                         <span>화면 전환 주기:</span>
                         <div>
                             <input type="number" id="page-interval-seconds" class="rotation-input" value="5" min="2" max="60" onchange="saveAlarmConfig()"> 초 간격
@@ -911,31 +1001,34 @@
             </div>
         </div>
 
-        <!-- 전체 중앙 긴급 공지 팝업 설정 영역 (아코디언 적용) -->
+        <!-- 전체 중앙 긴급 공지 팝업 설정 영역 -->
         <div class="alarm-toggle-container" id="accordion-global-popup" style="border-color: var(--popup-highlight);">
-            <div class="accordion-header" onclick="toggleAccordion('accordion-global-popup')">
+            <div class="accordion-header" onclick="openSettingWithAccordion('accordion-global-popup', '🚨 [전체 중앙] 긴급 공지 팝업 설정', '#ff4d4d')">
                 <div class="box-title-sm" style="color: var(--popup-highlight);">🚨 [전체 중앙] 긴급 공지 팝업 설정</div>
-                <span class="accordion-arrow">▼</span>
+                <div class="accordion-header-actions">
+                    <span class="btn-popup-zoom">크게보기</span>
+                    <span class="accordion-arrow">▼</span>
+                </div>
             </div>
-            <div class="accordion-content">
-                <div style="background: #1a1e24; padding: 8px; border-radius: 6px; border: 1px dashed var(--popup-highlight); margin-bottom: 3px;">
-                    <div class="box-title-sm" style="color: #fff; font-size: 13px; margin-bottom: 5px;">📺 표출 대상 화면 선택</div>
-                    <div style="display: flex; justify-content: space-around; gap: 5px;">
-                        <label style="font-size: 14px; font-weight: normal; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="all" checked onchange="saveAlarmConfig()"> 전체</label>
-                        <label style="font-size: 14px; font-weight: normal; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="guest" onchange="saveAlarmConfig()"> 손님용</label>
-                        <label style="font-size: 14px; font-weight: normal; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="worker" onchange="saveAlarmConfig()"> 근무자용</label>
+            <div class="accordion-content" id="content-accordion-global-popup">
+                <div style="background: #1a1e24; padding: 12px; border-radius: 8px; border: 1px dashed var(--popup-highlight);">
+                    <div class="box-title-sm" style="color: #fff; font-size: 17px; margin-bottom: 8px; text-align: center;">📺 표출 대상 화면 선택</div>
+                    <div style="display: flex; justify-content: space-around; gap: 8px; flex-wrap: wrap;">
+                        <label style="font-size: 18px; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="all" checked onchange="saveAlarmConfig()"> 전체</label>
+                        <label style="font-size: 18px; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="guest" onchange="saveAlarmConfig()"> 손님용</label>
+                        <label style="font-size: 18px; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="worker" onchange="saveAlarmConfig()"> 근무자용</label>
                     </div>
                 </div>
 
-                <div style="background: #1a1e24; padding: 8px; border-radius: 6px; border: 1px dashed var(--popup-highlight); margin-bottom: 3px;">
-                    <div class="box-title-sm" style="color: #fff; font-size: 13px; margin-bottom: 5px;">🔴 전체 수동 즉시 발동 스위치</div>
+                <div style="background: #1a1e24; padding: 12px; border-radius: 8px; border: 1px dashed var(--popup-highlight);">
+                    <div class="box-title-sm" style="color: #fff; font-size: 17px; margin-bottom: 8px; text-align: center;">🔴 전체 수동 즉시 발동 스위치</div>
                     <div class="alarm-radio-row">
                         <label style="color: #ff4d4d;"><input type="radio" name="popup_manual_switch" class="popup-accent" value="forced_on" onchange="handleManualPopupToggle('global', this.value)"> ⚡ 강제ON</label>
                         <label><input type="radio" name="popup_manual_switch" class="popup-accent" value="forced_off" checked onchange="handleManualPopupToggle('global', this.value)"> 💤 해제</label>
                     </div>
                 </div>
 
-                <div class="box-title-sm" style="color: #aaa; font-size: 12px; text-align: left; padding-left: 5px;">🕒 예약 자동 스케줄 설정</div>
+                <div class="box-title-sm" style="color: #ccc; font-size: 16px; text-align: left; padding-left: 4px;">🕒 예약 자동 스케줄 설정</div>
                 <div class="alarm-radio-row">
                     <label><input type="radio" name="popup_mode" class="popup-accent" value="on" checked onchange="saveAlarmConfig()"> ▶️ ON</label>
                     <label><input type="radio" name="popup_mode" class="popup-accent" value="off" onchange="saveAlarmConfig()"> ⏸️ OFF</label>
@@ -951,59 +1044,65 @@
                     <div class="setting-item-row">
                         <span>팝업 유지 시간:</span>
                         <div>
-                            <input type="number" id="popup-duration-seconds" class="popup-input" value="20" min="0" max="600" onchange="saveAlarmConfig()"> 초 <span style="font-size:12px;color:#aaa;">(0은 무제한)</span>
+                            <input type="number" id="popup-duration-seconds" class="popup-input" value="20" min="0" max="600" onchange="saveAlarmConfig()"> 초 <span style="font-size:15px;color:#bbb;">(0은 무제한)</span>
                         </div>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
-                        <span style="color: #ff4d4d; font-weight: bold;">📢 [전체 공지] 내용 입력창:</span>
-                        <textarea id="popup-message-text" class="popup-textarea" style="height: 60px;" placeholder="전체화면으로 띄울 공지내용을 적으세요" onchange="saveAlarmConfig()">기상 악화 및 정비 관계로 인하여 잠시 후 다음 항차 운항이 지연될 예정이오니 양해 바랍니다.</textarea>
+                    <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+                        <span style="color: #ff4d4d; font-weight: 900;">📢 [전체 공지] 내용 입력창:</span>
+                        <textarea id="popup-message-text" class="popup-textarea" placeholder="전체화면으로 띄울 공지내용을 적으세요" onchange="saveAlarmConfig()">기상 악화 및 정비 관계로 인하여 잠시 후 다음 항차 운항이 지연될 예정이오니 양해 바랍니다.</textarea>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 1호 영역 긴급 팝업 설정 영역 (아코디언 적용) -->
+        <!-- 1호 영역 긴급 팝업 설정 영역 -->
         <div class="alarm-toggle-container" id="accordion-boat1-popup" style="border-color: var(--boat3-color);">
-            <div class="accordion-header" onclick="toggleAccordion('accordion-boat1-popup')">
+            <div class="accordion-header" onclick="openSettingWithAccordion('accordion-boat1-popup', '🚨 [1호 영역] 긴급 팝업 설정', '#28a745')">
                 <div class="box-title-sm" style="color: var(--boat3-color);">🚨 [1호 영역] 긴급 팝업 설정</div>
-                <span class="accordion-arrow">▼</span>
+                <div class="accordion-header-actions">
+                    <span class="btn-popup-zoom">크게보기</span>
+                    <span class="accordion-arrow">▼</span>
+                </div>
             </div>
-            <div class="accordion-content">
-                <div style="background: #1a1e24; padding: 6px; border-radius: 6px; border: 1px dashed var(--boat3-color); margin-bottom: 3px;">
-                    <div class="box-title-sm" style="color: #fff; font-size: 12px; margin-bottom: 4px;">🔴 1호 수동 즉시 발동</div>
+            <div class="accordion-content" id="content-accordion-boat1-popup">
+                <div style="background: #1a1e24; padding: 12px; border-radius: 8px; border: 1px dashed var(--boat3-color);">
+                    <div class="box-title-sm" style="color: #fff; font-size: 17px; margin-bottom: 8px; text-align: center;">🔴 1호 수동 즉시 발동</div>
                     <div class="alarm-radio-row">
-                        <label style="color: var(--boat3-color); font-size: 14px;"><input type="radio" name="popup_manual_1" value="forced_on" onchange="handleManualPopupToggle(1, this.value)"> ⚡ 강제ON</label>
-                        <label style="font-size: 14px;"><input type="radio" name="popup_manual_1" value="forced_off" checked onchange="handleManualPopupToggle(1, this.value)"> 💤 해제</label>
+                        <label style="color: var(--boat3-color);"><input type="radio" name="popup_manual_1" value="forced_on" onchange="handleManualPopupToggle(1, this.value)"> ⚡ 강제ON</label>
+                        <label><input type="radio" name="popup_manual_1" value="forced_off" checked onchange="handleManualPopupToggle(1, this.value)"> 💤 해제</label>
                     </div>
                 </div>
 
                 <div class="alarm-time-setting" style="border-top: none; padding-top: 0;">
-                    <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
-                        <span style="font-size: 13px; color: var(--boat3-color);">📢 1호 전용 공지 내용:</span>
+                    <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+                        <span style="color: var(--boat3-color);">📢 1호 전용 공지 내용:</span>
                         <textarea id="popup-text-1" class="popup-textarea" placeholder="1호 긴급 공지내용 입력" onchange="saveAlarmConfig()">김시민 1호 기상 악화 및 정비 관계로 인하여 잠시 후 운항이 지연될 예정입니다.</textarea>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 2호 영역 긴급 팝업 설정 영역 (아코디언 적용) -->
+        <!-- 2호 영역 긴급 팝업 설정 영역 -->
         <div class="alarm-toggle-container" id="accordion-boat2-popup" style="border-color: var(--boat4-color);">
-            <div class="accordion-header" onclick="toggleAccordion('accordion-boat2-popup')">
+            <div class="accordion-header" onclick="openSettingWithAccordion('accordion-boat2-popup', '🚨 [2호 영역] 긴급 팝업 설정', '#2c7be5')">
                 <div class="box-title-sm" style="color: var(--boat4-color);">🚨 [2호 영역] 긴급 팝업 설정</div>
-                <span class="accordion-arrow">▼</span>
+                <div class="accordion-header-actions">
+                    <span class="btn-popup-zoom">크게보기</span>
+                    <span class="accordion-arrow">▼</span>
+                </div>
             </div>
-            <div class="accordion-content">
-                <div style="background: #1a1e24; padding: 6px; border-radius: 6px; border: 1px dashed var(--boat4-color); margin-bottom: 3px;">
-                    <div class="box-title-sm" style="color: #fff; font-size: 12px; margin-bottom: 4px;">🔴 2호 수동 즉시 발동</div>
+            <div class="accordion-content" id="content-accordion-boat2-popup">
+                <div style="background: #1a1e24; padding: 12px; border-radius: 8px; border: 1px dashed var(--boat4-color);">
+                    <div class="box-title-sm" style="color: #fff; font-size: 17px; margin-bottom: 8px; text-align: center;">🔴 2호 수동 즉시 발동</div>
                     <div class="alarm-radio-row">
-                        <label style="color: var(--boat4-color); font-size: 14px;"><input type="radio" name="popup_manual_2" value="forced_on" onchange="handleManualPopupToggle(2, this.value)"> ⚡ 강제ON</label>
-                        <label style="font-size: 14px;"><input type="radio" name="popup_manual_2" value="forced_off" checked onchange="handleManualPopupToggle(2, this.value)"> 💤 해제</label>
+                        <label style="color: var(--boat4-color);"><input type="radio" name="popup_manual_2" value="forced_on" onchange="handleManualPopupToggle(2, this.value)"> ⚡ 강제ON</label>
+                        <label><input type="radio" name="popup_manual_2" value="forced_off" checked onchange="handleManualPopupToggle(2, this.value)"> 💤 해제</label>
                     </div>
                 </div>
 
                 <div class="alarm-time-setting" style="border-top: none; padding-top: 0;">
-                    <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
-                        <span style="font-size: 13px; color: var(--boat4-color);">📢 2호 전용 공지 내용:</span>
+                    <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+                        <span style="color: var(--boat4-color);">📢 2호 전용 공지 내용:</span>
                         <textarea id="popup-text-2" class="popup-textarea" placeholder="2호 긴급 공지내용 입력" onchange="saveAlarmConfig()">김시민 2호 기상 악화 및 정비 관계로 인하여 잠시 후 운항이 지연될 예정입니다.</textarea>
                     </div>
                 </div>
@@ -1044,7 +1143,7 @@
         document.addEventListener('mousemove', (e) => {
             if (!isResizing) return;
             const newWidth = window.innerWidth - e.clientX - 15;
-            if (newWidth >= 200 && newWidth <= 600) {
+            if (newWidth >= 260 && newWidth <= 650) {
                 rightSidebar.style.width = `${newWidth}px`;
             }
         });
@@ -1059,17 +1158,72 @@
         });
     }
 
-    window.toggleAccordion = function(containerId) {
+    let activeModalContainerId = null;
+
+    window.openSettingWithAccordion = function(containerId, titleText, accentColor) {
         const container = document.getElementById(containerId);
-        if (container) {
-            container.classList.toggle('open');
+        const contentEl = document.getElementById(`content-${containerId}`);
+        if (!container || !contentEl) return;
+
+        container.classList.add('open');
+        restoreModalContent();
+
+        const overlay = document.getElementById('config-modal-overlay');
+        const box = document.getElementById('config-modal-box');
+        const titleEl = document.getElementById('config-modal-title');
+        const modalBody = document.getElementById('config-modal-body');
+
+        titleEl.innerText = titleText;
+        titleEl.style.color = accentColor || '#00ffcc';
+        box.style.borderColor = accentColor || '#00ffcc';
+
+        while (contentEl.firstChild) {
+            modalBody.appendChild(contentEl.firstChild);
         }
+
+        activeModalContainerId = containerId;
+        overlay.classList.add('active');
     };
+
+    function restoreModalContent() {
+        if (!activeModalContainerId) return;
+        const contentEl = document.getElementById(`content-${activeModalContainerId}`);
+        const modalBody = document.getElementById('config-modal-body');
+        if (contentEl && modalBody) {
+            while (modalBody.firstChild) {
+                contentEl.appendChild(modalBody.firstChild);
+            }
+        }
+        activeModalContainerId = null;
+    }
+
+    window.closeConfigModal = function() {
+        restoreModalContent();
+        const overlay = document.getElementById('config-modal-overlay');
+        if (overlay) overlay.classList.remove('active');
+    };
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && activeModalContainerId) {
+            window.closeConfigModal();
+        }
+    });
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast-notification');
+        if (!toast) return;
+        toast.innerText = msg;
+        toast.classList.add('show');
+        clearTimeout(window._toastTimer);
+        window._toastTimer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3200);
+    }
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             const swCode = `
-                const CACHE_NAME = 'kimsimin-cache-v7';
+                const CACHE_NAME = 'kimsimin-cache-v9';
                 self.addEventListener('install', e => self.skipWaiting());
                 self.addEventListener('activate', e => e.waitUntil(
                     caches.keys().then(keys => Promise.all(
@@ -1204,8 +1358,6 @@
     let playedEmergencyPopups = { global: {}, 1: {}, 2: {} };
     let activeVisualAlarms = { 1: [], 2: [] };
     let activeTtsBroadcasts = { 1: [], 2: [] };
-    let alarmSoundIntervals = {};
-    let isTtsSpeakingNow = false; 
 
     let guestPageStatus = {
         1: { currentPage: 1, lastRotationTime: Date.now() },
@@ -1694,21 +1846,277 @@
         window.saveAlarmConfig(); updateUI();
     };
 
+    // ==========================================================================
+    // [핵심 해결] 멀티모니터 브라우저간 충돌 방지 및 전역 순차 재생 큐 (Sequential Audio Queue)
+    // ==========================================================================
+    const TAB_INSTANCE_ID = `${mode || 'admin'}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const ROLE_PRIORITY = isWorker ? 2 : (isCustomerGuest ? 3 : 1); // 1:관리자 -> 2:근무자 -> 3:손님용
+    const audioSyncChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('kimsimin_audio_seq_channel') : null;
+
+    let localAudioQueue = [];        
+    let isLocalPlaying = false;      
+    let activeAudioJob = null;       
+    let remoteLockOwner = null;      
+    let remoteLockExpiresAt = 0;     
+    let alarmLoopTimer = null;
+
+    if (audioSyncChannel) {
+        audioSyncChannel.onmessage = (event) => {
+            const msg = event.data;
+            if (!msg || msg.sender === TAB_INSTANCE_ID) return;
+
+            if (msg.type === 'AUDIO_LOCK_ACQUIRED') {
+                remoteLockOwner = msg.sender;
+                remoteLockExpiresAt = Date.now() + (msg.durationMs || 15000);
+            } else if (msg.type === 'AUDIO_LOCK_RELEASED') {
+                if (remoteLockOwner === msg.sender) {
+                    remoteLockOwner = null;
+                    remoteLockExpiresAt = 0;
+                    setTimeout(processSequentialAudioQueue, 350);
+                }
+            } else if (msg.type === 'STOP_ALL_AUDIO') {
+                abortCurrentLocalAudio();
+            }
+        };
+    }
+
+    function acquireGlobalAudioLock(estimatedMs) {
+        if (remoteLockOwner && Date.now() < remoteLockExpiresAt) {
+            return false;
+        }
+        remoteLockOwner = null;
+        if (audioSyncChannel) {
+            audioSyncChannel.postMessage({
+                type: 'AUDIO_LOCK_ACQUIRED',
+                sender: TAB_INSTANCE_ID,
+                durationMs: estimatedMs
+            });
+        }
+        return true;
+    }
+
+    function releaseGlobalAudioLock() {
+        if (audioSyncChannel) {
+            audioSyncChannel.postMessage({
+                type: 'AUDIO_LOCK_RELEASED',
+                sender: TAB_INSTANCE_ID
+            });
+        }
+    }
+
+    function enqueueSequentialAudio(job) {
+        const exists = localAudioQueue.some(q => q.uniqueJobId === job.uniqueJobId)
+                    || (activeAudioJob && activeAudioJob.uniqueJobId === job.uniqueJobId);
+        if (exists) return;
+
+        localAudioQueue.push(job);
+        localAudioQueue.sort((a, b) => {
+            if (a.kind !== b.kind) return a.kind === 'alarm' ? -1 : 1;
+            if (a.priority !== b.priority) return a.priority - b.priority;
+            return (a.boatId || 0) - (b.boatId || 0);
+        });
+
+        processSequentialAudioQueue();
+    }
+
+    function processSequentialAudioQueue() {
+        if (isLocalPlaying || localAudioQueue.length === 0) return;
+
+        if (remoteLockOwner && Date.now() < remoteLockExpiresAt) {
+            setTimeout(processSequentialAudioQueue, 400);
+            return;
+        }
+
+        const nextJob = localAudioQueue.shift();
+        const estimatedDuration = nextJob.kind === 'alarm'
+            ? (nextJob.repeatCount * 1100 + 1000)
+            : (nextJob.repeatCount * 9000 + 2000);
+
+        if (!acquireGlobalAudioLock(estimatedDuration)) {
+            localAudioQueue.unshift(nextJob);
+            setTimeout(processSequentialAudioQueue, 400);
+            return;
+        }
+
+        isLocalPlaying = true;
+        activeAudioJob = nextJob;
+
+        const finishJob = () => {
+            isLocalPlaying = false;
+            activeAudioJob = null;
+            releaseGlobalAudioLock();
+            setTimeout(processSequentialAudioQueue, 600);
+        };
+
+        if (nextJob.kind === 'alarm') {
+            runSequentialAlarmJob(nextJob, finishJob);
+        } else if (nextJob.kind === 'tts') {
+            runSequentialTtsJob(nextJob, finishJob);
+        } else {
+            finishJob();
+        }
+    }
+
+    function runSequentialAlarmJob(job, onComplete) {
+        const ctx = getSharedAudioContext();
+        if (!ctx) {
+            if (job.boatId && job.time) window.dismissAlarm(job.boatId, job.time);
+            onComplete();
+            return;
+        }
+
+        if (navigator.vibrate) navigator.vibrate([300, 200, 300, 200, 500]);
+
+        let count = 0;
+        const maxRepeats = job.repeatCount || 5;
+
+        const playOnceAndCheck = () => {
+            if (job.boatId && job.time && !job.isTest) {
+                const isStillVisual = activeVisualAlarms[job.boatId]?.includes(job.time);
+                const isEnabled = isWorker
+                    ? ((job.boatId === 1 ? (configData.boat1Alarm || 'on') : (configData.boat2Alarm || 'on')) === 'on')
+                    : ((configData.alarmSound || 'on') === 'on');
+
+                if (!isStillVisual || !isEnabled) {
+                    clearInterval(alarmLoopTimer);
+                    alarmLoopTimer = null;
+                    window.dismissAlarm(job.boatId, job.time);
+                    onComplete();
+                    return;
+                }
+            }
+
+            playSingleBeepSignal(ctx, ctx.currentTime);
+            count++;
+
+            if (count >= maxRepeats) {
+                clearInterval(alarmLoopTimer);
+                alarmLoopTimer = null;
+                setTimeout(() => {
+                    if (job.boatId && job.time && !job.isTest) {
+                        window.dismissAlarm(job.boatId, job.time);
+                    }
+                    onComplete();
+                }, 700);
+            }
+        };
+
+        playOnceAndCheck();
+        if (count < maxRepeats) {
+            alarmLoopTimer = setInterval(playOnceAndCheck, 1000);
+        }
+    }
+
+    function runSequentialTtsJob(job, onComplete) {
+        if (!('speechSynthesis' in window)) {
+            if (job.boatId && job.time) window.dismissTtsBroadcast(job.boatId, job.time);
+            onComplete();
+            return;
+        }
+
+        let remainingLoops = job.repeatCount || 2;
+
+        const speakNextLoop = () => {
+            if (job.boatId && job.time && !job.isTest) {
+                const isStillActive = activeTtsBroadcasts[job.boatId]?.includes(job.time);
+                const isEnabled = isWorker
+                    ? ((job.boatId === 1 ? (configData.boat1Tts || 'on') : (configData.boat2Tts || 'on')) === 'on')
+                    : ((configData.ttsBroadcast || 'on') === 'on');
+
+                if (!isStillActive || !isEnabled || remainingLoops <= 0) {
+                    window.dismissTtsBroadcast(job.boatId, job.time);
+                    onComplete();
+                    return;
+                }
+            }
+
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+
+            speakKoreanPhrase(job.phrase, () => {
+                remainingLoops--;
+                if (remainingLoops > 0) {
+                    setTimeout(speakNextLoop, 1200);
+                } else {
+                    if (job.boatId && job.time && !job.isTest) {
+                        window.dismissTtsBroadcast(job.boatId, job.time);
+                    }
+                    onComplete();
+                }
+            });
+        };
+
+        speakNextLoop();
+    }
+
+    function abortCurrentLocalAudio() {
+        if (alarmLoopTimer) {
+            clearInterval(alarmLoopTimer);
+            alarmLoopTimer = null;
+        }
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+        localAudioQueue = [];
+        if (isLocalPlaying) {
+            isLocalPlaying = false;
+            activeAudioJob = null;
+            releaseGlobalAudioLock();
+        }
+    }
+
     window.dismissAlarm = function(id, time) {
-        const alarmKey = `${id}-${time}`;
-        if (alarmSoundIntervals[alarmKey]) { clearInterval(alarmSoundIntervals[alarmKey]); delete alarmSoundIntervals[alarmKey]; }
         activeVisualAlarms[id] = activeVisualAlarms[id].filter(t => t !== time);
+        localAudioQueue = localAudioQueue.filter(q => !(q.kind === 'alarm' && q.boatId === id && q.time === time));
+
+        if (activeAudioJob && activeAudioJob.kind === 'alarm' && activeAudioJob.boatId === id && activeAudioJob.time === time) {
+            if (alarmLoopTimer) { clearInterval(alarmLoopTimer); alarmLoopTimer = null; }
+            isLocalPlaying = false;
+            activeAudioJob = null;
+            releaseGlobalAudioLock();
+            setTimeout(processSequentialAudioQueue, 300);
+        }
         updateUI();
     };
 
     window.dismissTtsBroadcast = function(id, time) {
-        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         activeTtsBroadcasts[id] = activeTtsBroadcasts[id].filter(t => t !== time);
+        localAudioQueue = localAudioQueue.filter(q => !(q.kind === 'tts' && q.boatId === id && q.time === time));
+
+        if (activeAudioJob && activeAudioJob.kind === 'tts' && activeAudioJob.boatId === id && activeAudioJob.time === time) {
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            isLocalPlaying = false;
+            activeAudioJob = null;
+            releaseGlobalAudioLock();
+            setTimeout(processSequentialAudioQueue, 300);
+        }
         updateUI();
     };
 
+    // ==========================================================================
+    // Web Audio API & 한국어 음성 합성(TTS) 엔진
+    // ==========================================================================
     let sharedAudioCtx = null;
     let audioSystemUnlocked = false;
+    let cachedKoreanVoice = null;
+
+    function loadKoreanVoice() {
+        if (!('speechSynthesis' in window)) return null;
+        const voices = window.speechSynthesis.getVoices();
+        if (!voices || voices.length === 0) return null;
+
+        cachedKoreanVoice = voices.find(v => v.name.includes('Google') && v.lang.includes('ko'))
+                         || voices.find(v => v.name.includes('Natural') && v.lang.includes('ko'))
+                         || voices.find(v => v.name.includes('Heami') || v.name.includes('SunHi') || v.name.includes('InJoon'))
+                         || voices.find(v => v.lang === 'ko-KR' || v.lang.startsWith('ko'));
+        return cachedKoreanVoice;
+    }
+
+    if ('speechSynthesis' in window) {
+        loadKoreanVoice();
+        window.speechSynthesis.onvoiceschanged = () => {
+            loadKoreanVoice();
+        };
+    }
 
     function getSharedAudioContext() {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -1738,10 +2146,12 @@
         }
 
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.getVoices();
-            window.speechSynthesis.cancel();
-            const unlockUtter = new SpeechSynthesisUtterance(' ');
-            unlockUtter.volume = 0.01;
+            loadKoreanVoice();
+            if (window.speechSynthesis.paused) {
+                window.speechSynthesis.resume();
+            }
+            const unlockUtter = new SpeechSynthesisUtterance('');
+            unlockUtter.volume = 0;
             unlockUtter.lang = 'ko-KR';
             window.speechSynthesis.speak(unlockUtter);
         }
@@ -1751,37 +2161,77 @@
         if (banner) banner.classList.remove('show');
     };
 
-    window.testAlarmSound = function() {
-        window.unlockAllAudioSystems();
-        const ctx = getSharedAudioContext();
-        if (!ctx) {
-            alert("이 브라우저는 오디오 출력을 지원하지 않습니다.");
-            return;
-        }
-        playSingleBeepSignal(ctx, ctx.currentTime);
-    };
-
-    window.testTtsBroadcast = function() {
-        window.unlockAllAudioSystems();
+    function speakKoreanPhrase(phrase, onDoneCallback) {
         if (!('speechSynthesis' in window)) {
-            alert("이 브라우저는 음성 안내(TTS)를 지원하지 않습니다.");
+            if (onDoneCallback) onDoneCallback(false);
             return;
         }
-        const now = new Date();
-        const sampleText = buildRoleTtsSpeech(1, now.getHours(), now.getMinutes(), 12, boatData[1].capacity || 25);
+
         window.speechSynthesis.cancel();
+        if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+        }
+
         setTimeout(() => {
-            const utter = new SpeechSynthesisUtterance(sampleText);
-            const voices = window.speechSynthesis.getVoices();
-            let selectedVoice = voices.find(v => v.name.includes('Google') && v.lang.includes('ko'))
-                             || voices.find(v => v.lang === 'ko-KR' || v.lang.startsWith('ko'));
-            if (selectedVoice) utter.voice = selectedVoice;
+            const utter = new SpeechSynthesisUtterance(phrase);
+            const voice = cachedKoreanVoice || loadKoreanVoice();
+            if (voice) {
+                utter.voice = voice;
+            }
             utter.lang = 'ko-KR';
             utter.volume = 1.0;
             utter.rate = 0.95;
             utter.pitch = 1.0;
+
+            const keepAliveTimer = setInterval(() => {
+                if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+                    window.speechSynthesis.pause();
+                    window.speechSynthesis.resume();
+                } else if (!window.speechSynthesis.speaking) {
+                    clearInterval(keepAliveTimer);
+                }
+            }, 4000);
+
+            utter.onend = () => {
+                clearInterval(keepAliveTimer);
+                if (onDoneCallback) onDoneCallback(true);
+            };
+
+            utter.onerror = (err) => {
+                clearInterval(keepAliveTimer);
+                console.warn("TTS 발화 오류:", err);
+                if (onDoneCallback) onDoneCallback(false);
+            };
+
             window.speechSynthesis.speak(utter);
-        }, 80);
+        }, 150);
+    }
+
+    window.testAlarmSound = function() {
+        window.unlockAllAudioSystems();
+        showToast("🔔 알람 테스트 소리를 순차 대기열에 등록했습니다.");
+        enqueueSequentialAudio({
+            uniqueJobId: `test-alarm-${Date.now()}`,
+            kind: 'alarm',
+            priority: 0,
+            repeatCount: 2,
+            isTest: true
+        });
+    };
+
+    window.testTtsBroadcast = function() {
+        window.unlockAllAudioSystems();
+        const now = new Date();
+        const sampleText = buildRoleTtsSpeech(1, now.getHours(), now.getMinutes(), 12, boatData[1].capacity || 25);
+        showToast("🗣️ 방송 소리 테스트를 순차 대기열에 등록했습니다.");
+        enqueueSequentialAudio({
+            uniqueJobId: `test-tts-${Date.now()}`,
+            kind: 'tts',
+            priority: 0,
+            phrase: sampleText,
+            repeatCount: 1,
+            isTest: true
+        });
     };
 
     function playSingleBeepSignal(ctx, nowTime) {
@@ -1801,7 +2251,6 @@
     }
 
     function startInfiniteAlarmLoop(id, time) {
-        // [화면별 독립 제어] 관리자(본체) 화면인지, 근무자 화면인지, 손님 화면인지에 따라 알람 ON/OFF 및 반복 횟수 분기
         const isAlarmEnabled = isWorker
             ? ((id === 1 ? (configData.boat1Alarm || 'on') : (configData.boat2Alarm || 'on')) === 'on')
             : (isCustomerGuest ? false : ((configData.alarmSound || 'on') === 'on'));
@@ -1811,74 +2260,61 @@
         if (!activeVisualAlarms[id].includes(time)) activeVisualAlarms[id].push(time);
         updateUI(); 
 
-        const alarmKey = `${id}-${time}`;
-        if (alarmSoundIntervals[alarmKey]) return;
+        const maxRepeats = isWorker
+            ? ((id === 1 ? configData.boat1AlarmRep : configData.boat2AlarmRep) || 5)
+            : (configData.alarmRepeatCount || 5);
 
-        if (navigator.vibrate) navigator.vibrate([300, 200, 300, 200, 500]);
-
-        try {
-            const ctx = getSharedAudioContext();
-            if (!ctx) return;
-            
-            const maxRepeats = isWorker
-                ? ((id === 1 ? configData.boat1AlarmRep : configData.boat2AlarmRep) || 5)
-                : (configData.alarmRepeatCount || 5);
-                
-            let currentRepeatCount = 0;
-
-            playSingleBeepSignal(ctx, ctx.currentTime);
-            currentRepeatCount++;
-
-            if (currentRepeatCount >= maxRepeats) {
-                setTimeout(() => { window.dismissAlarm(id, time); }, 700);
-                return;
-            }
-
-            alarmSoundIntervals[alarmKey] = setInterval(() => {
-                const checkEnabled = isWorker
-                    ? ((id === 1 ? (configData.boat1Alarm || 'on') : (configData.boat2Alarm || 'on')) === 'on')
-                    : (isCustomerGuest ? false : ((configData.alarmSound || 'on') === 'on'));
-
-                if (!checkEnabled) { window.dismissAlarm(id, time); return; }
-
-                if (currentRepeatCount >= maxRepeats) { 
-                    window.dismissAlarm(id, time); 
-                    return; 
-                }
-
-                playSingleBeepSignal(ctx, ctx.currentTime);
-                currentRepeatCount++;
-            }, 1000);
-        } catch(e) { console.log("오디오 디바이스 에러:", e); }
+        enqueueSequentialAudio({
+            uniqueJobId: `alarm-${TAB_INSTANCE_ID}-${id}-${time}`,
+            kind: 'alarm',
+            priority: ROLE_PRIORITY,
+            boatId: id,
+            time: time,
+            repeatCount: maxRepeats
+        });
     }
 
     function stopBoatAlarms(id) {
-        for (let key in alarmSoundIntervals) {
-            if (key.startsWith(`${id}-`)) {
-                clearInterval(alarmSoundIntervals[key]);
-                delete alarmSoundIntervals[key];
-            }
-        }
         activeVisualAlarms[id] = [];
+        localAudioQueue = localAudioQueue.filter(q => !(q.kind === 'alarm' && q.boatId === id));
+        if (activeAudioJob && activeAudioJob.kind === 'alarm' && activeAudioJob.boatId === id) {
+            if (alarmLoopTimer) { clearInterval(alarmLoopTimer); alarmLoopTimer = null; }
+            isLocalPlaying = false;
+            activeAudioJob = null;
+            releaseGlobalAudioLock();
+            setTimeout(processSequentialAudioQueue, 300);
+        }
     }
 
     function stopBoatTts(id) {
-        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         activeTtsBroadcasts[id] = [];
+        localAudioQueue = localAudioQueue.filter(q => !(q.kind === 'tts' && q.boatId === id));
+        if (activeAudioJob && activeAudioJob.kind === 'tts' && activeAudioJob.boatId === id) {
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            isLocalPlaying = false;
+            activeAudioJob = null;
+            releaseGlobalAudioLock();
+            setTimeout(processSequentialAudioQueue, 300);
+        }
     }
 
     function stopAllAlarms() {
-        for (let key in alarmSoundIntervals) clearInterval(alarmSoundIntervals[key]);
-        alarmSoundIntervals = {}; activeVisualAlarms = { 1: [], 2: [] };
+        activeVisualAlarms = { 1: [], 2: [] };
+        localAudioQueue = localAudioQueue.filter(q => q.kind !== 'alarm');
+        if (activeAudioJob && activeAudioJob.kind === 'alarm') {
+            abortCurrentLocalAudio();
+        }
     }
 
     function stopAllTtsBroadcasts() {
-        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         activeTtsBroadcasts = { 1: [], 2: [] };
+        localAudioQueue = localAudioQueue.filter(q => q.kind !== 'tts');
+        if (activeAudioJob && activeAudioJob.kind === 'tts') {
+            abortCurrentLocalAudio();
+        }
     }
 
     function checkTenMinutesAlarm(id, times) {
-        // 손님용(1번) 화면은 알람 소리 울림 대상에서 제외 (근무자 및 관리자만 울림)
         if (isCustomerGuest) return;
 
         const isAlarmEnabled = isWorker
@@ -1923,7 +2359,6 @@
         const remain = Math.max(0, capacity - booked);
         let template = "";
 
-        // [화면별 독립 제어] 각 모니터(관리자, 손님용, 근무자용)에 맞는 독립된 TTS 멘트 템플릿 반환
         if (isCustomerGuest) {
             template = configData.ttsMsgGuest || defaultConfigData.ttsMsgGuest;
         } else if (isWorker) {
@@ -1941,11 +2376,6 @@
     }
 
     function checkTtsSpeechBroadcast(id, times) {
-        if (isTtsSpeakingNow || (('speechSynthesis' in window) && window.speechSynthesis.speaking)) {
-            return;
-        }
-
-        // [화면별 독립 제어] 각 화면별 사용 여부 체크
         if (isCustomerGuest && configData.ttsEnableGuest === false) return;
         if (isWorker && configData.ttsEnableWorker === false) return;
         if (!isGuest && configData.ttsEnableAdmin === false) return;
@@ -1991,87 +2421,20 @@
                         updateUI();
 
                         const speechText = buildRoleTtsSpeech(id, tH, tM, booked, capacity);
-                        executeNativeTTS(speechText, maxLoops, id, t);
+
+                        enqueueSequentialAudio({
+                            uniqueJobId: `tts-${TAB_INSTANCE_ID}-${id}-${t}`,
+                            kind: 'tts',
+                            priority: ROLE_PRIORITY,
+                            boatId: id,
+                            time: t,
+                            phrase: speechText,
+                            repeatCount: maxLoops
+                        });
                     }
                 }
             }
         });
-    }
-
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.getVoices();
-        window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
-    }
-
-    function executeNativeTTS(phrase, remainingLoops, id, time) {
-        if (!('speechSynthesis' in window)) return;
-
-        const isTtsEnabled = isWorker
-            ? ((id === 1 ? (configData.boat1Tts || 'on') : (configData.boat2Tts || 'on')) === 'on')
-            : ((configData.ttsBroadcast || 'on') === 'on');
-        
-        if (!isTtsEnabled) { 
-            isTtsSpeakingNow = false;
-            window.dismissTtsBroadcast(id, time); 
-            return; 
-        }
-
-        if (remainingLoops <= 0 || !activeTtsBroadcasts[id].includes(time)) { 
-            isTtsSpeakingNow = false;
-            window.dismissTtsBroadcast(id, time); 
-            return; 
-        }
-
-        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-
-        window.speechSynthesis.cancel();
-
-        setTimeout(() => {
-            if (!activeTtsBroadcasts[id].includes(time)) {
-                isTtsSpeakingNow = false;
-                return;
-            }
-
-            const utterance = new SpeechSynthesisUtterance(phrase); 
-            const voices = window.speechSynthesis.getVoices();
-
-            let selectedVoice = voices.find(voice => voice.name.includes('Google') && voice.name.includes('Female') && voice.lang.includes('ko'));
-            if (!selectedVoice) selectedVoice = voices.find(voice => voice.name.includes('Google') && voice.lang.includes('ko'));
-            if (!selectedVoice) selectedVoice = voices.find(voice => voice.name.includes('Natural') && voice.lang.includes('ko'));
-            if (!selectedVoice) selectedVoice = voices.find(voice => voice.lang === 'ko-KR' || voice.lang.startsWith('ko'));
-
-            if (selectedVoice) utterance.voice = selectedVoice;
-            utterance.lang = 'ko-KR';
-            utterance.volume = 1.0;
-            utterance.rate = 0.95;
-            utterance.pitch = 1.0;
-
-            utterance.onstart = function() {
-                isTtsSpeakingNow = true;
-            };
-
-            utterance.onend = function() {
-                const nextLoops = remainingLoops - 1;
-                if (nextLoops > 0 && activeTtsBroadcasts[id].includes(time)) { 
-                    setTimeout(() => { executeNativeTTS(phrase, nextLoops, id, time); }, 1500);
-                } else { 
-                    isTtsSpeakingNow = false;
-                    window.dismissTtsBroadcast(id, time); 
-                }
-            };
-
-            utterance.onerror = function() {
-                const nextLoops = remainingLoops - 1;
-                if (nextLoops > 0 && activeTtsBroadcasts[id].includes(time)) {
-                    setTimeout(() => { executeNativeTTS(phrase, nextLoops, id, time); }, 1500);
-                } else { 
-                    isTtsSpeakingNow = false;
-                    window.dismissTtsBroadcast(id, time); 
-                }
-            };
-
-            window.speechSynthesis.speak(utterance);
-        }, 100);
     }
 
     function checkEmergencyPopupSchedule() {
@@ -2580,9 +2943,13 @@
         }
     });
 
+    window.addEventListener('beforeunload', () => {
+        releaseGlobalAudioLock();
+    });
+
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.custom-multiselect')) {
-            document.querySelectorAll('.checkbox-list').forEach(el => el.classList.remove('show'));
+            document.querySelectorAll('.checkbox-list').forEach(el => el.classList.remove('start'));
         }
         if (!audioSystemUnlocked) {
             window.unlockAllAudioSystems();
