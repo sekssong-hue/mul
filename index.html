@@ -866,10 +866,10 @@
 
         <!-- 관리자용 알람 사운드 설정 영역 -->
         <div class="alarm-toggle-container" id="accordion-alarm">
-            <div class="accordion-header" onclick="openSettingWithAccordion('accordion-alarm', '🔔 [관리자 전용] 알람 사운드 설정', '#00ffcc')">
+            <div class="accordion-header" onclick="toggleAccordion('accordion-alarm')">
                 <div class="box-title-sm" style="color: #00ffcc;">🔔 [관리자 전용] 알람 사운드 설정</div>
                 <div class="accordion-header-actions">
-                    <span class="btn-popup-zoom">크게보기</span>
+                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingWithAccordion('accordion-alarm', '🔔 [관리자 전용] 알람 사운드 설정', '#00ffcc')">크게보기</span>
                     <span class="accordion-arrow">▼</span>
                 </div>
             </div>
@@ -900,10 +900,10 @@
 
         <!-- TTS 음성 안내방송 설정 영역 -->
         <div class="alarm-toggle-container" id="accordion-tts" style="border-color: var(--tts-highlight);">
-            <div class="accordion-header" onclick="openSettingWithAccordion('accordion-tts', '📢 [관리자/손님용] 음성 안내방송 설정', '#ff9f43')">
+            <div class="accordion-header" onclick="toggleAccordion('accordion-tts')">
                 <div class="box-title-sm" style="color: var(--tts-highlight);">📢 [관리자/손님용] 음성 안내방송 설정</div>
                 <div class="accordion-header-actions">
-                    <span class="btn-popup-zoom">크게보기</span>
+                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingWithAccordion('accordion-tts', '📢 [관리자/손님용] 음성 안내방송 설정', '#ff9f43')">크게보기</span>
                     <span class="accordion-arrow">▼</span>
                 </div>
             </div>
@@ -967,10 +967,10 @@
 
         <!-- 자동 화면전환기 설정 영역 -->
         <div class="alarm-toggle-container" id="accordion-rotation" style="border-color: var(--rotation-highlight);">
-            <div class="accordion-header" onclick="openSettingWithAccordion('accordion-rotation', '📺 자동 화면전환기 설정', '#00ecff')">
+            <div class="accordion-header" onclick="toggleAccordion('accordion-rotation')">
                 <div class="box-title-sm" style="color: var(--rotation-highlight);">📺 자동 화면전환기 설정</div>
                 <div class="accordion-header-actions">
-                    <span class="btn-popup-zoom">크게보기</span>
+                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingWithAccordion('accordion-rotation', '📺 자동 화면전환기 설정', '#00ecff')">크게보기</span>
                     <span class="accordion-arrow">▼</span>
                 </div>
             </div>
@@ -1003,10 +1003,10 @@
 
         <!-- 전체 중앙 긴급 공지 팝업 설정 영역 -->
         <div class="alarm-toggle-container" id="accordion-global-popup" style="border-color: var(--popup-highlight);">
-            <div class="accordion-header" onclick="openSettingWithAccordion('accordion-global-popup', '🚨 [전체 중앙] 긴급 공지 팝업 설정', '#ff4d4d')">
+            <div class="accordion-header" onclick="toggleAccordion('accordion-global-popup')">
                 <div class="box-title-sm" style="color: var(--popup-highlight);">🚨 [전체 중앙] 긴급 공지 팝업 설정</div>
                 <div class="accordion-header-actions">
-                    <span class="btn-popup-zoom">크게보기</span>
+                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingWithAccordion('accordion-global-popup', '🚨 [전체 중앙] 긴급 공지 팝업 설정', '#ff4d4d')">크게보기</span>
                     <span class="accordion-arrow">▼</span>
                 </div>
             </div>
@@ -1057,10 +1057,10 @@
 
         <!-- 1호 영역 긴급 팝업 설정 영역 -->
         <div class="alarm-toggle-container" id="accordion-boat1-popup" style="border-color: var(--boat3-color);">
-            <div class="accordion-header" onclick="openSettingWithAccordion('accordion-boat1-popup', '🚨 [1호 영역] 긴급 팝업 설정', '#28a745')">
+            <div class="accordion-header" onclick="toggleAccordion('accordion-boat1-popup')">
                 <div class="box-title-sm" style="color: var(--boat3-color);">🚨 [1호 영역] 긴급 팝업 설정</div>
                 <div class="accordion-header-actions">
-                    <span class="btn-popup-zoom">크게보기</span>
+                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingWithAccordion('accordion-boat1-popup', '🚨 [1호 영역] 긴급 팝업 설정', '#28a745')">크게보기</span>
                     <span class="accordion-arrow">▼</span>
                 </div>
             </div>
@@ -1084,10 +1084,10 @@
 
         <!-- 2호 영역 긴급 팝업 설정 영역 -->
         <div class="alarm-toggle-container" id="accordion-boat2-popup" style="border-color: var(--boat4-color);">
-            <div class="accordion-header" onclick="openSettingWithAccordion('accordion-boat2-popup', '🚨 [2호 영역] 긴급 팝업 설정', '#2c7be5')">
+            <div class="accordion-header" onclick="toggleAccordion('accordion-boat2-popup')">
                 <div class="box-title-sm" style="color: var(--boat4-color);">🚨 [2호 영역] 긴급 팝업 설정</div>
                 <div class="accordion-header-actions">
-                    <span class="btn-popup-zoom">크게보기</span>
+                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingWithAccordion('accordion-boat2-popup', '🚨 [2호 영역] 긴급 팝업 설정', '#2c7be5')">크게보기</span>
                     <span class="accordion-arrow">▼</span>
                 </div>
             </div>
@@ -1160,6 +1160,14 @@
 
     let activeModalContainerId = null;
 
+    // 아코디언 토글 전용 함수 (헤더 클릭 시 펼치기/접기)
+    window.toggleAccordion = function(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.classList.toggle('open');
+    };
+
+    // 대형 설정 모달창 오픈 함수
     window.openSettingWithAccordion = function(containerId, titleText, accentColor) {
         const container = document.getElementById(containerId);
         const contentEl = document.getElementById(`content-${containerId}`);
@@ -1223,7 +1231,7 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             const swCode = `
-                const CACHE_NAME = 'kimsimin-cache-v9';
+                const CACHE_NAME = 'kimsimin-cache-v10';
                 self.addEventListener('install', e => self.skipWaiting());
                 self.addEventListener('activate', e => e.waitUntil(
                     caches.keys().then(keys => Promise.all(
@@ -1847,10 +1855,10 @@
     };
 
     // ==========================================================================
-    // [핵심 해결] 멀티모니터 브라우저간 충돌 방지 및 전역 순차 재생 큐 (Sequential Audio Queue)
+    // 멀티모니터 브라우저간 충돌 방지 및 전역 순차 재생 큐 (Sequential Audio Queue)
     // ==========================================================================
     const TAB_INSTANCE_ID = `${mode || 'admin'}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-    const ROLE_PRIORITY = isWorker ? 2 : (isCustomerGuest ? 3 : 1); // 1:관리자 -> 2:근무자 -> 3:손님용
+    const ROLE_PRIORITY = isWorker ? 2 : (isCustomerGuest ? 3 : 1); 
     const audioSyncChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('kimsimin_audio_seq_channel') : null;
 
     let localAudioQueue = [];        
@@ -2092,9 +2100,7 @@
         updateUI();
     };
 
-    // ==========================================================================
     // Web Audio API & 한국어 음성 합성(TTS) 엔진
-    // ==========================================================================
     let sharedAudioCtx = null;
     let audioSystemUnlocked = false;
     let cachedKoreanVoice = null;
@@ -2949,7 +2955,7 @@
 
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.custom-multiselect')) {
-            document.querySelectorAll('.checkbox-list').forEach(el => el.classList.remove('start'));
+            document.querySelectorAll('.checkbox-list').forEach(el => el.classList.remove('show'));
         }
         if (!audioSystemUnlocked) {
             window.unlockAllAudioSystems();
