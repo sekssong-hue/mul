@@ -4,7 +4,7 @@
     <!-- 문서 인코딩(UTF-8) 및 모바일/태블릿 반응형 화면 비율 설정 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>김시민호 실시간 잔여석 관리 프로그램 (순차 방송 및 모바일 최적화)</title>
+    <title>김시민호 실시간 잔여석 관리 프로그램 (모바일 끊김 방지 최적화)</title>
 
     <!-- PWA(프로그레시브 웹 앱) 설정: 태블릿/모바일에서 주소창 없는 전체화면 앱처럼 실행 -->
     <link rel="manifest" href="manifest.json">
@@ -904,13 +904,12 @@
 
                     <div style="border-top: 1px dashed #666; padding-top: 10px; margin-top: 4px; display: flex; flex-direction: column; gap: 10px;">
                         <div style="font-size: 15px; color: #ccc; line-height: 1.4; background: #181c22; padding: 8px; border-radius: 6px;">
-                            ※ 재생 순서: <strong style="color:#00ffcc;">1. 관리자</strong> → <strong style="color:#61d800;">2. 손님용</strong> → <strong style="color:#ffcc00;">3. 근무자용</strong> 순차 완료 재생<br>
                             ※ 자동 변환 변수: <code style="color:#00ffcc;">{시}</code>, <code style="color:#00ffcc;">{분}</code>, <code style="color:#00ffcc;">{선박}</code>, <code style="color:#00ffcc;">{인원}</code>, <code style="color:#00ffcc;">{잔여}</code>
                         </div>
 
                         <div style="display: flex; flex-direction: column; gap: 6px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 17px; color: #00ffcc;">🖥️ 1순위. 관리자 화면 멘트:</span>
+                                <span style="font-size: 17px; color: #00ffcc;">🖥️ 관리자 화면 멘트:</span>
                                 <label style="font-size: 17px; color: #fff;"><input type="checkbox" id="tts-enable-admin" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
                             </div>
                             <textarea id="tts-msg-admin" class="popup-textarea" onchange="saveAlarmConfig()">관리자 알림. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명, 잔여석은 {잔여}명 입니다.</textarea>
@@ -918,15 +917,15 @@
 
                         <div style="display: flex; flex-direction: column; gap: 6px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 17px; color: #61d800;">📺 2순위. 손님용(1번) 화면 멘트:</span>
+                                <span style="font-size: 17px; color: #61d800;">📺 손님용(1번) 화면 멘트:</span>
                                 <label style="font-size: 17px; color: #fff;"><input type="checkbox" id="tts-enable-guest" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
                             </div>
-                            <textarea id="tts-msg-guest" class="popup-textarea" onchange="saveAlarmConfig()">승객 여러분께 안내 말씀 드립니다. 잠시 후 {시}시 {분}분에 출발하는 {선박}의 탑승이 곧 시작됩니다. 티켓을 소지하신 탑승객께서는 출발시간과 선박명을 확인하시고 탑승장으로 이동해 주시기 바랍니다.{선박}는 음주자 및 반려견은 탑승이 금지되어 있습니다. 감사합니다. We would like to inform our passengers. Boarding will soon begin on {선박}, departing at {시}:{분} minutes later. Passengers with tickets must check the departure time and ship name before proceeding to the boarding area. Drinking alcohol and dogs are prohibited from boarding the {선박}. thank you. </textarea>
+                            <textarea id="tts-msg-guest" class="popup-textarea" onchange="saveAlarmConfig()">승객 여러분께 안내 말씀 드립니다. .{선박}는 음주자 및 반려견은 탑승이 금지되어 있습니다. 잠시 후 {시}시 {분}분에 출발하는 {선박}의 탑승이 곧 시작됩니다. 티켓을 소지하신 탑승객께서는 출발시간과 선박명을 확인하시고 탑승장으로 이동해 주시기 바랍니다.감사합니다. </textarea>
                         </div>
 
                         <div style="display: flex; flex-direction: column; gap: 6px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 17px; color: #ffcc00;">👷 3순위. 근무자용(2번) 화면 멘트:</span>
+                                <span style="font-size: 17px; color: #ffcc00;">👷 근무자용(2번) 화면 멘트:</span>
                                 <label style="font-size: 17px; color: #fff;"><input type="checkbox" id="tts-enable-worker" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
                             </div>
                             <textarea id="tts-msg-worker" class="popup-textarea" onchange="saveAlarmConfig()">근무자 안내. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명입니다. 탑승 인원 및 안전 점검을 확인해 주시고 {선박}의 출발를 준비해 주세요.</textarea>
@@ -1076,7 +1075,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, runTransaction, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyASAWsxM_6x5iFFme8wqePiFzNytsNOF5E",
@@ -1166,7 +1165,7 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             const swCode = `
-                const CACHE_NAME = 'kimsimin-cache-v11';
+                const CACHE_NAME = 'kimsimin-cache-v10';
                 self.addEventListener('install', e => self.skipWaiting());
                 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(key => { if (key !== CACHE_NAME) return caches.delete(key); }))).then(() => self.clients.claim())));
                 self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
@@ -1178,10 +1177,7 @@
 
     let isOnlineStatus = navigator.onLine;
     let pendingOfflineQueue = JSON.parse(localStorage.getItem('kimsimin_pending_queue') || "[]");
-    
-    function saveOfflineQueue() { 
-        localStorage.setItem('kimsimin_pending_queue', JSON.stringify(pendingOfflineQueue)); 
-    }
+    function saveOfflineQueue() { localStorage.setItem('kimsimin_pending_queue', JSON.stringify(pendingOfflineQueue)); }
 
     function processOfflineQueue() {
         if (!isOnlineStatus || pendingOfflineQueue.length === 0) return;
@@ -1214,7 +1210,7 @@
         ttsBroadcast: "on", ttsMinutes: 5, ttsRepeatCount: 2, pageIntervalSeconds: 5,
         ttsEnableAdmin: true, ttsEnableGuest: true, ttsEnableWorker: true,
         ttsMsgAdmin: "관리자 알림. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명, 잔여석은 {잔여}명 입니다.",
-        ttsMsgGuest: "승객 여러분께 안내 말씀 드립니다. 잠시 후 {시}시 {분}분에 출발하는 {선박}의 탑승이 곧 시작됩니다. 티켓을 소지하신 탑승객께서는 출발시간과 선박명을 확인하시고 탑승장으로 이동해 주시기 바랍니다.{선박}는 음주자 및 반려견은 탑승이 금지되어 있습니다. 감사합니다. We would like to inform our passengers. Boarding will soon begin on {선박}, departing at {시}:{분} minutes later. Passengers with tickets must check the departure time and ship name before proceeding to the boarding area. Drinking alcohol and dogs are prohibited from boarding the {선박}. thank you.",
+        ttsMsgGuest: "승객 여러분께 안내 말씀 드립니다. .{선박}는 음주자 및 반려견은 탑승이 금지되어 있습니다. 잠시 후 {시}시 {분}분에 출발하는 {선박}의 탑승이 곧 시작됩니다. 티켓을 소지하신 탑승객께서는 출발시간과 선박명을 확인하시고 탑승장으로 이동해 주시기 바랍니다.감사합니다.",
         ttsMsgWorker: "근무자 안내. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명입니다. 탑승 인원 및 안전 점검을 확인해 주시고 {선박}의 출발를 준비해 주세요.",
         rotationMode: "on", rotationTargetGuest: true, rotationTargetWorker: true,
         boat1Alarm: "on", boat1AlarmMin: 10, boat1AlarmRep: 5, boat1Tts: "on", boat1TtsMin: 5, boat1TtsRep: 2, boat1FocusTime: "auto",
@@ -1333,7 +1329,7 @@
         reader.onload = function(e) {
             try {
                 const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                const workbook = XLSX.read(data, { type: 'array' });
                 const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
                 if (!jsonRows || jsonRows.length === 0) { alert("⚠️ 엑셀 파일에 데이터가 없습니다."); return; }
 
@@ -1352,19 +1348,7 @@
                 jsonRows.forEach(row => {
                     const rawTime = row[timeColumnKey];
                     if (rawTime) {
-                        let fullStr = "";
-                        if (rawTime instanceof Date) {
-                            let hh = String(rawTime.getHours()).padStart(2, '0');
-                            let mm = String(rawTime.getMinutes()).padStart(2, '0');
-                            let ss = String(rawTime.getSeconds()).padStart(2, '0');
-                            let yyyy = rawTime.getFullYear();
-                            let MM = String(rawTime.getMonth() + 1).padStart(2, '0');
-                            let dd = String(rawTime.getDate()).padStart(2, '0');
-                            fullStr = `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}`;
-                        } else {
-                            fullStr = String(rawTime).trim();
-                        }
-
+                        let fullStr = String(rawTime).trim();
                         if (fullStr.includes(" ")) {
                             let [datePart, timePart] = fullStr.split(" ");
                             if (datePart === todayStr && timePart.length >= 5) {
@@ -1546,16 +1530,7 @@
             if (!boatData[id].seats) boatData[id].seats = {};
             let cur = boatData[id].seats[time] || 0;
             boatData[id].seats[time] = Math.max(0, cur + amt);
-            
-            const existingIdx = pendingOfflineQueue.findIndex(q => q.type === 'seat_adjust' && q.boatId === id && q.time === time);
-            if (existingIdx !== -1) {
-                pendingOfflineQueue[existingIdx].amt += amt;
-                if (pendingOfflineQueue[existingIdx].amt === 0) {
-                    pendingOfflineQueue.splice(existingIdx, 1);
-                }
-            } else {
-                pendingOfflineQueue.push({ type: 'seat_adjust', boatId: id, time: time, amt: amt, timestamp: Date.now() });
-            }
+            pendingOfflineQueue.push({ type: 'seat_adjust', boatId: id, time: time, amt: amt, timestamp: Date.now() });
             saveOfflineQueue(); updateUI(); return;
         }
 
@@ -1572,12 +1547,7 @@
                 updateUI();
             }
         }).catch(() => {
-            const existingIdx = pendingOfflineQueue.findIndex(q => q.type === 'seat_adjust' && q.boatId === id && q.time === time);
-            if (existingIdx !== -1) {
-                pendingOfflineQueue[existingIdx].amt += amt;
-            } else {
-                pendingOfflineQueue.push({ type: 'seat_adjust', boatId: id, time: time, amt: amt, timestamp: Date.now() });
-            }
+            pendingOfflineQueue.push({ type: 'seat_adjust', boatId: id, time: time, amt: amt, timestamp: Date.now() });
             saveOfflineQueue();
         });
     };
@@ -1608,42 +1578,19 @@
     window.handleRotationToggle = function() { window.saveAlarmConfig(); updateUI(); };
 
     /* ==========================================================================
-       [엄격한 순차 방송 엔진: 1.관리자 -> 2.손님용 -> 3.근무자용 & 모바일 끊김 방지]
+       [모바일 오디오 끊김 방지 최적화 엔진] Web Audio API Keep-Alive 및 Wake Lock
        ========================================================================== */
     const TAB_INSTANCE_ID = `${mode || 'admin'}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-    // 우선순위 엄격 지정: 1 = 관리자(admin), 2 = 손님용(guest_h), 3 = 근무자용(guest_v)
-    const ROLE_PRIORITY = !isGuest ? 1 : (isCustomerGuest ? 2 : 3);
+    const ROLE_PRIORITY = isWorker ? 2 : (isCustomerGuest ? 3 : 1);
     const audioSyncChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('kimsimin_audio_seq_channel') : null;
 
     let localAudioQueue = [];        
     let isLocalPlaying = false;      
     let activeAudioJob = null;       
     let remoteLockOwner = null;      
-    let remoteLockPriority = 99;
     let remoteLockExpiresAt = 0;     
     let alarmLoopTimer = null;
-    let lockHeartbeatTimer = null;   // 반복 재생 중 잠금 연장(Heartbeat) 타이머
-    let wakeLockObj = null;          
-
-    // Firebase 실시간 전역 오디오 잠금 상태 (기기/창 간 완벽한 순서 보장)
-    const globalAudioLockRef = ref(db, 'namgang/audioLock');
-
-    onValue(globalAudioLockRef, (snapshot) => {
-        const lockData = snapshot.val();
-        if (lockData && lockData.owner && lockData.owner !== TAB_INSTANCE_ID && lockData.expiresAt > Date.now()) {
-            remoteLockOwner = lockData.owner;
-            remoteLockPriority = lockData.priority || 99;
-            remoteLockExpiresAt = lockData.expiresAt;
-        } else {
-            if (remoteLockOwner !== null) {
-                remoteLockOwner = null;
-                remoteLockPriority = 99;
-                remoteLockExpiresAt = 0;
-                // 앞선 순위의 반복 재생이 완전히 끝나 잠금이 해제되면 다음 순위 재생 시작
-                setTimeout(processSequentialAudioQueue, 600);
-            }
-        }
-    });
+    let wakeLockObj = null;          // 모바일 화면 자동 꺼짐 방지 WakeLock
 
     async function requestScreenWakeLock() {
         if ('wakeLock' in navigator && !wakeLockObj) {
@@ -1654,20 +1601,11 @@
         }
     }
 
-    // 백그라운드 복귀 시 오디오 컨텍스트, TTS 및 UI 즉시 복구
     document.addEventListener('visibilitychange', async () => {
         if (document.visibilityState === 'visible') {
             await requestScreenWakeLock();
             const ctx = getSharedAudioContext();
-            if (ctx && ctx.state === 'suspended') {
-                await ctx.resume();
-            }
-            if ('speechSynthesis' in window) {
-                if (window.speechSynthesis.paused) {
-                    window.speechSynthesis.resume();
-                }
-            }
-            updateUI();
+            if (ctx && ctx.state === 'suspended') ctx.resume();
         }
     });
 
@@ -1675,66 +1613,24 @@
         audioSyncChannel.onmessage = (event) => {
             const msg = event.data;
             if (!msg || msg.sender === TAB_INSTANCE_ID) return;
-            if (msg.type === 'AUDIO_LOCK_ACQUIRED' || msg.type === 'AUDIO_LOCK_HEARTBEAT') {
+            if (msg.type === 'AUDIO_LOCK_ACQUIRED') {
                 remoteLockOwner = msg.sender;
-                remoteLockPriority = msg.priority || 99;
-                remoteLockExpiresAt = Date.now() + 5000;
+                remoteLockExpiresAt = Date.now() + (msg.durationMs || 15000);
             } else if (msg.type === 'AUDIO_LOCK_RELEASED') {
-                if (remoteLockOwner === msg.sender) { 
-                    remoteLockOwner = null; 
-                    remoteLockPriority = 99;
-                    remoteLockExpiresAt = 0; 
-                    setTimeout(processSequentialAudioQueue, 600); 
-                }
-            } else if (msg.type === 'STOP_ALL_AUDIO') { 
-                abortCurrentLocalAudio(); 
-            }
+                if (remoteLockOwner === msg.sender) { remoteLockOwner = null; remoteLockExpiresAt = 0; setTimeout(processSequentialAudioQueue, 350); }
+            } else if (msg.type === 'STOP_ALL_AUDIO') { abortCurrentLocalAudio(); }
         };
     }
 
-    // 반복 재생이 진행되는 동안 1.5초마다 잠금을 연장하여 절대 중간에 끊기거나 타 화면이 치고 들어오지 못하게 방어
-    function startLockHeartbeat(priority) {
-        stopLockHeartbeat();
-        const sendHeartbeat = () => {
-            const expiresAt = Date.now() + 5000;
-            if (audioSyncChannel) {
-                audioSyncChannel.postMessage({ type: 'AUDIO_LOCK_HEARTBEAT', sender: TAB_INSTANCE_ID, priority: priority });
-            }
-            if (isOnlineStatus) {
-                set(globalAudioLockRef, { owner: TAB_INSTANCE_ID, priority: priority, expiresAt: expiresAt }).catch(() => {});
-            }
-        };
-        sendHeartbeat();
-        lockHeartbeatTimer = setInterval(sendHeartbeat, 1500);
-    }
-
-    function stopLockHeartbeat() {
-        if (lockHeartbeatTimer) {
-            clearInterval(lockHeartbeatTimer);
-            lockHeartbeatTimer = null;
-        }
-    }
-
-    function acquireGlobalAudioLock(priority) {
-        // 현재 다른 화면(관리자/손님/근무자)이 재생 중이라면 무조건 대기
+    function acquireGlobalAudioLock(estimatedMs) {
         if (remoteLockOwner && Date.now() < remoteLockExpiresAt) return false;
-        
         remoteLockOwner = null;
-        startLockHeartbeat(priority);
-        if (audioSyncChannel) {
-            audioSyncChannel.postMessage({ type: 'AUDIO_LOCK_ACQUIRED', sender: TAB_INSTANCE_ID, priority: priority });
-        }
+        if (audioSyncChannel) audioSyncChannel.postMessage({ type: 'AUDIO_LOCK_ACQUIRED', sender: TAB_INSTANCE_ID, durationMs: estimatedMs });
         return true;
     }
 
     function releaseGlobalAudioLock() {
-        stopLockHeartbeat();
-        if (audioSyncChannel) {
-            audioSyncChannel.postMessage({ type: 'AUDIO_LOCK_RELEASED', sender: TAB_INSTANCE_ID });
-        }
-        if (isOnlineStatus) {
-            remove(globalAudioLockRef).catch(() => {});
-        }
+        if (audioSyncChannel) audioSyncChannel.postMessage({ type: 'AUDIO_LOCK_RELEASED', sender: TAB_INSTANCE_ID });
     }
 
     function enqueueSequentialAudio(job) {
@@ -1742,7 +1638,6 @@
         if (exists) return;
         localAudioQueue.push(job);
         localAudioQueue.sort((a, b) => {
-            // 1. 알람(딩동) 우선 -> 2. 화면 순위 (1:관리자 -> 2:손님용 -> 3:근무자용) -> 3. 선박 번호(1호 -> 2호)
             if (a.kind !== b.kind) return a.kind === 'alarm' ? -1 : 1;
             if (a.priority !== b.priority) return a.priority - b.priority;
             return (a.boatId || 0) - (b.boatId || 0);
@@ -1752,32 +1647,17 @@
 
     function processSequentialAudioQueue() {
         if (isLocalPlaying || localAudioQueue.length === 0) return;
-        
-        // 다른 창이나 기기에서 현재 방송/알람이 진행 중이면 완전히 끝날 때까지 대기
-        if (remoteLockOwner && Date.now() < remoteLockExpiresAt) { 
-            setTimeout(processSequentialAudioQueue, 500); 
-            return; 
-        }
+        if (remoteLockOwner && Date.now() < remoteLockExpiresAt) { setTimeout(processSequentialAudioQueue, 400); return; }
 
-        const nextJob = localAudioQueue[0];
+        const nextJob = localAudioQueue.shift();
+        const estimatedDuration = nextJob.kind === 'alarm' ? (nextJob.repeatCount * 1100 + 1000) : (nextJob.repeatCount * 9000 + 2000);
 
-        // 상위 우선순위(예: 손님용(2)과 근무자용(3)이 동시에 대기할 때)가 먼저 치고 나갈 수 있도록 순위별 미세 시차(Stagger) 부여
-        if (!nextJob.staggerChecked) {
-            nextJob.staggerChecked = true;
-            // 관리자(1)는 0ms 즉시, 손님용(2)은 450ms 후, 근무자용(3)은 900ms 후 확인하여 순서 역전 원천 차단
-            const staggerDelayMs = (nextJob.priority - 1) * 450;
-            if (staggerDelayMs > 0) {
-                setTimeout(processSequentialAudioQueue, staggerDelayMs);
-                return;
-            }
-        }
-
-        if (!acquireGlobalAudioLock(nextJob.priority)) {
-            setTimeout(processSequentialAudioQueue, 500);
+        if (!acquireGlobalAudioLock(estimatedDuration)) {
+            localAudioQueue.unshift(nextJob);
+            setTimeout(processSequentialAudioQueue, 400);
             return;
         }
 
-        localAudioQueue.shift();
         isLocalPlaying = true;
         activeAudioJob = nextJob;
 
@@ -1785,8 +1665,7 @@
             isLocalPlaying = false;
             activeAudioJob = null;
             releaseGlobalAudioLock();
-            // 모든 반복 재생 완료 후 1초 여유를 두고 다음 순위 방송 시작
-            setTimeout(processSequentialAudioQueue, 1000);
+            setTimeout(processSequentialAudioQueue, 600);
         };
 
         if (nextJob.kind === 'alarm') runSequentialAlarmJob(nextJob, finishJob);
@@ -1821,12 +1700,12 @@
                 setTimeout(() => {
                     if (job.boatId && job.time && !job.isTest) window.dismissAlarm(job.boatId, job.time);
                     onComplete();
-                }, 800);
+                }, 700);
             }
         };
 
         playOnceAndCheck();
-        if (count < maxRepeats) alarmLoopTimer = setInterval(playOnceAndCheck, 1100);
+        if (count < maxRepeats) alarmLoopTimer = setInterval(playOnceAndCheck, 1000);
     }
 
     function runSequentialTtsJob(job, onComplete) {
@@ -1845,14 +1724,12 @@
 
             if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
 
-            // 설정된 반복 횟수가 모두 끝날 때까지 잠금을 풀지 않고 순차 반복
             speakKoreanPhrase(job.phrase, () => {
                 remainingLoops--;
-                if (remainingLoops > 0) {
-                    setTimeout(speakNextLoop, 1500); // 반복 멘트 간 1.5초 간격
-                } else {
+                if (remainingLoops > 0) setTimeout(speakNextLoop, 1200);
+                else {
                     if (job.boatId && job.time && !job.isTest) window.dismissTtsBroadcast(job.boatId, job.time);
-                    onComplete(); // 모든 반복이 완전히 끝난 후에만 잠금 해제 및 다음 화면 재생 허용
+                    onComplete();
                 }
             });
         };
@@ -1872,7 +1749,7 @@
         if (activeAudioJob && activeAudioJob.kind === 'alarm' && activeAudioJob.boatId === id && activeAudioJob.time === time) {
             if (alarmLoopTimer) { clearInterval(alarmLoopTimer); alarmLoopTimer = null; }
             isLocalPlaying = false; activeAudioJob = null; releaseGlobalAudioLock();
-            setTimeout(processSequentialAudioQueue, 400);
+            setTimeout(processSequentialAudioQueue, 300);
         }
         updateUI();
     };
@@ -1883,7 +1760,7 @@
         if (activeAudioJob && activeAudioJob.kind === 'tts' && activeAudioJob.boatId === id && activeAudioJob.time === time) {
             if ('speechSynthesis' in window) window.speechSynthesis.cancel();
             isLocalPlaying = false; activeAudioJob = null; releaseGlobalAudioLock();
-            setTimeout(processSequentialAudioQueue, 400);
+            setTimeout(processSequentialAudioQueue, 300);
         }
         updateUI();
     };
@@ -1914,6 +1791,7 @@
         return sharedAudioCtx;
     }
 
+    // [모바일 절전 끊김 방지] 무음 오디오 채널을 주기적으로 백그라운드 재생하여 브라우저 CPU 절전 차단
     function startSilentKeepAlive() {
         if (silentKeepAliveInterval) return;
         silentKeepAliveInterval = setInterval(() => {
@@ -1923,13 +1801,13 @@
                 try {
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
-                    gain.gain.setValueAtTime(0.00001, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.00001, ctx.currentTime); // 들리지 않는 초미세 볼륨
                     osc.connect(gain); gain.connect(ctx.destination);
                     osc.start(ctx.currentTime);
                     osc.stop(ctx.currentTime + 0.1);
                 } catch (e) {}
             }
-        }, 15000);
+        }, 15000); // 15초마다 무음 신호 펄스 송출
     }
 
     window.unlockAllAudioSystems = async function() {
@@ -1971,34 +1849,14 @@
             if (voice) utter.voice = voice;
             utter.lang = 'ko-KR'; utter.volume = 1.0; utter.rate = 0.95; utter.pitch = 1.0;
 
-            let callbackCalled = false;
-            const finishSpeech = (success) => {
-                if (callbackCalled) return;
-                callbackCalled = true;
-                clearInterval(keepAliveTimer);
-                clearTimeout(safetyFallbackTimer);
-                if (onDoneCallback) onDoneCallback(success);
-            };
-
-            // 모바일 TTS 백그라운드 끊김 방지용 주기적 청크 재개 타이머 (3초 간격)
             const keepAliveTimer = setInterval(() => {
-                if (window.speechSynthesis.speaking) {
-                    window.speechSynthesis.pause();
-                    window.speechSynthesis.resume();
-                } else {
-                    clearInterval(keepAliveTimer);
-                }
-            }, 3000);
+                if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+                    window.speechSynthesis.pause(); window.speechSynthesis.resume();
+                } else if (!window.speechSynthesis.speaking) { clearInterval(keepAliveTimer); }
+            }, 4000);
 
-            // 만일 모바일 OS 절전 등으로 onend 이벤트가 누락되더라도 다음 방송이 영구 대기하지 않도록 문장 길이 기반 최대 안전 타임아웃 설정
-            const maxExpectedMs = Math.max(12000, phrase.length * 180);
-            const safetyFallbackTimer = setTimeout(() => {
-                window.speechSynthesis.cancel();
-                finishSpeech(false);
-            }, maxExpectedMs);
-
-            utter.onend = () => finishSpeech(true);
-            utter.onerror = () => finishSpeech(false);
+            utter.onend = () => { clearInterval(keepAliveTimer); if (onDoneCallback) onDoneCallback(true); };
+            utter.onerror = () => { clearInterval(keepAliveTimer); if (onDoneCallback) onDoneCallback(false); };
             window.speechSynthesis.speak(utter);
         }, 150);
     }
@@ -2013,7 +1871,7 @@
         window.unlockAllAudioSystems();
         const sampleText = buildRoleTtsSpeech(1, new Date().getHours(), new Date().getMinutes(), 12, boatData[1].capacity || 25);
         showToast("🗣️ 방송 소리 테스트를 순차 대기열에 등록했습니다.");
-        enqueueSequentialAudio({ uniqueJobId: `test-tts-${Date.now()}`, kind: 'tts', priority: ROLE_PRIORITY, phrase: sampleText, repeatCount: 1, isTest: true });
+        enqueueSequentialAudio({ uniqueJobId: `test-tts-${Date.now()}`, kind: 'tts', priority: 0, phrase: sampleText, repeatCount: 1, isTest: true });
     };
 
     function playSingleBeepSignal(ctx, nowTime) {
