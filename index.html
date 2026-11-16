@@ -920,7 +920,7 @@
                                 <span style="font-size: 17px; color: #61d800;">📺 손님용(1번) 화면 멘트:</span>
                                 <label style="font-size: 17px; color: #fff;"><input type="checkbox" id="tts-enable-guest" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
                             </div>
-                            <textarea id="tts-msg-guest" class="popup-textarea" onchange="saveAlarmConfig()">승객 여러분께 안내 말씀 드립니다. .{선박}는 음주자 및 반려견은 탑승이 금지되어 있습니다. 잠시 후 {시}시 {분}분에 출발하는 {선박}의 탑승이 곧 시작됩니다. 티켓을 소지하신 탑승객께서는 출발시간과 선박명을 확인하시고 탑승장으로 이동해 주시기 바랍니다.감사합니다. </textarea>
+                            <textarea id="tts-msg-guest" class="popup-textarea" onchange="saveAlarmConfig()">승객 여러분께 안내 말씀 드립니다. .{선박}는 음주자 및 반려동물은 탑승이 금지되어 있습니다. 잠시 후 {시}시 {분}분에 출발하는 {선박}의 탑승이 곧 시작됩니다. 티켓을 소지하신 탑승객께서는 출발시간과 선박명을 확인하시고 탑승장으로 이동해 주시기 바랍니다.감사합니다. </textarea>
                         </div>
 
                         <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -1210,7 +1210,7 @@
         ttsBroadcast: "on", ttsMinutes: 5, ttsRepeatCount: 2, pageIntervalSeconds: 5,
         ttsEnableAdmin: true, ttsEnableGuest: true, ttsEnableWorker: true,
         ttsMsgAdmin: "관리자 알림. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명, 잔여석은 {잔여}명 입니다.",
-        ttsMsgGuest: "승객 여러분께 안내 말씀 드립니다. .{선박}는 음주자 및 반려견은 탑승이 금지되어 있습니다. 잠시 후 {시}시 {분}분에 출발하는 {선박}의 탑승이 곧 시작됩니다. 티켓을 소지하신 탑승객께서는 출발시간과 선박명을 확인하시고 탑승장으로 이동해 주시기 바랍니다.감사합니다.",
+        ttsMsgGuest: "승객 여러분께 안내 말씀 드립니다. .{선박}는 음주자 및 반려동물은 탑승이 금지되어 있습니다. 잠시 후 {시}시 {분}분에 출발하는 {선박}의 탑승이 곧 시작됩니다. 티켓을 소지하신 탑승객께서는 출발시간과 선박명을 확인하시고 탑승장으로 이동해 주시기 바랍니다.감사합니다.",
         ttsMsgWorker: "근무자 안내. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명입니다. 탑승 인원 및 안전 점검을 확인해 주시고 {선박}의 출발를 준비해 주세요.",
         rotationMode: "on", rotationTargetGuest: true, rotationTargetWorker: true,
         boat1Alarm: "on", boat1AlarmMin: 10, boat1AlarmRep: 5, boat1Tts: "on", boat1TtsMin: 5, boat1TtsRep: 2, boat1FocusTime: "auto",
