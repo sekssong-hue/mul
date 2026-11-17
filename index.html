@@ -4,7 +4,7 @@
     <!-- 문서 인코딩(UTF-8) 및 모바일/태블릿 반응형 화면 비율 설정 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>김시민호 실시간 잔여석 관리 프로그램 (개별 화면 확대/축소 지원)</title>
+    <title>김시민호 실시간 잔여석 관리 프로그램 (선장용·다중알람/방송 지원)</title>
 
     <!-- PWA(프로그레시브 웹 앱) 설정: 태블릿/모바일에서 주소창 없는 전체화면 앱처럼 실행 -->
     <link rel="manifest" href="manifest.json">
@@ -30,13 +30,13 @@
 
             --ended-gray: #f0f0f0;         /* 운항 종료된 행 배경색 */
             --ended-text-color: #999999;   /* 운항 종료된 행 글자색 */
-            --dark-green: #006400;         /* 티켓발권종료 상태 뱃지 배경색 */
+            --dark-green: #006400;         /* 티켓발권종료/마감 상태 뱃지 배경색 */
             --yellow-btn: #fbc02d;         /* 변경 적용 버튼 노란색 */
             --yellow-btn-border: #f9a825;  /* 변경 적용 버튼 테두리색 */
 
             --available-bg: #b3e5fc;       /* 티켓발권가능 (하늘색) */
             --sailing-bg: #fff59d;         /* 운항중 (연노랑) */
-            --ticketing-ended-bg: #c8e6c9; /* 티켓발권종료 (연초록) */
+            --ticketing-ended-bg: #c8e6c9; /* 티켓발권마감 (연초록) */
             --boarding-start-bg: #ffe0b2;  /* 탑승시작 (연주황) */
             --boarding-close-bg: #fff9c4;  /* 탑승마감 (밝은 노랑) */
             --soldout-blink-bg: #ff3b30;   /* 매진 강조 (빨간색) */
@@ -46,6 +46,7 @@
             --rotation-highlight: #00ecff; /* 자동 화면전환기 하늘색 */
             --popup-highlight: #ff4d4d;    /* 긴급 공지 팝업 빨간색 */
             --excel-btn-bg: #107c41;       /* 엑셀 업로드 버튼 초록색 */
+            --captain-color: #38bdf8;      /* 선장용 테마 하늘색 */
         }
 
         /* ==========================================================================
@@ -77,7 +78,7 @@
         #resizer:hover, #resizer.resizing { background-color: var(--highlight); }
 
         #right-sidebar {
-            width: 390px; min-width: 280px; max-width: 650px;
+            width: 400px; min-width: 280px; max-width: 650px;
             background-color: #1e222b; padding: 16px;
             display: flex; flex-direction: column; gap: 14px; border-radius: 15px;
             box-sizing: border-box; border: 1px solid #343a40;
@@ -85,7 +86,7 @@
         }
 
         #sidebar-title {
-            color: #fff; font-size: 30px; font-weight: 900; text-align: center;
+            color: #fff; font-size: 28px; font-weight: 900; text-align: center;
             padding-bottom: 14px; border-bottom: 3px dashed #555; margin-bottom: 6px;
             line-height: 1.3; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
@@ -113,7 +114,7 @@
         .btn-group-top { display: flex; flex-direction: column; gap: 10px; width: 100%; }
         .btn-open-guest {
             background-color: var(--highlight); color: #000; border: none; padding: 14px;
-            font-size: 20px; font-weight: 900; border-radius: 10px; cursor: pointer; text-align: center;
+            font-size: 19px; font-weight: 900; border-radius: 10px; cursor: pointer; text-align: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.2s; touch-action: manipulation;
         }
         .btn-open-guest:hover { filter: brightness(1.1); }
@@ -144,46 +145,55 @@
         }
         .btn-excel-upload:hover { filter: brightness(1.15); }
 
+        /* 근무자용 / 선장용 상단 퀵 컨트롤 바 */
         .worker-quick-control {
             display: none; background: #1e2631; padding: 10px 14px; border-bottom: 3px solid var(--highlight);
             align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
         }
-        .is-worker .worker-quick-control { display: flex; }
-        .worker-control-item { display: flex; align-items: center; gap: 4px; color: #fff; font-weight: bold; font-size: 14px; }
-        .worker-control-item input[type="number"] {
-            width: 42px; height: 30px; text-align: center; font-size: 14px; font-weight: 900;
-            border: 1px solid var(--highlight); background: #000; color: var(--highlight); border-radius: 6px;
+        .is-worker .worker-quick-control,
+        .is-captain .worker-quick-control { display: flex; }
+        .is-captain .worker-quick-control { border-bottom-color: var(--captain-color); background: #132232; }
+
+        .role-badge-header {
+            display: none; padding: 4px 12px; border-radius: 8px; font-size: 18px; font-weight: 900;
+            margin-left: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.4);
         }
-        .worker-control-item input[type="number"].tts-worker-input { border-color: var(--tts-highlight); color: var(--tts-highlight); }
+        .is-worker .role-badge-header.badge-worker { display: inline-block; background: #ffcc00; color: #000; }
+        .is-captain .role-badge-header.badge-captain { display: inline-block; background: #38bdf8; color: #000; }
+
+        .worker-control-item { display: flex; align-items: center; gap: 6px; color: #fff; font-weight: bold; font-size: 14px; flex-wrap: wrap; }
         .worker-control-item select {
             height: 32px; padding: 0 6px; font-size: 14px; font-weight: 900;
             border-radius: 6px; border: 1px solid #ffcc00; background: #000; color: #ffcc00; cursor: pointer;
         }
         .worker-control-item button {
-            padding: 5px 10px; font-size: 14px; font-weight: 900; border-radius: 6px; border: 1px solid #555; color: #fff; cursor: pointer;
+            padding: 6px 10px; font-size: 14px; font-weight: 900; border-radius: 6px; border: 1px solid #555; color: #fff; cursor: pointer;
             touch-action: manipulation;
         }
         .worker-control-item button.active-on { background: #28a745; border-color: #1e7e34; }
         .worker-control-item button.active-off { background: #dc3545; border-color: #bd2130; }
+        .btn-worker-sched-modal {
+            background: #2c7be5 !important; border-color: #61b3ff !important; color: #fff !important;
+        }
 
         .alarm-toggle-container {
             display: flex; flex-direction: column; gap: 12px; background: #282e38; 
             padding: 16px; border-radius: 10px; border: 2px solid #444; width: 100%; box-sizing: border-box;
         }
-        
+
         .accordion-header {
             display: flex; justify-content: space-between; align-items: center;
             cursor: pointer; user-select: none; padding: 4px 0; gap: 8px;
         }
         .accordion-header:hover { filter: brightness(1.2); }
         .accordion-header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        
+
         .btn-popup-zoom {
             background: rgba(255, 255, 255, 0.15); color: #fff; border: 1px solid rgba(255,255,255,0.4);
             border-radius: 6px; padding: 4px 8px; font-size: 13px; font-weight: 800; cursor: pointer;
         }
         .btn-popup-zoom:hover { background: var(--highlight); color: #000; }
-        
+
         .accordion-arrow { font-size: 18px; color: #ddd; transition: transform 0.2s ease; font-weight: bold; }
         .alarm-toggle-container.open .accordion-arrow { transform: rotate(180deg); }
 
@@ -195,7 +205,7 @@
 
         .alarm-radio-row { display: flex; gap: 18px; align-items: center; justify-content: center; flex-wrap: wrap; }
         .alarm-toggle-container label, .modal-setting-body label {
-            color: #fff; font-size: 19px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px;
+            color: #fff; font-size: 18px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px;
         }
 
         .alarm-toggle-container input[type="radio"], .modal-setting-body input[type="radio"] {
@@ -215,8 +225,28 @@
         }
         .setting-item-row { display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 8px; }
 
-        .alarm-time-setting input[type="number"], .modal-setting-body input[type="number"] {
-            width: 74px; height: 40px; text-align: center; font-size: 20px; font-weight: 900;
+        /* 다중 알람·방송 스케줄 카드 리스트 스타일 */
+        .schedule-list-container {
+            display: flex; flex-direction: column; gap: 8px; width: 100%;
+        }
+        .schedule-item-card {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            background: #161920; padding: 10px 12px; border-radius: 8px; border: 1px solid #4a5568;
+            flex-wrap: wrap;
+        }
+        .schedule-item-card span { font-size: 16px; font-weight: 800; color: #fff; }
+        .btn-add-schedule {
+            background: #28a745; color: #fff; border: none; border-radius: 8px; padding: 10px;
+            font-size: 16px; font-weight: 900; cursor: pointer; width: 100%; touch-action: manipulation;
+        }
+        .btn-add-schedule:hover { filter: brightness(1.15); }
+        .btn-del-schedule {
+            background: #ff4d4d; color: #fff; border: none; border-radius: 6px; padding: 6px 10px;
+            font-size: 14px; font-weight: 900; cursor: pointer; touch-action: manipulation;
+        }
+
+        .alarm-time-setting input[type="number"], .modal-setting-body input[type="number"], .schedule-item-card input[type="number"] {
+            width: 66px; height: 38px; text-align: center; font-size: 19px; font-weight: 900;
             border: 2px solid var(--highlight); background: #000; color: var(--highlight); border-radius: 6px;
         }
         input[type="number"].tts-input { border-color: var(--tts-highlight) !important; color: var(--tts-highlight) !important; }
@@ -231,15 +261,15 @@
         }
 
         .alarm-time-setting textarea.popup-textarea, .modal-setting-body textarea.popup-textarea {
-            width: 100%; height: 75px; font-size: 17px; font-weight: 700; line-height: 1.4; background: #000; color: #fff; 
+            width: 100%; height: 75px; font-size: 16px; font-weight: 700; line-height: 1.4; background: #000; color: #fff; 
             border: 2px solid #666; border-radius: 8px; padding: 10px; box-sizing: border-box; resize: vertical;
         }
 
-        .box-title-sm { color: #fff; font-size: 19px; font-weight: 900; text-align: left; margin: 0; line-height: 1.3; }
+        .box-title-sm { color: #fff; font-size: 18px; font-weight: 900; text-align: left; margin: 0; line-height: 1.3; }
         .preset-container .box-title-sm, .excel-upload-container .box-title-sm { text-align: center; }
 
         /* ==========================================================================
-           [4. 크게보기 상세 설정 모달 팝업 스타일]
+           [4. 크게보기 및 다중 스케줄 설정 모달 팝업 스타일]
            ========================================================================== */
         .config-modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -261,51 +291,49 @@
             display: flex; justify-content: space-between; align-items: center;
         }
         .config-modal-title {
-            font-size: 32px !important; font-weight: 900; color: var(--highlight); margin: 0;
+            font-size: 30px !important; font-weight: 900; color: var(--highlight); margin: 0;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
         .btn-modal-close {
             background: #ff4d4d; color: #fff; border: none; border-radius: 12px;
-            padding: 12px 24px; font-size: 22px; font-weight: 900; cursor: pointer;
+            padding: 12px 24px; font-size: 20px; font-weight: 900; cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
         .btn-modal-close:hover { filter: brightness(1.15); }
 
         .modal-setting-body {
-            padding: 30px 35px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px;
-            color: #fff; font-size: 24px !important; font-weight: 800;
+            padding: 25px 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;
+            color: #fff; font-size: 22px !important; font-weight: 800;
         }
-        .modal-setting-body .alarm-time-setting { font-size: 24px !important; gap: 20px; border-top: none; padding-top: 0; }
-        .modal-setting-body label { font-size: 26px !important; font-weight: 900; gap: 12px; }
-        .modal-setting-body input[type="number"] { width: 110px; height: 56px; font-size: 28px !important; font-weight: 900; }
-        .modal-setting-body select.popup-select { width: 110px; height: 56px; font-size: 26px !important; font-weight: 900; }
-        .modal-setting-body textarea.popup-textarea { height: 140px !important; font-size: 22px !important; font-weight: 700; line-height: 1.5; padding: 14px; }
-        .modal-setting-body span, .modal-setting-body div { font-size: inherit; }
-        .modal-setting-body .setting-item-row { font-size: 24px !important; }
-        .modal-setting-body .btn-test-sound { font-size: 22px !important; padding: 16px 20px !important; font-weight: 900; border-radius: 10px; }
-        .modal-setting-body input[type="radio"], .modal-setting-body input[type="checkbox"] { width: 28px !important; height: 28px !important; }
+        .modal-setting-body .alarm-time-setting { font-size: 22px !important; gap: 18px; border-top: none; padding-top: 0; }
+        .modal-setting-body label { font-size: 24px !important; font-weight: 900; gap: 12px; }
+        .modal-setting-body input[type="number"] { width: 95px; height: 50px; font-size: 26px !important; font-weight: 900; }
+        .modal-setting-body select.popup-select { width: 100px; height: 50px; font-size: 24px !important; font-weight: 900; }
+        .modal-setting-body textarea.popup-textarea { height: 130px !important; font-size: 20px !important; font-weight: 700; line-height: 1.5; padding: 14px; }
+        .modal-setting-body .btn-test-sound { font-size: 20px !important; padding: 14px 18px !important; font-weight: 900; border-radius: 10px; }
+        .modal-setting-body input[type="radio"], .modal-setting-body input[type="checkbox"] { width: 26px !important; height: 26px !important; }
 
         .config-modal-footer {
-            background: #101319; padding: 20px 30px; border-top: 3px solid #2d3542;
+            background: #101319; padding: 18px 30px; border-top: 3px solid #2d3542;
             display: flex; justify-content: flex-end; gap: 12px;
         }
         .btn-modal-confirm {
             background: var(--highlight); color: #000; border: none; border-radius: 12px;
-            padding: 16px 36px; font-size: 24px; font-weight: 900; cursor: pointer;
+            padding: 14px 32px; font-size: 22px; font-weight: 900; cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,255,204,0.3);
         }
         .btn-modal-confirm:hover { filter: brightness(1.1); }
 
         /* ==========================================================================
-           [5. 선박 상단 헤더, 설정 입력창, 손님용 배너, 공지사항 영역]
+           [5. 선박 상단 헤더, 설정 입력창, 손님용 배너]
            ========================================================================== */
         .boat-header { 
             padding: 10px 15px; color: white; 
             display: flex; align-items: center; justify-content: space-between; 
-            position: relative; min-height: 120px; flex-wrap: nowrap;
+            position: relative; min-height: 110px; flex-wrap: nowrap;
         }
-        .boat-title-area { display: flex; align-items: center; gap: 20px; }
-        .boat-title { font-size: clamp(36px, 6vw, 78px); font-weight: 900; letter-spacing: -2px; text-shadow: 3px 3px 6px rgba(0,0,0,0.4); }
+        .boat-title-area { display: flex; align-items: center; gap: 12px; }
+        .boat-title { font-size: clamp(34px, 5.5vw, 72px); font-weight: 900; letter-spacing: -2px; text-shadow: 3px 3px 6px rgba(0,0,0,0.4); }
 
         .page-badge {
             display: none; position: absolute; right: 20px; bottom: 20px;
@@ -337,13 +365,11 @@
         }
         .btn-wizard { background-color: #e1f5fe !important; color: #01579b; border: 1px solid #b3e5fc !important; }
         .btn-section-reset { background-color: #fff0f0 !important; color: #d63031; border: 1px solid #ccc; }
-        .btn-notice-delete { background-color: #ff4d4d !important; color: #fff !important; border: 1px solid #ff3333 !important; }
 
         .cap-container { display: flex; align-items: center; gap: 5px; background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 0 10px; flex: 1.2; height: 50px; box-sizing: border-box;}
         .course-container { flex: 2 !important; }
         .cap-label { font-size: 18px; font-weight: bold; color: #333; white-space: nowrap; }
         .cap-edit-input { width: 100% !important; border: none !important; text-align: center; font-size: 20px; font-weight: bold; outline: none; background: transparent; }
-        .notice-edit-input { width: 100% !important; border: none !important; text-align: left; font-size: 18px; font-weight: bold; outline: none; background: transparent; resize: none; height: 44px; padding: 10px 0 0 10px; box-sizing: border-box; font-family: inherit; }
 
         .guest-info-banner { 
             display: none; background: #f0f7ff; padding: 10px; border-bottom: 2px solid #2c7be5;
@@ -352,14 +378,6 @@
         .is-guest .guest-info-banner { display: flex; }
         .info-item { color: #002d5a; }
         .info-val { color: #e60000; margin-left: 5px; }
-
-        .notice-view-container {
-            display: none; background: #fffdeb; padding: 15px 20px; border-bottom: 3px dashed #f9a825;
-            min-height: 90px; box-sizing: border-box; flex-direction: column; justify-content: center;
-        }
-        .mode-v .notice-view-container { display: flex; }
-        .notice-title { font-size: 22px; font-weight: 800; color: #d63031; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
-        .notice-content { font-size: clamp(20px, 3.5vw, 30px); font-weight: 900; color: #2d3436; line-height: 1.3; white-space: normal; word-break: break-all; }
 
         /* ==========================================================================
            [6. 긴급 공지 오버레이 팝업]
@@ -493,12 +511,12 @@
 
         .btn-alarm-stop {
             background-color: #ffffff !important; color: #ff1251 !important; border: 3px solid #000000 !important; 
-            padding: 5px 12px; font-size: 28px !important; font-weight: 900; border-radius: 8px; cursor: pointer; 
+            padding: 5px 12px; font-size: 24px !important; font-weight: 900; border-radius: 8px; cursor: pointer; 
             animation: textBlinker 0.8s linear infinite; box-shadow: 0 4px 10px rgba(0,0,0,0.3); touch-action: manipulation;
         }
         .btn-tts-stop {
             background-color: #ffffff !important; color: #ff8400 !important; border: 3px solid #000000 !important; 
-            padding: 5px 12px; font-size: 28px !important; font-weight: 900; border-radius: 8px; cursor: pointer; 
+            padding: 5px 12px; font-size: 24px !important; font-weight: 900; border-radius: 8px; cursor: pointer; 
             animation: textBlinker 1.2s linear infinite; box-shadow: 0 4px 10px rgba(0,0,0,0.3); touch-action: manipulation;
         }
 
@@ -557,7 +575,7 @@
 
         .btn-test-sound {
             background-color: #2c7be5; color: #fff; border: none; padding: 12px 14px;
-            font-size: 17px; font-weight: 900; border-radius: 8px; cursor: pointer;
+            font-size: 16px; font-weight: 900; border-radius: 8px; cursor: pointer;
             flex: 1; transition: all 0.2s; touch-action: manipulation;
         }
         .btn-test-sound:hover { filter: brightness(1.15); }
@@ -593,6 +611,7 @@
         <button type="button" class="zoom-reset-btn" onclick="resetWindowZoom()">초기화</button>
     </div>
 
+    <!-- 관리자 설정 크게보기 모달 -->
     <div id="config-modal-overlay" class="config-modal-overlay" onclick="if(event.target===this) closeConfigModal()">
         <div id="config-modal-box" class="config-modal-box">
             <div class="config-modal-header">
@@ -606,6 +625,21 @@
         </div>
     </div>
 
+    <!-- 근무자용 / 선장용 다중 알람·방송 스케줄 관리 팝업 모달 -->
+    <div id="role-schedule-modal-overlay" class="config-modal-overlay" onclick="if(event.target===this) closeRoleScheduleModal()">
+        <div class="config-modal-box" style="border-color: #38bdf8; max-width: 750px;">
+            <div class="config-modal-header">
+                <h2 id="role-schedule-modal-title" class="config-modal-title" style="color: #38bdf8;">⏰ 다중 알람 · 방송 시간 설정</h2>
+                <button type="button" class="btn-modal-close" onclick="closeRoleScheduleModal()">✕ 닫기</button>
+            </div>
+            <div id="role-schedule-modal-body" class="modal-setting-body"></div>
+            <div class="config-modal-footer">
+                <button type="button" class="btn-modal-confirm" style="background: #38bdf8;" onclick="closeRoleScheduleModal()">✅ 저장 및 닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 전체 중앙 긴급 공지 오버레이 -->
     <div id="emergency-overlay" class="emergency-fullscreen-overlay">
         <div id="emergency-popup-inner-box" class="emergency-popup-box popup-global-theme">
             <div class="emergency-popup-header">
@@ -634,6 +668,8 @@
             <div class="boat-header boat3-title">
                 <div class="boat-title-area">
                     <div class="boat-title">&nbsp;&nbsp;&nbsp;김시민 1호</div>
+                    <span class="role-badge-header badge-worker">👷 근무자용</span>
+                    <span class="role-badge-header badge-captain">⚓ 선장용</span>
                 </div>
                 <div class="boat-info-right">
                     <div class="boat-date" id="date-1"></div>
@@ -641,18 +677,19 @@
                 </div>
             </div>
 
+            <!-- 근무자용 & 선장용 퀵 컨트롤 바 -->
             <div class="worker-quick-control">
                 <div class="worker-control-item">
-                    <button id="worker-alarm-btn-1" onclick="toggleWorkerAlarm(1)" class="active-on">🔔 알람 ON</button>
-                    <span>출발</span><input type="number" id="worker-alarm-min-1" value="10" min="1" max="60" onchange="updateWorkerTimeConfig(1)">분 전 / 반복 <input type="number" id="worker-alarm-rep-1" value="5" min="1" max="20" title="알람 반복횟수(회)" onchange="updateWorkerTimeConfig(1)">회
+                    <button id="worker-alarm-btn-1" onclick="toggleRoleAlarm(1)" class="active-on">🔔 알람 ON</button>
+                    <button type="button" class="btn-worker-sched-modal" id="worker-alarm-summary-1" onclick="openRoleScheduleModal(1, 'alarm')">⏰ 알람 시간설정 (1개)</button>
                 </div>
                 <div class="worker-control-item">
-                    <button id="worker-tts-btn-1" onclick="toggleWorkerTts(1)" class="active-on">📢 방송 ON</button>
-                    <span>출발</span><input type="number" id="worker-tts-min-1" class="tts-worker-input" value="5" min="1" max="60" onchange="updateWorkerTimeConfig(1)">분 전 / 반복 <input type="number" id="worker-tts-rep-1" class="tts-worker-input" value="2" min="1" max="5" title="방송 반복횟수(번)" onchange="updateWorkerTimeConfig(1)">번
+                    <button id="worker-tts-btn-1" onclick="toggleRoleTts(1)" class="active-on">📢 방송 ON</button>
+                    <button type="button" class="btn-worker-sched-modal" id="worker-tts-summary-1" onclick="openRoleScheduleModal(1, 'tts')" style="background:#d97706 !important; border-color:#fbbf24 !important;">🗣️ 방송 시간설정 (1개)</button>
                 </div>
                 <div class="worker-control-item">
                     <span>🕒 기준:</span>
-                    <select id="worker-focus-time-1" onchange="setWorkerFocusTime(1, this.value)">
+                    <select id="worker-focus-time-1" onchange="setRoleFocusTime(1, this.value)">
                         <option value="auto">자동</option>
                     </select>
                 </div>
@@ -660,11 +697,6 @@
                     <button type="button" class="btn-test-sound" onclick="testAlarmSound()" style="padding: 5px 8px; font-size: 12px;">🔔 알람테스트</button>
                     <button type="button" class="btn-test-sound btn-test-tts" onclick="testTtsBroadcast()" style="padding: 5px 8px; font-size: 12px;">🗣️ 방송테스트</button>
                 </div>
-            </div>
-
-            <div class="notice-view-container" id="notice-view-container-1">
-                <div class="notice-title">📢 김시민 1호 안내사항</div>
-                <div class="notice-content" id="notice-text-1">현재 정상 운항 중입니다.</div>
             </div>
 
             <div class="guest-info-banner" id="guest-banner-1">
@@ -684,14 +716,6 @@
                     <div class="cap-container course-container"><span class="cap-label">운항코스 :</span><input type="text" id="course-direct-1" class="cap-edit-input" placeholder="코스명"></div>
                     <button class="btn-apply-unified" onclick="applyExtraInfo(1)">변경 적용</button>
                     <button class="btn-action-unified btn-section-reset" onclick="resetBoat(1)">데이터 리셋</button>
-                </div>
-                <div class="setting-row" style="border-top: 1px dashed #ccc; padding-top: 8px;">
-                    <div class="cap-container" style="flex: 1; height: 50px;">
-                        <span class="cap-label" style="color: #d63031;">📢 1호 공지 :</span>
-                        <textarea id="notice-direct-1" class="notice-edit-input" placeholder="실시간 공지사항 입력"></textarea>
-                    </div>
-                    <button class="btn-apply-unified" onclick="applyNotice(1)">공지 적용</button>
-                    <button class="btn-action-unified btn-notice-delete" onclick="deleteNotice(1)">공지 삭제</button>
                 </div>
             </div>
 
@@ -748,6 +772,8 @@
             <div class="boat-header boat4-title">
                 <div class="boat-title-area">
                     <div class="boat-title">&nbsp;&nbsp;&nbsp;김시민 2호</div>
+                    <span class="role-badge-header badge-worker">👷 근무자용</span>
+                    <span class="role-badge-header badge-captain">⚓ 선장용</span>
                 </div>
                 <div class="boat-info-right">
                     <div class="boat-date" id="date-2"></div>
@@ -755,18 +781,19 @@
                 </div>
             </div>
 
+            <!-- 근무자용 & 선장용 퀵 컨트롤 바 -->
             <div class="worker-quick-control">
                 <div class="worker-control-item">
-                    <button id="worker-alarm-btn-2" onclick="toggleWorkerAlarm(2)" class="active-on">🔔 알람 ON</button>
-                    <span>출발</span><input type="number" id="worker-alarm-min-2" value="10" min="1" max="60" onchange="updateWorkerTimeConfig(2)">분 전 / 반복 <input type="number" id="worker-alarm-rep-2" value="5" min="1" max="20" title="알람 반복횟수(회)" onchange="updateWorkerTimeConfig(2)">회
+                    <button id="worker-alarm-btn-2" onclick="toggleRoleAlarm(2)" class="active-on">🔔 알람 ON</button>
+                    <button type="button" class="btn-worker-sched-modal" id="worker-alarm-summary-2" onclick="openRoleScheduleModal(2, 'alarm')">⏰ 알람 시간설정 (1개)</button>
                 </div>
                 <div class="worker-control-item">
-                    <button id="worker-tts-btn-2" onclick="toggleWorkerTts(2)" class="active-on">📢 방송 ON</button>
-                    <span>출발</span><input type="number" id="worker-tts-min-2" class="tts-worker-input" value="5" min="1" max="60" onchange="updateWorkerTimeConfig(2)">분 전 / 반복 <input type="number" id="worker-tts-rep-2" class="tts-worker-input" value="2" min="1" max="5" title="방송 반복횟수(번)" onchange="updateWorkerTimeConfig(2)">번
+                    <button id="worker-tts-btn-2" onclick="toggleRoleTts(2)" class="active-on">📢 방송 ON</button>
+                    <button type="button" class="btn-worker-sched-modal" id="worker-tts-summary-2" onclick="openRoleScheduleModal(2, 'tts')" style="background:#d97706 !important; border-color:#fbbf24 !important;">🗣️ 방송 시간설정 (1개)</button>
                 </div>
                 <div class="worker-control-item">
                     <span>🕒 기준:</span>
-                    <select id="worker-focus-time-2" onchange="setWorkerFocusTime(2, this.value)">
+                    <select id="worker-focus-time-2" onchange="setRoleFocusTime(2, this.value)">
                         <option value="auto">자동</option>
                     </select>
                 </div>
@@ -774,11 +801,6 @@
                     <button type="button" class="btn-test-sound" onclick="testAlarmSound()" style="padding: 5px 8px; font-size: 12px;">🔔 알람테스트</button>
                     <button type="button" class="btn-test-sound btn-test-tts" onclick="testTtsBroadcast()" style="padding: 5px 8px; font-size: 12px;">🗣️ 방송테스트</button>
                 </div>
-            </div>
-
-            <div class="notice-view-container" id="notice-view-container-2">
-                <div class="notice-title">📢 김시민 2호 안내사항</div>
-                <div class="notice-content" id="notice-text-2">현재 정상 운항 중입니다. </div>
             </div>
 
             <div class="guest-info-banner" id="guest-banner-2">
@@ -798,14 +820,6 @@
                     <div class="cap-container course-container"><span class="cap-label">운항코스 :</span><input type="text" id="course-direct-2" class="cap-edit-input" placeholder="코스명"></div>
                     <button class="btn-apply-unified" onclick="applyExtraInfo(2)">변경 적용</button>
                     <button class="btn-action-unified btn-section-reset" onclick="resetBoat(2)">데이터 리셋</button>
-                </div>
-                <div class="setting-row" style="border-top: 1px dashed #ccc; padding-top: 8px;">
-                    <div class="cap-container" style="flex: 1; height: 50px;">
-                        <span class="cap-label" style="color: #d63031;">📢 2호 공지 :</span>
-                        <textarea id="notice-direct-2" class="notice-edit-input" placeholder="실시간 공지사항 입력"></textarea>
-                    </div>
-                    <button class="btn-apply-unified" onclick="applyNotice(2)">공지 적용</button>
-                    <button class="btn-action-unified btn-notice-delete" onclick="deleteNotice(2)">공지 삭제</button>
                 </div>
             </div>
 
@@ -854,7 +868,8 @@
 
         <div class="btn-group-top">
             <button class="btn-open-guest" onclick="openGuestWindow('h')">📺 1번 화면 손님용 오픈</button>
-            <button class="btn-open-guest" onclick="openGuestWindow('v')" style="background-color: #ffcc00;">📺 2번 화면 근무자용 오픈</button>
+            <button class="btn-open-guest" onclick="openGuestWindow('v')" style="background-color: #ffcc00;">👷 2번 화면 근무자용 오픈</button>
+            <button class="btn-open-guest" onclick="openGuestWindow('c')" style="background-color: #38bdf8;">⚓ 3번 화면 선장용 오픈</button>
             <button class="btn-open-guest btn-reset-all" onclick="confirmResetAll()">⚠️ 전체 데이터 초기화</button>
         </div>
 
@@ -875,12 +890,12 @@
             </button>
         </div>
 
-        <!-- 알람 사운드 설정 -->
+        <!-- 다중 알람 사운드 설정 -->
         <div class="alarm-toggle-container" id="accordion-alarm">
             <div class="accordion-header" onclick="toggleAccordion('accordion-alarm')">
-                <div class="box-title-sm" style="color: #00ffcc;">🔔 [관리자 전용] 알람 사운드 설정</div>
+                <div class="box-title-sm" style="color: #00ffcc;">🔔 [관리자] 다중 알람 사운드 설정</div>
                 <div class="accordion-header-actions">
-                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingModal('accordion-alarm', '🔔 [관리자 전용] 알람 사운드 설정', '#00ffcc')">크게보기</span>
+                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingModal('accordion-alarm', '🔔 [관리자] 다중 알람 사운드 설정', '#00ffcc')">크게보기</span>
                     <span class="accordion-arrow">▼</span>
                 </div>
             </div>
@@ -890,14 +905,9 @@
                     <label><input type="radio" name="alarm_sound" value="off" onchange="handleAlarmToggle()"> 🔇 OFF</label>
                 </div>
                 <div class="alarm-time-setting">
-                    <div class="setting-item-row">
-                        <span>출발 전 설정:</span>
-                        <div><input type="number" id="alarm-trigger-minutes" value="10" min="1" max="60" onchange="saveAlarmConfig()"> 분 전 알람 🔔</div>
-                    </div>
-                    <div class="setting-item-row" style="color: #00ffcc;">
-                        <span>알람 반복 횟수:</span>
-                        <div><input type="number" id="alarm-repeat-count" value="5" min="1" max="20" onchange="saveAlarmConfig()"> 회 울림 🔔</div>
-                    </div>
+                    <div style="font-size: 15px; color: #00ffcc;">※ 원하는 만큼 알람 시간을 여러 개 추가할 수 있습니다.</div>
+                    <div id="admin-alarm-list" class="schedule-list-container"></div>
+                    <button type="button" class="btn-add-schedule" onclick="addAdminAlarmSchedule()">+ 알람 스케줄 추가</button>
                     <div style="display: flex; gap: 8px; margin-top: 4px;">
                         <button type="button" class="btn-test-sound" onclick="testAlarmSound()">🔔 알람 소리 즉시 테스트</button>
                     </div>
@@ -905,12 +915,12 @@
             </div>
         </div>
 
-        <!-- 음성 안내방송(TTS) 설정 -->
+        <!-- 다중 음성 안내방송(TTS) 설정 -->
         <div class="alarm-toggle-container" id="accordion-tts" style="border-color: var(--tts-highlight);">
             <div class="accordion-header" onclick="toggleAccordion('accordion-tts')">
-                <div class="box-title-sm" style="color: var(--tts-highlight);">📢 [관리자/손님용] 음성 안내방송 설정</div>
+                <div class="box-title-sm" style="color: var(--tts-highlight);">📢 다중 음성 안내방송(TTS) 설정</div>
                 <div class="accordion-header-actions">
-                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingModal('accordion-tts', '📢 [관리자/손님용] 음성 안내방송 설정', '#ff9f43')">크게보기</span>
+                    <span class="btn-popup-zoom" onclick="event.stopPropagation(); openSettingModal('accordion-tts', '📢 다중 음성 안내방송(TTS) 설정', '#ff9f43')">크게보기</span>
                     <span class="accordion-arrow">▼</span>
                 </div>
             </div>
@@ -920,43 +930,46 @@
                     <label><input type="radio" name="tts_broadcast" class="tts-accent" value="off" onchange="handleTtsToggle()"> 🔇 OFF</label>
                 </div>
                 <div class="alarm-time-setting">
-                    <div class="setting-item-row">
-                        <span>방송 시작 시각:</span>
-                        <div>출발 <input type="number" id="tts-trigger-minutes" class="tts-input" value="5" min="1" max="60" onchange="saveAlarmConfig()"> 분 전</div>
-                    </div>
-                    <div class="setting-item-row" style="color: var(--tts-highlight);">
-                        <span>방송 반복 횟수:</span>
-                        <div><input type="number" id="tts-repeat-count" class="tts-input" value="2" min="1" max="5" onchange="saveAlarmConfig()"> 번 반복 🗣️</div>
-                    </div>
+                    <div style="font-size: 15px; color: var(--tts-highlight);">※ 원하는 만큼 방송 시간을 여러 개 추가할 수 있습니다.</div>
+                    <div id="admin-tts-list" class="schedule-list-container"></div>
+                    <button type="button" class="btn-add-schedule" style="background: #e67e22;" onclick="addAdminTtsSchedule()">+ 방송 스케줄 추가</button>
 
                     <div style="border-top: 1px dashed #666; padding-top: 10px; margin-top: 4px; display: flex; flex-direction: column; gap: 10px;">
-                        <div style="font-size: 15px; color: #ccc; line-height: 1.4; background: #181c22; padding: 8px; border-radius: 6px;">
-                            ※ 재생 순서: <strong style="color:#00ffcc;">1. 관리자</strong> → <strong style="color:#61d800;">2. 손님용</strong> → <strong style="color:#ffcc00;">3. 근무자용</strong> 순차 완료 재생<br>
+                        <div style="font-size: 14px; color: #ccc; line-height: 1.4; background: #181c22; padding: 8px; border-radius: 6px;">
+                            ※ 재생 순서: <strong style="color:#00ffcc;">1. 관리자</strong> → <strong style="color:#61d800;">2. 손님용</strong> → <strong style="color:#ffcc00;">3. 근무자용</strong> → <strong style="color:#38bdf8;">4. 선장용</strong><br>
                             ※ 자동 변환 변수: <code style="color:#00ffcc;">{시}</code>, <code style="color:#00ffcc;">{분}</code>, <code style="color:#00ffcc;">{선박}</code>, <code style="color:#00ffcc;">{인원}</code>, <code style="color:#00ffcc;">{잔여}</code>
                         </div>
 
                         <div style="display: flex; flex-direction: column; gap: 6px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 17px; color: #00ffcc;">🖥️ 1순위. 관리자 화면 멘트:</span>
-                                <label style="font-size: 17px; color: #fff;"><input type="checkbox" id="tts-enable-admin" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
+                                <span style="font-size: 16px; color: #00ffcc;">🖥️ 1순위. 관리자 화면 멘트:</span>
+                                <label style="font-size: 16px; color: #fff;"><input type="checkbox" id="tts-enable-admin" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
                             </div>
                             <textarea id="tts-msg-admin" class="popup-textarea" onchange="saveAlarmConfig()">관리자 알림. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명, 잔여석은 {잔여}명 입니다.</textarea>
                         </div>
 
                         <div style="display: flex; flex-direction: column; gap: 6px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 17px; color: #61d800;">📺 2순위. 손님용(1번) 화면 멘트:</span>
-                                <label style="font-size: 17px; color: #fff;"><input type="checkbox" id="tts-enable-guest" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
+                                <span style="font-size: 16px; color: #61d800;">📺 2순위. 손님용(1번) 화면 멘트:</span>
+                                <label style="font-size: 16px; color: #fff;"><input type="checkbox" id="tts-enable-guest" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
                             </div>
                             <textarea id="tts-msg-guest" class="popup-textarea" onchange="saveAlarmConfig()">승객 여러분께 안내 말씀 드립니다. 잠시 후 {시}시 {분}분에 출발하는 {선박}의 탑승이 곧 시작됩니다. 티켓을 소지하신 탑승객께서는 출발시간과 선박명을 확인하시고 탑승장으로 이동해 주시기 바랍니다.{선박}는 음주자 및 반려견은 탑승이 금지되어 있습니다. 감사합니다. We would like to inform our passengers. Boarding will soon begin on {선박}, departing at {시}:{분} minutes later. Passengers with tickets must check the departure time and ship name before proceeding to the boarding area. Drinking alcohol and dogs are prohibited from boarding the {선박}. thank you. </textarea>
                         </div>
 
                         <div style="display: flex; flex-direction: column; gap: 6px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 17px; color: #ffcc00;">👷 3순위. 근무자용(2번) 화면 멘트:</span>
-                                <label style="font-size: 17px; color: #fff;"><input type="checkbox" id="tts-enable-worker" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
+                                <span style="font-size: 16px; color: #ffcc00;">👷 3순위. 근무자용(2번) 화면 멘트:</span>
+                                <label style="font-size: 16px; color: #fff;"><input type="checkbox" id="tts-enable-worker" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
                             </div>
                             <textarea id="tts-msg-worker" class="popup-textarea" onchange="saveAlarmConfig()">근무자 안내. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명입니다. 탑승 인원 및 안전 점검을 확인해 주시고 {선박}의 출발를 준비해 주세요.</textarea>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 16px; color: #38bdf8;">⚓ 4순위. 선장용(3번) 화면 멘트:</span>
+                                <label style="font-size: 16px; color: #fff;"><input type="checkbox" id="tts-enable-captain" class="tts-accent" checked onchange="saveAlarmConfig()"> 사용</label>
+                            </div>
+                            <textarea id="tts-msg-captain" class="popup-textarea" onchange="saveAlarmConfig()">선장님 안내. 잠시 후 {시}시 {분}분 출발하는 {선박}의 총 탑승 예정 인원은 {인원}명입니다. 안전 운항 준비를 부탁드립니다.</textarea>
                         </div>
 
                         <div style="display: flex; gap: 8px; margin-top: 6px;">
@@ -985,8 +998,9 @@
                 <div class="alarm-time-setting">
                     <div class="setting-item-row" style="margin-bottom: 4px;"><span style="color: #fff;">대상 화면 선택:</span></div>
                     <div style="display: flex; flex-direction: column; gap: 10px; padding-left: 6px;">
-                        <label style="font-size: 18px; color: #eee;"><input type="checkbox" id="rotation-target-guest" class="rotation-accent" checked onchange="saveAlarmConfig()"> 1번 화면 손님용 적용</label>
-                        <label style="font-size: 18px; color: #eee;"><input type="checkbox" id="rotation-target-worker" class="rotation-accent" checked onchange="saveAlarmConfig()"> 2번 화면 근무자용 적용</label>
+                        <label style="font-size: 17px; color: #eee;"><input type="checkbox" id="rotation-target-guest" class="rotation-accent" checked onchange="saveAlarmConfig()"> 1번 화면 손님용 적용</label>
+                        <label style="font-size: 17px; color: #eee;"><input type="checkbox" id="rotation-target-worker" class="rotation-accent" checked onchange="saveAlarmConfig()"> 2번 화면 근무자용 적용</label>
+                        <label style="font-size: 17px; color: #eee;"><input type="checkbox" id="rotation-target-captain" class="rotation-accent" checked onchange="saveAlarmConfig()"> 3번 화면 선장용 적용</label>
                     </div>
                     <div class="setting-item-row" style="border-top: 1px dashed #555; padding-top: 10px; margin-top: 6px;">
                         <span>화면 전환 주기:</span>
@@ -1009,9 +1023,10 @@
                 <div style="background: #1a1e24; padding: 12px; border-radius: 8px; border: 1px dashed var(--popup-highlight);">
                     <div class="box-title-sm" style="color: #fff; font-size: 17px; margin-bottom: 8px; text-align: center;">📺 표출 대상 화면 선택</div>
                     <div style="display: flex; justify-content: space-around; gap: 8px; flex-wrap: wrap;">
-                        <label style="font-size: 18px; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="all" checked onchange="saveAlarmConfig()"> 전체</label>
-                        <label style="font-size: 18px; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="guest" onchange="saveAlarmConfig()"> 손님용</label>
-                        <label style="font-size: 18px; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="worker" onchange="saveAlarmConfig()"> 근무자용</label>
+                        <label style="font-size: 17px; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="all" checked onchange="saveAlarmConfig()"> 전체</label>
+                        <label style="font-size: 17px; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="guest" onchange="saveAlarmConfig()"> 손님용</label>
+                        <label style="font-size: 17px; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="worker" onchange="saveAlarmConfig()"> 근무자용</label>
+                        <label style="font-size: 17px; color: #fff;"><input type="radio" name="popup_target_screen" class="popup-accent" value="captain" onchange="saveAlarmConfig()"> 선장용</label>
                     </div>
                 </div>
 
@@ -1120,15 +1135,19 @@
     const db = getDatabase(app);
 
     /* ==========================================================================
-       [개별 창 확대/축소 제어 로직 (sessionStorage 기반으로 창별 독립 적용)]
+       [화면 모드 및 개별 창 확대/축소 제어 로직]
        ========================================================================== */
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('mode'); 
     if (mode === 'guest_h') document.body.classList.add('is-guest', 'mode-h'); 
     if (mode === 'guest_v') document.body.classList.add('is-guest', 'mode-v', 'is-worker'); 
+    if (mode === 'guest_c') document.body.classList.add('is-guest', 'mode-c', 'is-captain'); 
+
     const isGuest = mode && mode.startsWith('guest');
     const isCustomerGuest = (mode === 'guest_h');
     const isWorker = (mode === 'guest_v');
+    const isCaptain = (mode === 'guest_c');
+    const isStaffOrCaptain = isWorker || isCaptain;
 
     const ZOOM_STORAGE_KEY = `kimsimin_zoom_${mode || 'admin'}`;
     let currentWindowZoom = parseFloat(sessionStorage.getItem(ZOOM_STORAGE_KEY)) || 1.0;
@@ -1136,25 +1155,13 @@
     function applyWindowZoom(val) {
         currentWindowZoom = Math.max(0.7, Math.min(1.5, Math.round(val * 100) / 100));
         sessionStorage.setItem(ZOOM_STORAGE_KEY, currentWindowZoom);
-        
-        // CSS zoom 속성을 body에 적용하여 완벽하고 깔끔하게 확대/축소
         document.body.style.zoom = currentWindowZoom;
-
         const valText = document.getElementById('zoom-val-text');
-        if (valText) {
-            valText.innerText = `${Math.round(currentWindowZoom * 100)}%`;
-        }
+        if (valText) valText.innerText = `${Math.round(currentWindowZoom * 100)}%`;
     }
 
-    window.adjustWindowZoom = function(delta) {
-        applyWindowZoom(currentWindowZoom + delta);
-    };
-
-    window.resetWindowZoom = function() {
-        applyWindowZoom(1.0);
-    };
-
-    // 페이지 로드 시 즉시 적용
+    window.adjustWindowZoom = function(delta) { applyWindowZoom(currentWindowZoom + delta); };
+    window.resetWindowZoom = function() { applyWindowZoom(1.0); };
     applyWindowZoom(currentWindowZoom);
 
     /* 우측 사이드바 마우스 드래그 너비 조절 */
@@ -1218,7 +1225,12 @@
         if (overlay) overlay.classList.remove('active');
     };
 
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && activeModalContainerId) window.closeConfigModal(); });
+    document.addEventListener('keydown', (e) => { 
+        if (e.key === 'Escape') {
+            if (activeModalContainerId) window.closeConfigModal();
+            if (activeRoleScheduleModal) window.closeRoleScheduleModal();
+        }
+    });
 
     function showToast(msg) {
         const toast = document.getElementById('toast-notification');
@@ -1231,7 +1243,7 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             const swCode = `
-                const CACHE_NAME = 'kimsimin-cache-v13';
+                const CACHE_NAME = 'kimsimin-cache-v14';
                 self.addEventListener('install', e => self.skipWaiting());
                 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(key => { if (key !== CACHE_NAME) return caches.delete(key); }))).then(() => self.clients.claim())));
                 self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
@@ -1243,7 +1255,7 @@
 
     let isOnlineStatus = navigator.onLine;
     let pendingOfflineQueue = JSON.parse(localStorage.getItem('kimsimin_pending_queue') || "[]");
-    
+
     function saveOfflineQueue() { 
         localStorage.setItem('kimsimin_pending_queue', JSON.stringify(pendingOfflineQueue)); 
     }
@@ -1270,20 +1282,40 @@
     };
 
     const defaultBoatData = {
-        1: { capacity: 25, duration: 20, course: "망진나루 ↔ 진주성(촉석루)", notice: "현재 정상 운항 중입니다.", times: presetSchedules.weekday[1], seats: {}, customStatus: {} },
-        2: { capacity: 30, duration: 20, course: "망진나루 ↔ 진주성(촉석루)", notice: "현재 정상 운항 중입니다.", times: presetSchedules.weekday[2], seats: {}, customStatus: {} }
+        1: { capacity: 25, duration: 20, course: "망진나루 ↔ 진주성(촉석루)", times: presetSchedules.weekday[1], seats: {}, customStatus: {} },
+        2: { capacity: 30, duration: 20, course: "망진나루 ↔ 진주성(촉석루)", times: presetSchedules.weekday[2], seats: {}, customStatus: {} }
     };
 
     const defaultConfigData = {
-        lastDate: "", selectedPreset: "weekday", alarmSound: "on", alarmMinutes: 10, alarmRepeatCount: 5, 
-        ttsBroadcast: "on", ttsMinutes: 5, ttsRepeatCount: 2, pageIntervalSeconds: 5,
-        ttsEnableAdmin: true, ttsEnableGuest: true, ttsEnableWorker: true,
+        lastDate: "", selectedPreset: "weekday",
+        alarmSound: "on",
+        adminAlarmSchedules: [{ minutes: 10, repeatCount: 5 }],
+        ttsBroadcast: "on",
+        adminTtsSchedules: [{ minutes: 5, repeatCount: 2 }],
+        pageIntervalSeconds: 5,
+        ttsEnableAdmin: true, ttsEnableGuest: true, ttsEnableWorker: true, ttsEnableCaptain: true,
         ttsMsgAdmin: "관리자 알림. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명, 잔여석은 {잔여}명 입니다.",
         ttsMsgGuest: "승객 여러분께 안내 말씀 드립니다. 잠시 후 {시}시 {분}분에 출발하는 {선박}의 탑승이 곧 시작됩니다. 티켓을 소지하신 탑승객께서는 출발시간과 선박명을 확인하시고 탑승장으로 이동해 주시기 바랍니다.{선박}는 음주자 및 반려견은 탑승이 금지되어 있습니다. 감사합니다. We would like to inform our passengers. Boarding will soon begin on {선박}, departing at {시}:{분} minutes later. Passengers with tickets must check the departure time and ship name before proceeding to the boarding area. Drinking alcohol and dogs are prohibited from boarding the {선박}. thank you.",
         ttsMsgWorker: "근무자 안내. 잠시 후 {시}시 {분}분 출발하는 {선박}의 발권 인원은 총 {인원}명입니다. 탑승 인원 및 안전 점검을 확인해 주시고 {선박}의 출발를 준비해 주세요.",
-        rotationMode: "on", rotationTargetGuest: true, rotationTargetWorker: true,
-        boat1Alarm: "on", boat1AlarmMin: 10, boat1AlarmRep: 5, boat1Tts: "on", boat1TtsMin: 5, boat1TtsRep: 2, boat1FocusTime: "auto",
-        boat2Alarm: "on", boat2AlarmMin: 10, boat2AlarmRep: 5, boat2Tts: "on", boat2TtsMin: 5, boat2TtsRep: 2, boat2FocusTime: "auto",
+        ttsMsgCaptain: "선장님 안내. 잠시 후 {시}시 {분}분 출발하는 {선박}의 총 탑승 예정 인원은 {인원}명입니다. 안전 운항 준비를 부탁드립니다.",
+        rotationMode: "on", rotationTargetGuest: true, rotationTargetWorker: true, rotationTargetCaptain: true,
+
+        // 근무자용 개별 다중 스케줄
+        boat1Alarm: "on", boat1AlarmSchedules: [{ minutes: 10, repeatCount: 5 }],
+        boat1Tts: "on", boat1TtsSchedules: [{ minutes: 5, repeatCount: 2 }],
+        boat1FocusTime: "auto",
+        boat2Alarm: "on", boat2AlarmSchedules: [{ minutes: 10, repeatCount: 5 }],
+        boat2Tts: "on", boat2TtsSchedules: [{ minutes: 5, repeatCount: 2 }],
+        boat2FocusTime: "auto",
+
+        // 선장용 개별 다중 스케줄
+        capBoat1Alarm: "on", capBoat1AlarmSchedules: [{ minutes: 10, repeatCount: 5 }],
+        capBoat1Tts: "on", capBoat1TtsSchedules: [{ minutes: 5, repeatCount: 2 }],
+        capBoat1FocusTime: "auto",
+        capBoat2Alarm: "on", capBoat2AlarmSchedules: [{ minutes: 10, repeatCount: 5 }],
+        capBoat2Tts: "on", capBoat2TtsSchedules: [{ minutes: 5, repeatCount: 2 }],
+        capBoat2FocusTime: "auto",
+
         popupMode: "on", popupHour: "12", popupMinute: "00", popupDurationSeconds: 20,
         popupMessageText: "기상 악화 및 정비 관계로 인하여 잠시 후 다음 항차 운항이 지연될 예정이오니 양해 바랍니다.",
         popupActiveUntil: 0, popupManualSwitch: "forced_off", popupTargetScreen: "all",
@@ -1302,6 +1334,161 @@
 
     let guestPageStatus = { 1: { currentPage: 1, lastRotationTime: Date.now() }, 2: { currentPage: 1, lastRotationTime: Date.now() } };
 
+    /* ==========================================================================
+       [다중 알람 & 방송 스케줄 데이터 안전 헬퍼]
+       ========================================================================== */
+    function ensureScheduleArrays() {
+        if (!Array.isArray(configData.adminAlarmSchedules) || configData.adminAlarmSchedules.length === 0) {
+            configData.adminAlarmSchedules = [{ minutes: configData.alarmMinutes || 10, repeatCount: configData.alarmRepeatCount || 5 }];
+        }
+        if (!Array.isArray(configData.adminTtsSchedules) || configData.adminTtsSchedules.length === 0) {
+            configData.adminTtsSchedules = [{ minutes: configData.ttsMinutes || 5, repeatCount: configData.ttsRepeatCount || 2 }];
+        }
+        [1, 2].forEach(id => {
+            if (!Array.isArray(configData[`boat${id}AlarmSchedules`]) || configData[`boat${id}AlarmSchedules`].length === 0) {
+                configData[`boat${id}AlarmSchedules`] = [{ minutes: configData[`boat${id}AlarmMin`] || 10, repeatCount: configData[`boat${id}AlarmRep`] || 5 }];
+            }
+            if (!Array.isArray(configData[`boat${id}TtsSchedules`]) || configData[`boat${id}TtsSchedules`].length === 0) {
+                configData[`boat${id}TtsSchedules`] = [{ minutes: configData[`boat${id}TtsMin`] || 5, repeatCount: configData[`boat${id}TtsRep`] || 2 }];
+            }
+            if (!Array.isArray(configData[`capBoat${id}AlarmSchedules`]) || configData[`capBoat${id}AlarmSchedules`].length === 0) {
+                configData[`capBoat${id}AlarmSchedules`] = [{ minutes: 10, repeatCount: 5 }];
+            }
+            if (!Array.isArray(configData[`capBoat${id}TtsSchedules`]) || configData[`capBoat${id}TtsSchedules`].length === 0) {
+                configData[`capBoat${id}TtsSchedules`] = [{ minutes: 5, repeatCount: 2 }];
+            }
+        });
+    }
+
+    function renderAdminScheduleLists() {
+        ensureScheduleArrays();
+        const alarmListEl = document.getElementById('admin-alarm-list');
+        if (alarmListEl) {
+            alarmListEl.innerHTML = configData.adminAlarmSchedules.map((item, idx) => `
+                <div class="schedule-item-card">
+                    <span>#${idx + 1}</span>
+                    <div>출발 <input type="number" value="${item.minutes}" min="1" max="60" onchange="updateAdminSchedule('alarm', ${idx}, 'minutes', this.value)"> 분 전</div>
+                    <div>반복 <input type="number" value="${item.repeatCount}" min="1" max="20" onchange="updateAdminSchedule('alarm', ${idx}, 'repeatCount', this.value)"> 회</div>
+                    ${configData.adminAlarmSchedules.length > 1 ? `<button type="button" class="btn-del-schedule" onclick="removeAdminSchedule('alarm', ${idx})">삭제</button>` : ''}
+                </div>
+            `).join('');
+        }
+
+        const ttsListEl = document.getElementById('admin-tts-list');
+        if (ttsListEl) {
+            ttsListEl.innerHTML = configData.adminTtsSchedules.map((item, idx) => `
+                <div class="schedule-item-card">
+                    <span>#${idx + 1}</span>
+                    <div>출발 <input type="number" class="tts-input" value="${item.minutes}" min="1" max="60" onchange="updateAdminSchedule('tts', ${idx}, 'minutes', this.value)"> 분 전</div>
+                    <div>반복 <input type="number" class="tts-input" value="${item.repeatCount}" min="1" max="5" onchange="updateAdminSchedule('tts', ${idx}, 'repeatCount', this.value)"> 번</div>
+                    ${configData.adminTtsSchedules.length > 1 ? `<button type="button" class="btn-del-schedule" onclick="removeAdminSchedule('tts', ${idx})">삭제</button>` : ''}
+                </div>
+            `).join('');
+        }
+    }
+
+    window.addAdminAlarmSchedule = function() {
+        ensureScheduleArrays();
+        configData.adminAlarmSchedules.push({ minutes: 5, repeatCount: 3 });
+        saveConfigData(); renderAdminScheduleLists();
+    };
+    window.addAdminTtsSchedule = function() {
+        ensureScheduleArrays();
+        configData.adminTtsSchedules.push({ minutes: 3, repeatCount: 1 });
+        saveConfigData(); renderAdminScheduleLists();
+    };
+    window.updateAdminSchedule = function(kind, idx, field, val) {
+        ensureScheduleArrays();
+        const arr = kind === 'alarm' ? configData.adminAlarmSchedules : configData.adminTtsSchedules;
+        const maxVal = field === 'minutes' ? 60 : (kind === 'alarm' ? 20 : 5);
+        arr[idx][field] = Math.min(maxVal, Math.max(1, parseInt(val) || 1));
+        saveConfigData(); renderAdminScheduleLists();
+    };
+    window.removeAdminSchedule = function(kind, idx) {
+        ensureScheduleArrays();
+        const arr = kind === 'alarm' ? configData.adminAlarmSchedules : configData.adminTtsSchedules;
+        if (arr.length > 1) {
+            arr.splice(idx, 1);
+            saveConfigData(); renderAdminScheduleLists();
+        }
+    };
+
+    /* 근무자용 / 선장용 다중 스케줄 관리 모달 */
+    let activeRoleScheduleModal = null;
+
+    function getRoleKeyPrefix() {
+        return isCaptain ? 'capBoat' : 'boat';
+    }
+
+    window.openRoleScheduleModal = function(boatId, kind) {
+        ensureScheduleArrays();
+        activeRoleScheduleModal = { boatId, kind };
+        const roleLabel = isCaptain ? '선장용' : '근무자용';
+        const kindLabel = kind === 'alarm' ? '🔔 다중 알람 시간 설정' : '🗣️ 다중 방송 시간 설정';
+        document.getElementById('role-schedule-modal-title').innerText = `[${roleLabel} - 김시민 ${boatId}호] ${kindLabel}`;
+        renderRoleScheduleModalBody();
+        document.getElementById('role-schedule-modal-overlay').classList.add('active');
+    };
+
+    function renderRoleScheduleModalBody() {
+        if (!activeRoleScheduleModal) return;
+        const { boatId, kind } = activeRoleScheduleModal;
+        const prefix = getRoleKeyPrefix();
+        const key = kind === 'alarm' ? `${prefix}${boatId}AlarmSchedules` : `${prefix}${boatId}TtsSchedules`;
+        const arr = configData[key] || [];
+        const bodyEl = document.getElementById('role-schedule-modal-body');
+
+        bodyEl.innerHTML = `
+            <div style="font-size:18px; color:#ccc;">출발 몇 분 전에 알릴지 여러 개를 등록할 수 있습니다. (예: 15분 전, 10분 전, 5분 전)</div>
+            <div class="schedule-list-container">
+                ${arr.map((item, idx) => `
+                    <div class="schedule-item-card" style="padding: 14px;">
+                        <span style="font-size: 20px; color: #38bdf8;">#${idx + 1}</span>
+                        <div style="font-size: 20px;">출발 <input type="number" class="${kind === 'tts' ? 'tts-input' : ''}" value="${item.minutes}" min="1" max="60" onchange="updateRoleScheduleItem(${idx}, 'minutes', this.value)"> 분 전</div>
+                        <div style="font-size: 20px;">반복 <input type="number" class="${kind === 'tts' ? 'tts-input' : ''}" value="${item.repeatCount}" min="1" max="${kind === 'alarm' ? 20 : 5}" onchange="updateRoleScheduleItem(${idx}, 'repeatCount', this.value)"> ${kind === 'alarm' ? '회' : '번'}</div>
+                        ${arr.length > 1 ? `<button type="button" class="btn-del-schedule" style="font-size: 16px; padding: 8px 14px;" onclick="removeRoleScheduleItem(${idx})">삭제</button>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+            <button type="button" class="btn-add-schedule" style="font-size: 20px; padding: 14px; background: ${kind === 'alarm' ? '#28a745' : '#e67e22'};" onclick="addRoleScheduleItem()">+ 시간 스케줄 추가하기</button>
+        `;
+    }
+
+    window.addRoleScheduleItem = function() {
+        if (!activeRoleScheduleModal) return;
+        const { boatId, kind } = activeRoleScheduleModal;
+        const prefix = getRoleKeyPrefix();
+        const key = kind === 'alarm' ? `${prefix}${boatId}AlarmSchedules` : `${prefix}${boatId}TtsSchedules`;
+        configData[key].push({ minutes: kind === 'alarm' ? 5 : 3, repeatCount: kind === 'alarm' ? 3 : 1 });
+        saveConfigData(); renderRoleScheduleModalBody(); updateUI();
+    };
+
+    window.updateRoleScheduleItem = function(idx, field, val) {
+        if (!activeRoleScheduleModal) return;
+        const { boatId, kind } = activeRoleScheduleModal;
+        const prefix = getRoleKeyPrefix();
+        const key = kind === 'alarm' ? `${prefix}${boatId}AlarmSchedules` : `${prefix}${boatId}TtsSchedules`;
+        const maxVal = field === 'minutes' ? 60 : (kind === 'alarm' ? 20 : 5);
+        configData[key][idx][field] = Math.min(maxVal, Math.max(1, parseInt(val) || 1));
+        saveConfigData(); renderRoleScheduleModalBody(); updateUI();
+    };
+
+    window.removeRoleScheduleItem = function(idx) {
+        if (!activeRoleScheduleModal) return;
+        const { boatId, kind } = activeRoleScheduleModal;
+        const prefix = getRoleKeyPrefix();
+        const key = kind === 'alarm' ? `${prefix}${boatId}AlarmSchedules` : `${prefix}${boatId}TtsSchedules`;
+        if (configData[key].length > 1) {
+            configData[key].splice(idx, 1);
+            saveConfigData(); renderRoleScheduleModalBody(); updateUI();
+        }
+    };
+
+    window.closeRoleScheduleModal = function() {
+        activeRoleScheduleModal = null;
+        document.getElementById('role-schedule-modal-overlay').classList.remove('active');
+    };
+
     function buildPopupTimeSelectOptions() {
         const globalH = document.getElementById('popup-hour');
         const globalM = document.getElementById('popup-minute');
@@ -1313,8 +1500,9 @@
     }
     buildPopupTimeSelectOptions();
 
-    window.toggleWorkerAlarm = function(id) {
-        const key = id === 1 ? 'boat1Alarm' : 'boat2Alarm';
+    window.toggleRoleAlarm = function(id) {
+        const prefix = getRoleKeyPrefix();
+        const key = `${prefix}${id}Alarm`;
         const cur = configData[key] || 'on';
         const next = cur === 'on' ? 'off' : 'on';
         configData[key] = next;
@@ -1322,8 +1510,9 @@
         saveConfigData(); updateUI();
     };
 
-    window.toggleWorkerTts = function(id) {
-        const key = id === 1 ? 'boat1Tts' : 'boat2Tts';
+    window.toggleRoleTts = function(id) {
+        const prefix = getRoleKeyPrefix();
+        const key = `${prefix}${id}Tts`;
         const cur = configData[key] || 'on';
         const next = cur === 'on' ? 'off' : 'on';
         configData[key] = next;
@@ -1331,24 +1520,9 @@
         saveConfigData(); updateUI();
     };
 
-    window.updateWorkerTimeConfig = function(id) {
-        const alarmMinIn = document.getElementById(`worker-alarm-min-${id}`);
-        const alarmRepIn = document.getElementById(`worker-alarm-rep-${id}`);
-        const ttsMinIn = document.getElementById(`worker-tts-min-${id}`);
-        const ttsRepIn = document.getElementById(`worker-tts-rep-${id}`);
-
-        let aMin = Math.min(60, Math.max(1, parseInt(alarmMinIn.value) || 10)); alarmMinIn.value = aMin;
-        let aRep = Math.min(20, Math.max(1, parseInt(alarmRepIn.value) || 5)); alarmRepIn.value = aRep;
-        let tMin = Math.min(60, Math.max(1, parseInt(ttsMinIn.value) || 5)); ttsMinIn.value = tMin;
-        let tRep = Math.min(5, Math.max(1, parseInt(ttsRepIn.value) || 2)); ttsRepIn.value = tRep;
-
-        if (id === 1) { configData.boat1AlarmMin = aMin; configData.boat1AlarmRep = aRep; configData.boat1TtsMin = tMin; configData.boat1TtsRep = tRep; }
-        else { configData.boat2AlarmMin = aMin; configData.boat2AlarmRep = aRep; configData.boat2TtsMin = tMin; configData.boat2TtsRep = tRep; }
-        saveConfigData(); updateUI();
-    };
-
-    window.setWorkerFocusTime = function(id, val) {
-        if (id === 1) configData.boat1FocusTime = val; else configData.boat2FocusTime = val;
+    window.setRoleFocusTime = function(id, val) {
+        const prefix = getRoleKeyPrefix();
+        configData[`${prefix}${id}FocusTime`] = val;
         saveConfigData(); updateUI();
     };
 
@@ -1358,7 +1532,7 @@
     }
 
     function saveConfigData() {
-        if (isGuest && !isWorker) return;
+        if (isGuest && !isStaffOrCaptain) return;
         if (!isOnlineStatus) { pendingOfflineQueue.push({ type: 'config_data', timestamp: Date.now() }); saveOfflineQueue(); return; }
         set(ref(db, 'namgang/configData'), configData).catch(() => { pendingOfflineQueue.push({ type: 'config_data', timestamp: Date.now() }); saveOfflineQueue(); });
     }
@@ -1370,6 +1544,7 @@
             boatData[2].times = [...presetSchedules[presetKey][2]];
             configData.selectedPreset = presetKey;
             configData.boat1FocusTime = "auto"; configData.boat2FocusTime = "auto";
+            configData.capBoat1FocusTime = "auto"; configData.capBoat2FocusTime = "auto";
             saveBoatData(); saveConfigData(); updateUI();
             alert("운항 시간표 프리셋이 변경되었습니다.");
         }
@@ -1461,7 +1636,7 @@
     };
 
     window.handleManualPopupToggle = function(targetType, val) {
-        if (isGuest && !isWorker) return;
+        if (isGuest && !isStaffOrCaptain) return;
         if (targetType === 'global') configData.popupManualSwitch = val;
         if (targetType === 1) configData.popupManual1 = val;
         if (targetType === 2) configData.popupManual2 = val;
@@ -1469,29 +1644,28 @@
     };
 
     window.saveAlarmConfig = function() {
-        if (isGuest && !isWorker) return; 
+        if (isGuest && !isStaffOrCaptain) return; 
         const alarmOpt = document.querySelector('input[name="alarm_sound"]:checked');
         if (alarmOpt) configData.alarmSound = alarmOpt.value;
-        configData.alarmMinutes = Math.min(60, Math.max(1, parseInt(document.getElementById('alarm-trigger-minutes').value) || 10));
-        configData.alarmRepeatCount = Math.min(20, Math.max(1, parseInt(document.getElementById('alarm-repeat-count').value) || 5));
         configData.pageIntervalSeconds = Math.min(60, Math.max(2, parseInt(document.getElementById('page-interval-seconds').value) || 5));
 
         const ttsOption = document.querySelector('input[name="tts_broadcast"]:checked');
         if (ttsOption) configData.ttsBroadcast = ttsOption.value;
-        configData.ttsMinutes = Math.min(60, Math.max(1, parseInt(document.getElementById('tts-trigger-minutes').value) || 5));
-        configData.ttsRepeatCount = Math.min(5, Math.max(1, parseInt(document.getElementById('tts-repeat-count').value) || 2));
 
         if (document.getElementById('tts-enable-admin')) configData.ttsEnableAdmin = document.getElementById('tts-enable-admin').checked;
         if (document.getElementById('tts-enable-guest')) configData.ttsEnableGuest = document.getElementById('tts-enable-guest').checked;
         if (document.getElementById('tts-enable-worker')) configData.ttsEnableWorker = document.getElementById('tts-enable-worker').checked;
+        if (document.getElementById('tts-enable-captain')) configData.ttsEnableCaptain = document.getElementById('tts-enable-captain').checked;
         if (document.getElementById('tts-msg-admin')) configData.ttsMsgAdmin = document.getElementById('tts-msg-admin').value;
         if (document.getElementById('tts-msg-guest')) configData.ttsMsgGuest = document.getElementById('tts-msg-guest').value;
         if (document.getElementById('tts-msg-worker')) configData.ttsMsgWorker = document.getElementById('tts-msg-worker').value;
+        if (document.getElementById('tts-msg-captain')) configData.ttsMsgCaptain = document.getElementById('tts-msg-captain').value;
 
         const rotationOption = document.querySelector('input[name="rotation_mode"]:checked');
         if (rotationOption) configData.rotationMode = rotationOption.value;
         configData.rotationTargetGuest = document.getElementById('rotation-target-guest').checked;
         configData.rotationTargetWorker = document.getElementById('rotation-target-worker').checked;
+        if (document.getElementById('rotation-target-captain')) configData.rotationTargetCaptain = document.getElementById('rotation-target-captain').checked;
 
         const popOption = document.querySelector('input[name="popup_mode"]:checked');
         if (popOption) configData.popupMode = popOption.value;
@@ -1509,7 +1683,7 @@
     };
 
     window.toggleDropdown = function(id) {
-        if(isGuest && !isWorker) return; 
+        if(isGuest && !isStaffOrCaptain) return; 
         const list = document.getElementById(`list-${id}`);
         const isShow = list.classList.contains('show');
         document.querySelectorAll('.checkbox-list').forEach(el => el.classList.remove('show'));
@@ -1541,20 +1715,6 @@
         if (!isNaN(dur)) boatData[id].duration = dur;
         boatData[id].course = cou;
         saveBoatData(); updateUI(); alert("정보가 변경되었습니다.");
-    };
-
-    window.applyNotice = function(id) {
-        boatData[id].notice = document.getElementById(`notice-direct-${id}`).value || "현재 정상 운항 중입니다.";
-        saveBoatData(); updateUI(); alert(`${id}호의 공지사항이 반영되었습니다.`);
-    };
-
-    window.deleteNotice = function(id) {
-        if(confirm(`${id}호의 공지사항을 삭제하시겠습니까?`)) {
-            boatData[id].notice = "현재 정상 운항 중입니다.";
-            const noticeIn = document.getElementById(`notice-direct-${id}`);
-            if(noticeIn) noticeIn.value = ""; 
-            saveBoatData(); updateUI(); alert("공지사항이 삭제되었습니다.");
-        }
     };
 
     window.updateSettings = function(id) {
@@ -1603,13 +1763,11 @@
             if (!boatData[id].seats) boatData[id].seats = {};
             let cur = boatData[id].seats[time] || 0;
             boatData[id].seats[time] = Math.max(0, cur + amt);
-            
+
             const existingIdx = pendingOfflineQueue.findIndex(q => q.type === 'seat_adjust' && q.boatId === id && q.time === time);
             if (existingIdx !== -1) {
                 pendingOfflineQueue[existingIdx].amt += amt;
-                if (pendingOfflineQueue[existingIdx].amt === 0) {
-                    pendingOfflineQueue.splice(existingIdx, 1);
-                }
+                if (pendingOfflineQueue[existingIdx].amt === 0) pendingOfflineQueue.splice(existingIdx, 1);
             } else {
                 pendingOfflineQueue.push({ type: 'seat_adjust', boatId: id, time: time, amt: amt, timestamp: Date.now() });
             }
@@ -1630,18 +1788,15 @@
             }
         }).catch(() => {
             const existingIdx = pendingOfflineQueue.findIndex(q => q.type === 'seat_adjust' && q.boatId === id && q.time === time);
-            if (existingIdx !== -1) {
-                pendingOfflineQueue[existingIdx].amt += amt;
-            } else {
-                pendingOfflineQueue.push({ type: 'seat_adjust', boatId: id, time: time, amt: amt, timestamp: Date.now() });
-            }
+            if (existingIdx !== -1) pendingOfflineQueue[existingIdx].amt += amt;
+            else pendingOfflineQueue.push({ type: 'seat_adjust', boatId: id, time: time, amt: amt, timestamp: Date.now() });
             saveOfflineQueue();
         });
     };
 
     window.resetBoat = function(id) {
         if(confirm('해당 선박의 현황을 초기화할까요?')) {
-            boatData[id].seats = {}; boatData[id].customStatus = {}; boatData[id].notice = "현재 정상 운항 중입니다."; 
+            boatData[id].seats = {}; boatData[id].customStatus = {}; 
             saveBoatData(); updateUI();
         }
     };
@@ -1665,10 +1820,10 @@
     window.handleRotationToggle = function() { window.saveAlarmConfig(); updateUI(); };
 
     /* ==========================================================================
-       [엄격한 순차 방송 엔진: 1.관리자 -> 2.손님용 -> 3.근무자용 & 모바일 끊김 방지]
+       [엄격한 순차 방송 엔진: 1.관리자 -> 2.손님용 -> 3.근무자용 -> 4.선장용]
        ========================================================================== */
     const TAB_INSTANCE_ID = `${mode || 'admin'}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-    const ROLE_PRIORITY = !isGuest ? 1 : (isCustomerGuest ? 2 : 3);
+    const ROLE_PRIORITY = !isGuest ? 1 : (isCustomerGuest ? 2 : (isWorker ? 3 : 4));
     const audioSyncChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('kimsimin_audio_seq_channel') : null;
 
     let localAudioQueue = [];        
@@ -1712,14 +1867,8 @@
         if (document.visibilityState === 'visible') {
             await requestScreenWakeLock();
             const ctx = getSharedAudioContext();
-            if (ctx && ctx.state === 'suspended') {
-                await ctx.resume();
-            }
-            if ('speechSynthesis' in window) {
-                if (window.speechSynthesis.paused) {
-                    window.speechSynthesis.resume();
-                }
-            }
+            if (ctx && ctx.state === 'suspended') await ctx.resume();
+            if ('speechSynthesis' in window && window.speechSynthesis.paused) window.speechSynthesis.resume();
             updateUI();
         }
     });
@@ -1749,42 +1898,29 @@
         stopLockHeartbeat();
         const sendHeartbeat = () => {
             const expiresAt = Date.now() + 5000;
-            if (audioSyncChannel) {
-                audioSyncChannel.postMessage({ type: 'AUDIO_LOCK_HEARTBEAT', sender: TAB_INSTANCE_ID, priority: priority });
-            }
-            if (isOnlineStatus) {
-                set(globalAudioLockRef, { owner: TAB_INSTANCE_ID, priority: priority, expiresAt: expiresAt }).catch(() => {});
-            }
+            if (audioSyncChannel) audioSyncChannel.postMessage({ type: 'AUDIO_LOCK_HEARTBEAT', sender: TAB_INSTANCE_ID, priority: priority });
+            if (isOnlineStatus) set(globalAudioLockRef, { owner: TAB_INSTANCE_ID, priority: priority, expiresAt: expiresAt }).catch(() => {});
         };
         sendHeartbeat();
         lockHeartbeatTimer = setInterval(sendHeartbeat, 1500);
     }
 
     function stopLockHeartbeat() {
-        if (lockHeartbeatTimer) {
-            clearInterval(lockHeartbeatTimer);
-            lockHeartbeatTimer = null;
-        }
+        if (lockHeartbeatTimer) { clearInterval(lockHeartbeatTimer); lockHeartbeatTimer = null; }
     }
 
     function acquireGlobalAudioLock(priority) {
         if (remoteLockOwner && Date.now() < remoteLockExpiresAt) return false;
         remoteLockOwner = null;
         startLockHeartbeat(priority);
-        if (audioSyncChannel) {
-            audioSyncChannel.postMessage({ type: 'AUDIO_LOCK_ACQUIRED', sender: TAB_INSTANCE_ID, priority: priority });
-        }
+        if (audioSyncChannel) audioSyncChannel.postMessage({ type: 'AUDIO_LOCK_ACQUIRED', sender: TAB_INSTANCE_ID, priority: priority });
         return true;
     }
 
     function releaseGlobalAudioLock() {
         stopLockHeartbeat();
-        if (audioSyncChannel) {
-            audioSyncChannel.postMessage({ type: 'AUDIO_LOCK_RELEASED', sender: TAB_INSTANCE_ID });
-        }
-        if (isOnlineStatus) {
-            remove(globalAudioLockRef).catch(() => {});
-        }
+        if (audioSyncChannel) audioSyncChannel.postMessage({ type: 'AUDIO_LOCK_RELEASED', sender: TAB_INSTANCE_ID });
+        if (isOnlineStatus) remove(globalAudioLockRef).catch(() => {});
     }
 
     function enqueueSequentialAudio(job) {
@@ -1801,7 +1937,7 @@
 
     function processSequentialAudioQueue() {
         if (isLocalPlaying || localAudioQueue.length === 0) return;
-        
+
         if (remoteLockOwner && Date.now() < remoteLockExpiresAt) { 
             setTimeout(processSequentialAudioQueue, 500); 
             return; 
@@ -1846,11 +1982,12 @@
 
         let count = 0;
         const maxRepeats = job.repeatCount || 5;
+        const prefix = getRoleKeyPrefix();
 
         const playOnceAndCheck = () => {
             if (job.boatId && job.time && !job.isTest) {
                 const isStillVisual = activeVisualAlarms[job.boatId]?.includes(job.time);
-                const isEnabled = isWorker ? ((job.boatId === 1 ? configData.boat1Alarm : configData.boat2Alarm) === 'on') : ((configData.alarmSound || 'on') === 'on');
+                const isEnabled = isStaffOrCaptain ? ((configData[`${prefix}${job.boatId}Alarm`] || 'on') === 'on') : ((configData.alarmSound || 'on') === 'on');
                 if (!isStillVisual || !isEnabled) {
                     clearInterval(alarmLoopTimer); alarmLoopTimer = null;
                     window.dismissAlarm(job.boatId, job.time);
@@ -1878,10 +2015,12 @@
         if (!('speechSynthesis' in window)) { if (job.boatId && job.time) window.dismissTtsBroadcast(job.boatId, job.time); onComplete(); return; }
 
         let remainingLoops = job.repeatCount || 2;
+        const prefix = getRoleKeyPrefix();
+
         const speakNextLoop = () => {
             if (job.boatId && job.time && !job.isTest) {
                 const isStillActive = activeTtsBroadcasts[job.boatId]?.includes(job.time);
-                const isEnabled = isWorker ? ((job.boatId === 1 ? configData.boat1Tts : configData.boat2Tts) === 'on') : ((configData.ttsBroadcast || 'on') === 'on');
+                const isEnabled = isStaffOrCaptain ? ((configData[`${prefix}${job.boatId}Tts`] || 'on') === 'on') : ((configData.ttsBroadcast || 'on') === 'on');
                 if (!isStillActive || !isEnabled || remainingLoops <= 0) {
                     window.dismissTtsBroadcast(job.boatId, job.time);
                     onComplete(); return;
@@ -2065,68 +2204,32 @@
         let testJobsCount = 0;
         const testBatchId = Date.now();
 
+        const formatSample = (tpl) => tpl
+            .replace(/\{시\}/g, String(sampleH))
+            .replace(/\{분\}/g, String(sampleM))
+            .replace(/\{선박\}/g, sampleBoat)
+            .replace(/\{인원\}/g, String(sampleBooked))
+            .replace(/\{잔여\}/g, String(sampleCap - sampleBooked));
+
         if (configData.ttsEnableAdmin !== false) {
-            const adminPhrase = (configData.ttsMsgAdmin || defaultConfigData.ttsMsgAdmin)
-                .replace(/\{시\}/g, String(sampleH))
-                .replace(/\{분\}/g, String(sampleM))
-                .replace(/\{선박\}/g, sampleBoat)
-                .replace(/\{인원\}/g, String(sampleBooked))
-                .replace(/\{잔여\}/g, String(sampleCap - sampleBooked));
-
-            enqueueSequentialAudio({
-                uniqueJobId: `test-tts-admin-${testBatchId}`,
-                kind: 'tts',
-                priority: 1,
-                phrase: adminPhrase,
-                repeatCount: 1,
-                isTest: true
-            });
+            enqueueSequentialAudio({ uniqueJobId: `test-tts-admin-${testBatchId}`, kind: 'tts', priority: 1, phrase: formatSample(configData.ttsMsgAdmin || defaultConfigData.ttsMsgAdmin), repeatCount: 1, isTest: true });
             testJobsCount++;
         }
-
         if (configData.ttsEnableGuest !== false) {
-            const guestPhrase = (configData.ttsMsgGuest || defaultConfigData.ttsMsgGuest)
-                .replace(/\{시\}/g, String(sampleH))
-                .replace(/\{분\}/g, String(sampleM))
-                .replace(/\{선박\}/g, sampleBoat)
-                .replace(/\{인원\}/g, String(sampleBooked))
-                .replace(/\{잔여\}/g, String(sampleCap - sampleBooked));
-
-            enqueueSequentialAudio({
-                uniqueJobId: `test-tts-guest-${testBatchId}`,
-                kind: 'tts',
-                priority: 2,
-                phrase: guestPhrase,
-                repeatCount: 1,
-                isTest: true
-            });
+            enqueueSequentialAudio({ uniqueJobId: `test-tts-guest-${testBatchId}`, kind: 'tts', priority: 2, phrase: formatSample(configData.ttsMsgGuest || defaultConfigData.ttsMsgGuest), repeatCount: 1, isTest: true });
             testJobsCount++;
         }
-
         if (configData.ttsEnableWorker !== false) {
-            const workerPhrase = (configData.ttsMsgWorker || defaultConfigData.ttsMsgWorker)
-                .replace(/\{시\}/g, String(sampleH))
-                .replace(/\{분\}/g, String(sampleM))
-                .replace(/\{선박\}/g, sampleBoat)
-                .replace(/\{인원\}/g, String(sampleBooked))
-                .replace(/\{잔여\}/g, String(sampleCap - sampleBooked));
-
-            enqueueSequentialAudio({
-                uniqueJobId: `test-tts-worker-${testBatchId}`,
-                kind: 'tts',
-                priority: 3,
-                phrase: workerPhrase,
-                repeatCount: 1,
-                isTest: true
-            });
+            enqueueSequentialAudio({ uniqueJobId: `test-tts-worker-${testBatchId}`, kind: 'tts', priority: 3, phrase: formatSample(configData.ttsMsgWorker || defaultConfigData.ttsMsgWorker), repeatCount: 1, isTest: true });
+            testJobsCount++;
+        }
+        if (configData.ttsEnableCaptain !== false) {
+            enqueueSequentialAudio({ uniqueJobId: `test-tts-captain-${testBatchId}`, kind: 'tts', priority: 4, phrase: formatSample(configData.ttsMsgCaptain || defaultConfigData.ttsMsgCaptain), repeatCount: 1, isTest: true });
             testJobsCount++;
         }
 
-        if (testJobsCount > 0) {
-            showToast(`🗣️ 체크된 방송 멘트 ${testJobsCount}개를 순차 테스트 대기열에 등록했습니다.`);
-        } else {
-            alert("⚠️ 현재 사용 체크된 방송 멘트가 하나도 없습니다. 설정을 확인해 주세요.");
-        }
+        if (testJobsCount > 0) showToast(`🗣️ 체크된 방송 멘트 ${testJobsCount}개를 순차 테스트 대기열에 등록했습니다.`);
+        else alert("⚠️ 현재 사용 체크된 방송 멘트가 하나도 없습니다. 설정을 확인해 주세요.");
     };
 
     function playSingleBeepSignal(ctx, nowTime) {
@@ -2143,14 +2246,14 @@
         osc2.connect(gain2); gain2.connect(ctx.destination); osc2.start(nowTime + 0.15); osc2.stop(nowTime + 0.6);
     }
 
-    function startInfiniteAlarmLoop(id, time) {
-        const isAlarmEnabled = isWorker ? ((id === 1 ? configData.boat1Alarm : configData.boat2Alarm) === 'on') : (isCustomerGuest ? false : ((configData.alarmSound || 'on') === 'on'));
+    function startInfiniteAlarmLoop(id, time, maxRepeats, schedIdx) {
+        const prefix = getRoleKeyPrefix();
+        const isAlarmEnabled = isStaffOrCaptain ? ((configData[`${prefix}${id}Alarm`] || 'on') === 'on') : (isCustomerGuest ? false : ((configData.alarmSound || 'on') === 'on'));
         if (!isAlarmEnabled) return;
         if (!activeVisualAlarms[id].includes(time)) activeVisualAlarms[id].push(time);
         updateUI(); 
 
-        const maxRepeats = isWorker ? ((id === 1 ? configData.boat1AlarmRep : configData.boat2AlarmRep) || 5) : (configData.alarmRepeatCount || 5);
-        enqueueSequentialAudio({ uniqueJobId: `alarm-${TAB_INSTANCE_ID}-${id}-${time}`, kind: 'alarm', priority: ROLE_PRIORITY, boatId: id, time: time, repeatCount: maxRepeats });
+        enqueueSequentialAudio({ uniqueJobId: `alarm-${TAB_INSTANCE_ID}-${id}-${time}-s${schedIdx}`, kind: 'alarm', priority: ROLE_PRIORITY, boatId: id, time: time, repeatCount: maxRepeats || 5 });
     }
 
     function stopBoatAlarms(id) {
@@ -2185,13 +2288,16 @@
         if (activeAudioJob && activeAudioJob.kind === 'tts') abortCurrentLocalAudio();
     }
 
+    /* 다중 알람 스케줄 체크 로직 */
     function checkTenMinutesAlarm(id, times) {
         if (isCustomerGuest) return;
-        const isAlarmEnabled = isWorker ? ((id === 1 ? configData.boat1Alarm : configData.boat2Alarm) === 'on') : ((configData.alarmSound || 'on') === 'on');
+        ensureScheduleArrays();
+        const prefix = getRoleKeyPrefix();
+        const isAlarmEnabled = isStaffOrCaptain ? ((configData[`${prefix}${id}Alarm`] || 'on') === 'on') : ((configData.alarmSound || 'on') === 'on');
         if (!isAlarmEnabled) return;
 
-        const triggerMinutes = isWorker ? ((id === 1 ? configData.boat1AlarmMin : configData.boat2AlarmMin) || 10) : (configData.alarmMinutes || 10);
-        const rolePrefix = isWorker ? 'worker' : 'admin';
+        const schedules = isStaffOrCaptain ? (configData[`${prefix}${id}AlarmSchedules`] || []) : (configData.adminAlarmSchedules || []);
+        const rolePrefix = isCaptain ? 'captain' : (isWorker ? 'worker' : 'admin');
         const now = new Date(); const todayStr = now.toLocaleDateString();
 
         times.forEach(t => {
@@ -2199,36 +2305,50 @@
             const targetTime = new Date(); targetTime.setHours(tH, tM, 0, 0);
             const diffMins = (targetTime.getTime() - now.getTime()) / 60000;
 
-            if (diffMins <= triggerMinutes && diffMins > 0) {
-                const booked = (boatData[id].seats && boatData[id].seats[t]) || 0;
-                if (booked <= 0) return;
-                const uniqueKey = `${todayStr}-${rolePrefix}-${id}-${t}-${triggerMinutes}`;
-                if (!playedAlarms[uniqueKey]) {
-                    const cStat = (boatData[id].customStatus && boatData[id].customStatus[t]) || "auto";
-                    const isHalted = cStat.includes("중지") || cStat === "운항없음" || cStat === "점 검 중" || cStat === "점검중";
-                    if (!isHalted) { playedAlarms[uniqueKey] = true; startInfiniteAlarmLoop(id, t); }
+            schedules.forEach((sched, sIdx) => {
+                const triggerMinutes = sched.minutes || 10;
+                const repeatCount = sched.repeatCount || 5;
+
+                if (diffMins <= triggerMinutes && diffMins > 0) {
+                    const booked = (boatData[id].seats && boatData[id].seats[t]) || 0;
+                    if (booked <= 0) return;
+                    const uniqueKey = `${todayStr}-${rolePrefix}-${id}-${t}-m${triggerMinutes}-s${sIdx}`;
+                    if (!playedAlarms[uniqueKey]) {
+                        const cStat = (boatData[id].customStatus && boatData[id].customStatus[t]) || "auto";
+                        const isHalted = cStat.includes("중지") || cStat === "운항없음" || cStat === "점 검 중" || cStat === "점검중";
+                        if (!isHalted) {
+                            playedAlarms[uniqueKey] = true;
+                            startInfiniteAlarmLoop(id, t, repeatCount, sIdx);
+                        }
+                    }
                 }
-            }
+            });
         });
     }
 
     function buildRoleTtsSpeech(id, tH, tM, booked, capacity) {
         const boatNumStr = (id === 1) ? "김시민 1호" : "김시민 2호";
         const remain = Math.max(0, capacity - booked);
-        let template = isCustomerGuest ? (configData.ttsMsgGuest || defaultConfigData.ttsMsgGuest) : (isWorker ? (configData.ttsMsgWorker || defaultConfigData.ttsMsgWorker) : (configData.ttsMsgAdmin || defaultConfigData.ttsMsgAdmin));
+        let template = isCustomerGuest ? (configData.ttsMsgGuest || defaultConfigData.ttsMsgGuest)
+                     : (isWorker ? (configData.ttsMsgWorker || defaultConfigData.ttsMsgWorker)
+                     : (isCaptain ? (configData.ttsMsgCaptain || defaultConfigData.ttsMsgCaptain)
+                     : (configData.ttsMsgAdmin || defaultConfigData.ttsMsgAdmin)));
         return template.replace(/\{시\}/g, String(tH)).replace(/\{분\}/g, String(tM)).replace(/\{선박\}/g, boatNumStr).replace(/\{인원\}/g, String(booked)).replace(/\{잔여\}/g, String(remain));
     }
 
+    /* 다중 방송 스케줄 체크 로직 */
     function checkTtsSpeechBroadcast(id, times) {
         if (isCustomerGuest && configData.ttsEnableGuest === false) return;
         if (isWorker && configData.ttsEnableWorker === false) return;
+        if (isCaptain && configData.ttsEnableCaptain === false) return;
 
-        const isTtsEnabled = isWorker ? ((id === 1 ? configData.boat1Tts : configData.boat2Tts) === 'on') : ((configData.ttsBroadcast || 'on') === 'on');
+        ensureScheduleArrays();
+        const prefix = getRoleKeyPrefix();
+        const isTtsEnabled = isStaffOrCaptain ? ((configData[`${prefix}${id}Tts`] || 'on') === 'on') : ((configData.ttsBroadcast || 'on') === 'on');
         if (!isTtsEnabled) return;
 
-        const ttsTriggerMinutes = isWorker ? ((id === 1 ? configData.boat1TtsMin : configData.boat2TtsMin) || 5) : (configData.ttsMinutes || 5);
-        const maxLoops = isWorker ? ((id === 1 ? configData.boat1TtsRep : configData.boat2TtsRep) || 2) : (configData.ttsRepeatCount || 2);
-        const rolePrefix = isWorker ? 'worker' : (isCustomerGuest ? 'guest' : 'admin');
+        const schedules = isStaffOrCaptain ? (configData[`${prefix}${id}TtsSchedules`] || []) : (configData.adminTtsSchedules || []);
+        const rolePrefix = isCaptain ? 'captain' : (isWorker ? 'worker' : (isCustomerGuest ? 'guest' : 'admin'));
         const now = new Date(); const todayStr = now.toLocaleDateString();
 
         times.forEach(t => {
@@ -2236,27 +2356,32 @@
             const targetTime = new Date(); targetTime.setHours(tH, tM, 0, 0);
             const diffMins = (targetTime.getTime() - now.getTime()) / 60000;
 
-            if (diffMins <= ttsTriggerMinutes && diffMins > 0) {
-                const broadcastKey = `${todayStr}-${rolePrefix}-${id}-${t}-${ttsTriggerMinutes}`;
-                if (!playedBroadcasts[broadcastKey]) {
-                    const data = boatData[id]; const capacity = data.capacity || 0;
-                    const booked = (data.seats && data.seats[t]) || 0;
-                    const cStat = (data.customStatus && data.customStatus[t]) || "auto";
-                    if (booked <= 0) return;
+            schedules.forEach((sched, sIdx) => {
+                const ttsTriggerMinutes = sched.minutes || 5;
+                const maxLoops = sched.repeatCount || 2;
 
-                    const isHalted = cStat.includes("중지") || cStat === "운항없음" || cStat === "점 검 중" || cStat === "점검중";
-                    if (!isHalted) {
-                        playedBroadcasts[broadcastKey] = true;
-                        if (!activeTtsBroadcasts[id].includes(t)) activeTtsBroadcasts[id].push(t);
-                        updateUI();
-                        
-                        const shouldSpeak = isGuest ? true : (configData.ttsEnableAdmin !== false);
-                        if (shouldSpeak) {
-                            enqueueSequentialAudio({ uniqueJobId: `tts-${TAB_INSTANCE_ID}-${id}-${t}`, kind: 'tts', priority: ROLE_PRIORITY, boatId: id, time: t, phrase: buildRoleTtsSpeech(id, tH, tM, booked, capacity), repeatCount: maxLoops });
+                if (diffMins <= ttsTriggerMinutes && diffMins > 0) {
+                    const broadcastKey = `${todayStr}-${rolePrefix}-${id}-${t}-m${ttsTriggerMinutes}-s${sIdx}`;
+                    if (!playedBroadcasts[broadcastKey]) {
+                        const data = boatData[id]; const capacity = data.capacity || 0;
+                        const booked = (data.seats && data.seats[t]) || 0;
+                        const cStat = (data.customStatus && data.customStatus[t]) || "auto";
+                        if (booked <= 0) return;
+
+                        const isHalted = cStat.includes("중지") || cStat === "운항없음" || cStat === "점 검 중" || cStat === "점검중";
+                        if (!isHalted) {
+                            playedBroadcasts[broadcastKey] = true;
+                            if (!activeTtsBroadcasts[id].includes(t)) activeTtsBroadcasts[id].push(t);
+                            updateUI();
+
+                            const shouldSpeak = isGuest ? true : (configData.ttsEnableAdmin !== false);
+                            if (shouldSpeak) {
+                                enqueueSequentialAudio({ uniqueJobId: `tts-${TAB_INSTANCE_ID}-${id}-${t}-s${sIdx}`, kind: 'tts', priority: ROLE_PRIORITY, boatId: id, time: t, phrase: buildRoleTtsSpeech(id, tH, tM, booked, capacity), repeatCount: maxLoops });
+                            }
                         }
                     }
                 }
-            }
+            });
         });
     }
 
@@ -2279,7 +2404,9 @@
         }
 
         const targetScreenSetting = configData.popupTargetScreen || 'all';
-        if ((targetScreenSetting === 'guest' && mode !== 'guest_h') || (targetScreenSetting === 'worker' && mode !== 'guest_v')) {
+        if ((targetScreenSetting === 'guest' && mode !== 'guest_h') || 
+            (targetScreenSetting === 'worker' && mode !== 'guest_v') ||
+            (targetScreenSetting === 'captain' && mode !== 'guest_c')) {
             if (overlayGlobal) overlayGlobal.classList.remove('active');
             if (overlay1) overlay1.classList.remove('active');
             if (overlay2) overlay2.classList.remove('active');
@@ -2338,6 +2465,7 @@
             configData.lastDate = today; configData.popupActiveUntil = 0;
             configData.popupManualSwitch = "forced_off"; configData.popupManual1 = "forced_off"; configData.popupManual2 = "forced_off";
             configData.boat1FocusTime = "auto"; configData.boat2FocusTime = "auto";
+            configData.capBoat1FocusTime = "auto"; configData.capBoat2FocusTime = "auto";
             saveBoatData(); saveConfigData();
             playedAlarms = {}; playedBroadcasts = {}; playedEmergencyPopups = { global: {}, 1: {}, 2: {} };
             stopAllAlarms(); stopAllTtsBroadcasts(); 
@@ -2351,40 +2479,40 @@
         const timeFormatted = `${String(now.getHours()).padStart(2, '0')}시 ${String(now.getMinutes()).padStart(2, '0')}분 ${String(now.getSeconds()).padStart(2, '0')}초`;
 
         updatePresetButtonsUI();
+        ensureScheduleArrays();
+        const prefix = getRoleKeyPrefix();
 
         [1, 2].forEach(id => {
             const dEl = document.getElementById(`date-${id}`); const cEl = document.getElementById(`clock-${id}`);
             if (dEl) dEl.innerText = dateFormatted; if (cEl) cEl.innerText = timeFormatted;
 
-            const noticeTextEl = document.getElementById(`notice-text-${id}`);
-            if (noticeTextEl) noticeTextEl.innerText = boatData[id].notice || "현재 정상 운항 중입니다. ";
-
             const gDur = document.getElementById(`g-dur-${id}`); const gCourse = document.getElementById(`g-course-${id}`);
             if (gDur) gDur.innerText = boatData[id].duration || "-";
             if (gCourse) gCourse.innerText = boatData[id].course || "-";
 
-            const bAlarmState = (id === 1 ? configData.boat1Alarm : configData.boat2Alarm) || 'on';
-            const bTtsState = (id === 1 ? configData.boat1Tts : configData.boat2Tts) || 'on';
-            const bAlarmMin = (id === 1 ? configData.boat1AlarmMin : configData.boat2AlarmMin) || 10;
-            const bAlarmRep = (id === 1 ? configData.boat1AlarmRep : configData.boat2AlarmRep) || 5;
-            const bTtsMin = (id === 1 ? configData.boat1TtsMin : configData.boat2TtsMin) || 5;
-            const bTtsRep = (id === 1 ? configData.boat1TtsRep : configData.boat2TtsRep) || 2;
-            const bFocusTime = (id === 1 ? configData.boat1FocusTime : configData.boat2FocusTime) || "auto";
+            const bAlarmState = configData[`${prefix}${id}Alarm`] || 'on';
+            const bTtsState = configData[`${prefix}${id}Tts`] || 'on';
+            const alarmArr = configData[`${prefix}${id}AlarmSchedules`] || [];
+            const ttsArr = configData[`${prefix}${id}TtsSchedules`] || [];
+            const bFocusTime = configData[`${prefix}${id}FocusTime`] || "auto";
 
             const alarmBtn = document.getElementById(`worker-alarm-btn-${id}`);
             if (alarmBtn) { alarmBtn.innerText = bAlarmState === 'on' ? "🔔 알람 ON" : "🔕 알람 OFF"; alarmBtn.className = bAlarmState === 'on' ? "active-on" : "active-off"; }
 
+            const alarmSumBtn = document.getElementById(`worker-alarm-summary-${id}`);
+            if (alarmSumBtn) {
+                const minsPreview = alarmArr.map(s => `${s.minutes}분`).join(',');
+                alarmSumBtn.innerText = `⏰ 알람설정 (${minsPreview})`;
+            }
+
             const ttsBtn = document.getElementById(`worker-tts-btn-${id}`);
             if (ttsBtn) { ttsBtn.innerText = bTtsState === 'on' ? "📢 방송 ON" : "🔇 방송 OFF"; ttsBtn.className = bTtsState === 'on' ? "active-on" : "active-off"; }
 
-            const alarmMinIn = document.getElementById(`worker-alarm-min-${id}`);
-            if (alarmMinIn && document.activeElement !== alarmMinIn) alarmMinIn.value = bAlarmMin;
-            const alarmRepIn = document.getElementById(`worker-alarm-rep-${id}`);
-            if (alarmRepIn && document.activeElement !== alarmRepIn) alarmRepIn.value = bAlarmRep;
-            const ttsMinIn = document.getElementById(`worker-tts-min-${id}`);
-            if (ttsMinIn && document.activeElement !== ttsMinIn) ttsMinIn.value = bTtsMin;
-            const ttsRepIn = document.getElementById(`worker-tts-rep-${id}`);
-            if (ttsRepIn && document.activeElement !== ttsRepIn) ttsRepIn.value = bTtsRep;
+            const ttsSumBtn = document.getElementById(`worker-tts-summary-${id}`);
+            if (ttsSumBtn) {
+                const minsPreview = ttsArr.map(s => `${s.minutes}분`).join(',');
+                ttsSumBtn.innerText = `🗣️ 방송설정 (${minsPreview})`;
+            }
 
             const focusSelect = document.getElementById(`worker-focus-time-${id}`);
             if (focusSelect && document.activeElement !== focusSelect) {
@@ -2398,11 +2526,9 @@
                 const capIn = document.getElementById(`cap-direct-${id}`);
                 const durIn = document.getElementById(`dur-direct-${id}`);
                 const couIn = document.getElementById(`course-direct-${id}`);
-                const notIn = document.getElementById(`notice-direct-${id}`);
                 if (capIn && document.activeElement !== capIn) capIn.value = boatData[id].capacity || 0;
                 if (durIn && document.activeElement !== durIn) durIn.value = boatData[id].duration || 0;
                 if (couIn && document.activeElement !== couIn) couIn.value = boatData[id].course || "";
-                if (notIn && document.activeElement !== notIn) notIn.value = boatData[id].notice === "현재 정상 운항 중입니다." ? "" : boatData[id].notice;
             }
         });
 
@@ -2435,19 +2561,21 @@
                 else if (dMins > -duration) { autoTargetTime = times[i]; break; }
             }
 
-            const bFocusSetting = (id === 1 ? configData.boat1FocusTime : configData.boat2FocusTime) || "auto";
+            const bFocusSetting = configData[`${prefix}${id}FocusTime`] || "auto";
             const activeHighlightTime = (bFocusSetting === "auto") ? autoTargetTime : bFocusSetting;
 
             let pageTimes = times;
             const rotationMode = configData.rotationMode || "on";
             const targetGuest = configData.rotationTargetGuest !== false;
             const targetWorker = configData.rotationTargetWorker !== false;
+            const targetCaptain = configData.rotationTargetCaptain !== false;
             const pageInterval = (configData.pageIntervalSeconds || 5) * 1000;
 
             let isRotationActiveForThisMode = false;
             if (rotationMode === "on") {
                 if (mode === 'guest_h' && targetGuest) isRotationActiveForThisMode = true;
                 if (mode === 'guest_v' && targetWorker) isRotationActiveForThisMode = true;
+                if (mode === 'guest_c' && targetCaptain) isRotationActiveForThisMode = true;
             }
 
             const totalCount = times.length;
@@ -2487,47 +2615,70 @@
                     else if (customStat === "티켓발권마감") { rowClass = "row-ticketing-ended-bg"; statusClass = "bg-dark-green-yellow"; }
                     else if (customStat === "탑승(승선)마감") { rowClass = "row-boarding-close-solid"; statusClass = "text-boarding-close"; }
                 } else {
-                    if (diffMins < -duration) { statusText = booked > 0 ? "운항종료(End)" : "종료(End)"; rowClass = "row-ended"; statusClass = "text-ended-box"; }
-                    else if (diffMins <= 0) {
-                        if (booked <= 0) { statusText = "종료(End)"; rowClass = "row-ended"; statusClass = "text-ended-box"; }
-                        else { statusText = "운 항 중"; rowClass = "row-sailing-bg"; statusClass = "text-blue"; }
+                    if (diffMins < -duration) {
+                        statusText = booked > 0 ? "운항종료(End)" : "종료(End)";
+                        rowClass = "row-ended";
+                        statusClass = "text-ended-box";
+                    } else if (diffMins <= 0) {
+                        if (booked <= 0) {
+                            statusText = "종료(End)";
+                            rowClass = "row-ended";
+                            statusClass = "text-ended-box";
+                        } else {
+                            statusText = "운 항 중";
+                            rowClass = "row-sailing-bg";
+                            statusClass = "text-blue";
+                        }
                     } else if (diffMins <= 5) {
-                        statusText = booked <= 0 ? "티켓발권가능" : "탑승마감";
-                        rowClass = booked <= 0 ? "row-available-bg" : "row-boarding-close-solid";
-                        statusClass = booked <= 0 ? "text-available" : "text-boarding-close";
+                        /* 출발 5분 전 이하: 예약자가 없으면 티켓발권마감, 예약자가 있으면 탑승마감 */
+                        statusText = booked <= 0 ? "티켓발권마감" : "탑승마감";
+                        rowClass = booked <= 0 ? "row-ticketing-ended-bg" : "row-boarding-close-solid";
+                        statusClass = booked <= 0 ? "bg-dark-green-yellow" : "text-boarding-close";
                     } else if (diffMins <= 10) {
-                        statusText = booked <= 0 ? "티켓발권가능" : "탑승시작";
-                        rowClass = booked <= 0 ? "row-available-bg" : "row-boarding-start-bg";
-                        statusClass = booked <= 0 ? "text-available" : "text-boarding-start";
+                        /* 출발 10분 전 이하: 예약자가 없으면 티켓발권마감, 예약자가 있으면 탑승시작 */
+                        statusText = booked <= 0 ? "티켓발권마감" : "탑승시작";
+                        rowClass = booked <= 0 ? "row-ticketing-ended-bg" : "row-boarding-start-bg";
+                        statusClass = booked <= 0 ? "bg-dark-green-yellow" : "text-boarding-start";
                     } else if (diffMins <= 15) {
-                        statusText = booked <= 0 ? "티켓발권가능" : "티켓발권종료";
-                        rowClass = booked <= 0 ? "row-available-bg" : "row-ticketing-ended-bg";
-                        statusClass = booked <= 0 ? "text-available" : "bg-dark-green-yellow";
+                        /* 출발 15분 전 이하: 인원 유무와 관계없이 티켓발권마감 */
+                        statusText = "티켓발권마감";
+                        rowClass = "row-ticketing-ended-bg";
+                        statusClass = "bg-dark-green-yellow";
                     } else {
-                        if (remain <= 0) { statusText = "매진(Sold out)"; rowClass = "row-soldout-blink"; statusClass = "text-soldout"; remainClass += " text-soldout-zero"; }
-                        else { statusText = "티켓발권가능"; rowClass = "row-available-bg"; statusClass = "text-available"; }
+                        if (remain <= 0) {
+                            statusText = "매진(Sold out)";
+                            rowClass = "row-soldout-blink";
+                            statusClass = "text-soldout";
+                            remainClass += " text-soldout-zero";
+                        } else {
+                            statusText = "티켓발권가능";
+                            rowClass = "row-available-bg";
+                            statusClass = "text-available";
+                        }
                     }
                 }
 
-                if (remain <= 0 && customStat === "auto" && !statusText.includes("종료") && statusText !== "운 항 중") {
+                if (remain <= 0 && customStat === "auto" && !statusText.includes("종료") && statusText !== "운 항 중" && statusText !== "티켓발권마감" && statusText !== "탑승시작" && statusText !== "탑승마감") {
                     rowClass = "row-soldout-blink"; remainClass += " text-soldout-zero";
                 }
 
-                if (remain < 0 && (!isGuest || isWorker)) { remainText = `<span class="over-capacity-text">⚠️ 초과 +${Math.abs(remain)}명</span>`; }
+                if (remain < 0 && (!isGuest || isStaffOrCaptain)) { remainText = `<span class="over-capacity-text">⚠️ 초과 +${Math.abs(remain)}명</span>`; }
 
-                const targetHighlightTime = isWorker ? activeHighlightTime : autoTargetTime;
+                const targetHighlightTime = isStaffOrCaptain ? activeHighlightTime : autoTargetTime;
                 if (t === targetHighlightTime) rowClass += " row-current-highlight";
 
                 const isAlarmActive = activeVisualAlarms[id].includes(t);
                 const isTtsActive = activeTtsBroadcasts[id].includes(t);
 
                 let controlBtns = "";
-                if (!isGuest || isWorker) {
+                if (!isGuest || isStaffOrCaptain) {
                     let alarmStopBtn = isAlarmActive ? `<button class="btn-alarm-stop" onclick="dismissAlarm(${id}, '${t}')">🔔 알람확인</button>` : "";
                     let ttsStopBtn = isTtsActive ? `<button class="btn-tts-stop" onclick="dismissTtsBroadcast(${id}, '${t}')">🗣️ 방송확인</button>` : "";
                     if (!isGuest) {
                         controlBtns = `<div class="btn-group"><button class="btn-adj" onclick="adjust(${id}, '${t}', 1)">+</button><button class="btn-adj" onclick="adjust(${id}, '${t}', -1)">-</button></div>${alarmStopBtn} ${ttsStopBtn}`;
-                    } else if (isWorker) { controlBtns = `${alarmStopBtn} ${ttsStopBtn}`; }
+                    } else if (isStaffOrCaptain) {
+                        controlBtns = `${alarmStopBtn} ${ttsStopBtn}`;
+                    }
                 }
 
                 const isHaltedCell = rowClass.includes("row-halted-gray-bg") || rowClass.includes("row-ended");
@@ -2537,7 +2688,7 @@
                     <tr class="${rowClass}">
                         <td class="${lineThroughClass}"><span>${t}</span></td>
                         <td class="${lineThroughClass}"><div class="total-booked-flex"><div>${capacity}명<span class="slash-divider">/</span>${booked}명</div>${controlBtns}</div></td>
-                        <td class="${lineThroughClass}"><span class="${remainClass}">${remainText}</span>${remain < 0 && (!isGuest || isWorker) ? '' : '명'}</td>
+                        <td class="${lineThroughClass}"><span class="${remainClass}">${remainText}</span>${remain < 0 && (!isGuest || isStaffOrCaptain) ? '' : '명'}</td>
                         <td><div class="status-cell-flex"><span class="status-text ${statusClass}">${statusText}</span></div></td>
                     </tr>
                 `;
@@ -2564,34 +2715,34 @@
         const val = snapshot.val();
         if (val) {
             configData = val;
+            ensureScheduleArrays();
             if (!isGuest) {
                 const alarmRadio = document.querySelector(`input[name="alarm_sound"][value="${configData.alarmSound || 'on'}"]`);
                 if (alarmRadio) alarmRadio.checked = true;
-                const alarmTrigEl = document.getElementById('alarm-trigger-minutes');
-                if (alarmTrigEl && document.activeElement !== alarmTrigEl) alarmTrigEl.value = configData.alarmMinutes || 10;
-                const alarmRepEl = document.getElementById('alarm-repeat-count');
-                if (alarmRepEl && document.activeElement !== alarmRepEl) alarmRepEl.value = configData.alarmRepeatCount || 5;
                 const pageIntEl = document.getElementById('page-interval-seconds');
                 if (pageIntEl && document.activeElement !== pageIntEl) pageIntEl.value = configData.pageIntervalSeconds || 5;
 
                 const ttsRadio = document.querySelector(`input[name="tts_broadcast"][value="${configData.ttsBroadcast || 'on'}"]`);
                 if (ttsRadio) ttsRadio.checked = true;
-                const ttsTrigEl = document.getElementById('tts-trigger-minutes');
-                if (ttsTrigEl && document.activeElement !== ttsTrigEl) ttsTrigEl.value = configData.ttsMinutes || 5;
-                const ttsRepEl = document.getElementById('tts-repeat-count');
-                if (ttsRepEl && document.activeElement !== ttsRepEl) ttsRepEl.value = configData.ttsRepeatCount || 2;
+
+                renderAdminScheduleLists();
 
                 if (document.getElementById('tts-enable-admin')) document.getElementById('tts-enable-admin').checked = configData.ttsEnableAdmin !== false;
                 if (document.getElementById('tts-enable-guest')) document.getElementById('tts-enable-guest').checked = configData.ttsEnableGuest !== false;
                 if (document.getElementById('tts-enable-worker')) document.getElementById('tts-enable-worker').checked = configData.ttsEnableWorker !== false;
-                if (document.getElementById('tts-msg-admin')) document.getElementById('tts-msg-admin').value = configData.ttsMsgAdmin || defaultConfigData.ttsMsgAdmin;
-                if (document.getElementById('tts-msg-guest')) document.getElementById('tts-msg-guest').value = configData.ttsMsgGuest || defaultConfigData.ttsMsgGuest;
-                if (document.getElementById('tts-msg-worker')) document.getElementById('tts-msg-worker').value = configData.ttsMsgWorker || defaultConfigData.ttsMsgWorker;
+                if (document.getElementById('tts-enable-captain')) document.getElementById('tts-enable-captain').checked = configData.ttsEnableCaptain !== false;
+
+                if (document.getElementById('tts-msg-admin') && document.activeElement !== document.getElementById('tts-msg-admin')) document.getElementById('tts-msg-admin').value = configData.ttsMsgAdmin || defaultConfigData.ttsMsgAdmin;
+                if (document.getElementById('tts-msg-guest') && document.activeElement !== document.getElementById('tts-msg-guest')) document.getElementById('tts-msg-guest').value = configData.ttsMsgGuest || defaultConfigData.ttsMsgGuest;
+                if (document.getElementById('tts-msg-worker') && document.activeElement !== document.getElementById('tts-msg-worker')) document.getElementById('tts-msg-worker').value = configData.ttsMsgWorker || defaultConfigData.ttsMsgWorker;
+                if (document.getElementById('tts-msg-captain') && document.activeElement !== document.getElementById('tts-msg-captain')) document.getElementById('tts-msg-captain').value = configData.ttsMsgCaptain || defaultConfigData.ttsMsgCaptain;
 
                 const rotRadio = document.querySelector(`input[name="rotation_mode"][value="${configData.rotationMode || 'on'}"]`);
                 if (rotRadio) rotRadio.checked = true;
                 if (document.getElementById('rotation-target-guest')) document.getElementById('rotation-target-guest').checked = configData.rotationTargetGuest !== false;
                 if (document.getElementById('rotation-target-worker')) document.getElementById('rotation-target-worker').checked = configData.rotationTargetWorker !== false;
+                if (document.getElementById('rotation-target-captain')) document.getElementById('rotation-target-captain').checked = configData.rotationTargetCaptain !== false;
+
                 const popTargetScreenRadio = document.querySelector(`input[name="popup_target_screen"][value="${configData.popupTargetScreen || 'all'}"]`);
                 if (popTargetScreenRadio) popTargetScreenRadio.checked = true;
                 const popRadio = document.querySelector(`input[name="popup_mode"][value="${configData.popupMode || 'on'}"]`);
@@ -2606,6 +2757,7 @@
                 if (document.getElementById('popup-text-1')) document.getElementById('popup-text-1').value = configData.popupText1 || "";
                 if (document.getElementById('popup-text-2')) document.getElementById('popup-text-2').value = configData.popupText2 || "";
             }
+            if (activeRoleScheduleModal) renderRoleScheduleModalBody();
             checkMidnightReset(); updateUI();
         } else { saveConfigData(); }
     });
@@ -2616,6 +2768,7 @@
     });
     document.addEventListener('touchstart', () => { if (!audioSystemUnlocked) window.unlockAllAudioSystems(); }, { passive: true });
 
+    renderAdminScheduleLists();
     setInterval(() => { updateUI(); }, 1000);
 </script>
 </body>
